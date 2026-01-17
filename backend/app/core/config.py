@@ -11,13 +11,23 @@ class Settings(BaseSettings):
     DEBUG: bool = False
 
     # Cấu hình Database MySQL
-    # DATABASE_URL được build từ các biến môi trường riêng
-    DATABASE_URL: str = "mysql+aiomysql://user:password@localhost:3306/aicmr"
     DB_HOST: str = "localhost"
     DB_PORT: int = 3306
     DB_NAME: str = "aicmr"
     DB_USER: str = "aicmr_user"
     DB_PASSWORD: str = "password"
+    
+    @property
+    def DATABASE_URL(self) -> str:
+        """
+        Tự động build DATABASE_URL từ các thành phần nếu không được set trực tiếp.
+        Ưu tiên sử dụng biến môi trường DATABASE_URL nếu có.
+        """
+        import os
+        env_url = os.getenv("DATABASE_URL")
+        if env_url:
+            return env_url
+        return f"mysql+aiomysql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
     # Cấu hình Security - JWT và password hashing
     SECRET_KEY: str = "your-secret-key"
