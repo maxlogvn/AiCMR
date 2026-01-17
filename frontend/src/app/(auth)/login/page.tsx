@@ -36,7 +36,7 @@ export default function LoginPage() {
     try {
       await login(data);
       showSuccess('Đăng nhập thành công!');
-      setTimeout(() => router.push('/profile'), 1000);
+      setTimeout(() => router.push('/dashboard/profile'), 1000);
     } catch (error) {
       showError((error as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Đăng nhập thất bại');
     }

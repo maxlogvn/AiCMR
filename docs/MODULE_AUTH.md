@@ -82,8 +82,8 @@ class User(Base):
 - **`/`**: Trang chủ giới thiệu hệ thống
 - **`/login`**: Form đăng nhập với validation
 - **`/register`**: Form đăng ký
-- **`/profile`**: Dashboard cá nhân hiển thị thông tin và rank
-- **`/settings`**: Cài đặt tài khoản (Đổi mật khẩu)
+- **`/dashboard/profile`**: Dashboard cá nhân hiển thị thông tin và rank
+- **`/dashboard/settings`**: Cài đặt tài khoản (Đổi mật khẩu)
 - **`/users`**: Quản trị người dùng (Admin only)
 
 ### Features

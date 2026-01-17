@@ -20,7 +20,7 @@ pydantic-extra-types==2.1.0
 
 # Utilities
 httpx==0.25.2
-fastapi-pagination==0.12.34
+fastapi-pagination>=0.12.40
 fastapi-cache2[redis]==0.2.1
 loguru==0.7.2
 sentry-sdk[fastapi]==1.39.1

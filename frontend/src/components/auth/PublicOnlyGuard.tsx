@@ -21,7 +21,7 @@ export default function PublicOnlyGuard({ children }: PublicOnlyGuardProps) {
 
   useEffect(() => {
     if (mounted && token) {
-      router.push('/profile');
+      router.push('/dashboard/profile');
     }
   }, [mounted, token, router]);
 

@@ -34,7 +34,7 @@ export default function HomePage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-12">
           {token ? (
             <Link
-              href="/profile"
+              href="/dashboard/profile"
               className="group flex flex-col items-center p-6 bg-white dark:bg-zinc-900 rounded-lg shadow-lg hover:shadow-xl transition-shadow sm:col-span-2"
             >
               <UserCircle className="h-12 w-12 text-zinc-600 dark:text-zinc-400 mb-4" />

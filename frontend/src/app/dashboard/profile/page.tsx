@@ -1,5 +1,6 @@
 "use client";
 
+import Link from 'next/link';
 import { User, Edit2 } from 'lucide-react';
 import { useUser } from '@/hooks/useUser';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -106,10 +107,13 @@ export default function ProfilePage() {
         </div>
 
         <div className="mt-6 pt-6 border-t border-zinc-200 dark:border-zinc-800">
-          <button className="w-full flex items-center justify-center px-4 py-2 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
+          <Link 
+            href="/dashboard/settings"
+            className="w-full flex items-center justify-center px-4 py-2 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+          >
             <Edit2 className="h-4 w-4 mr-2" />
-            Chỉnh sửa hồ sơ
-          </button>
+            Chỉnh sửa hồ sơ (Đổi mật khẩu)
+          </Link>
         </div>
       </Card>
     </div>

@@ -54,9 +54,6 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Thêm Pagination vào app
-add_pagination(app)
-
 # Configure CORS Middleware
 # Cho phép frontend (Next.js) gọi API từ domain khác
 app.add_middleware(
@@ -86,3 +83,6 @@ async def health_check():
     Health check endpoint.
     """
     return {"status": "healthy"}
+
+# Thêm Pagination vào app (cần đặt sau cùng để middleware hoạt động đúng)
+add_pagination(app)
