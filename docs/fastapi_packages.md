@@ -46,12 +46,14 @@ Dùng để lưu kết quả response vào Redis nhằm tăng tốc độ cho c�
   ```
 - **Cấu hình:** Đã khởi tạo trong [main.py](file:///home/AiCMR/backend/app/main.py) kết nối tới `REDIS_URL` trong settings.
 
-## 4. Xác Thực với FastAPI Users
+## 4. Xác Thực & Phân Quyền (Custom Implementation)
 
-Thư viện này cung cấp sẵn các logic cho hệ thống User.
+Hệ thống sử dụng giải pháp tự triển khai (Custom Implementation) thay vì thư viện có sẵn để tối ưu hóa cho hệ thống Rank đặc thù.
 
-- **Tình trạng:** Đã cài đặt trong [requirements.txt](file:///home/AiCMR/backend/requirements.txt).
-- **Tiếp theo:** Bạn có thể tham khảo [tài liệu FastAPI Users](https://fastapi-users.github.io/fastapi-users/) để thay thế các phần `TODO` trong [auth.py](file:///home/AiCMR/backend/app/api/v1/auth.py).
+- **Security**: JWT Stateless Authentication.
+- **Password Hashing**: Bcrypt (`passlib[bcrypt]`).
+- **RBAC**: Middleware `require_min_rank` kiểm tra quyền dựa trên trường `rank` của User (0-5).
+- **Files**: Xem `app/api/deps.py` và `app/core/security.py`.
 
 ## 5. Kiểm Thử với Pytest
 

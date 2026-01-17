@@ -50,6 +50,8 @@ class User(Base):
 #### Authentication
 - `POST /api/v1/auth/register` - Đăng ký tài khoản mới (rank luôn mặc định = 0 để bảo mật)
 - `POST /api/v1/auth/login` - Xác thực và trả về JWT token
+- `POST /api/v1/auth/forgot-password` - Yêu cầu mã khôi phục mật khẩu
+- `POST /api/v1/auth/reset-password` - Đổi mật khẩu bằng mã khôi phục
 
 #### User Management
 - `GET /api/v1/users/me` - Lấy thông tin user hiện tại
@@ -81,6 +83,8 @@ class User(Base):
 - **`/login`**: Form đăng nhập với validation
 - **`/register`**: Form đăng ký
 - **`/profile`**: Dashboard cá nhân hiển thị thông tin và rank
+- **`/settings`**: Cài đặt tài khoản (Đổi mật khẩu)
+- **`/users`**: Quản trị người dùng (Admin only)
 
 ### Features
 - **Token Storage**: Lưu trong localStorage với automatic attachment
@@ -129,11 +133,11 @@ docker compose up -d --build
 
 ## Future Enhancements
 
-- [ ] Forgot password endpoint với email gửi token
-- [ ] Reset password endpoint
+- [x] Forgot password endpoint với email gửi token
+- [x] Reset password endpoint
 - [ ] Email verification
 - [ ] Refresh token mechanism
-- [ ] Settings page (change password UI)
-- [ ] Admin page (users list với pagination và actions)
+- [x] Settings page (change password UI)
+- [x] Admin page (users list với pagination và actions)
 - [ ] E2E tests
 - [ ] Responsive design improvements

@@ -32,6 +32,16 @@ export interface ChangePasswordRequest {
 export interface UpdateUserRequest {
   email?: string;
   username?: string;
+  rank?: number;
+  is_active?: boolean;
+}
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  size: number;
+  pages?: number;
 }
 
 export interface UserWithRank extends User {
