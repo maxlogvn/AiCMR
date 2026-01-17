@@ -27,6 +27,12 @@ class Settings(BaseSettings):
     # Cấu hình CORS - Danh sách các origin được phép truy cập
     ALLOWED_ORIGINS: list = ["http://localhost:3000"]
 
+    # Cấu hình Redis (cho Caching)
+    REDIS_URL: str = "redis://localhost:6379/0"
+
+    # Cấu hình Sentry (tùy chọn)
+    SENTRY_DSN: str = ""
+
     class Config:
         env_file = ".env"
         case_sensitive = True
