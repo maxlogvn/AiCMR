@@ -89,6 +89,12 @@ docker compose up -d --build
 - **phpMyAdmin**: Sử dụng để quản lý MySQL trực quan.
 - **MySQL Auth**: Sử dụng `mysql_native_password` để tương thích tốt nhất với các công cụ quản lý.
 
+## Tài liệu Chi tiết
+
+- [Module Auth & User](docs/MODULE_AUTH.md) - Hướng dẫn đầy đủ về hệ thống xác thực và quản lý người dùng
+- [Hướng dẫn cho AI Agents](AGENTS.md) - Coding conventions, build commands, và quy tắc phát triển
+- [Frontend Documentation](frontend/README.md) - Chi tiết về Frontend Next.js
+
 ## Lưu ý Phát triển
 
 - **Frontend**: Sử dụng Next.js 16 với Turbopack để tăng tốc độ phát triển.

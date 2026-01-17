@@ -1,71 +1,53 @@
-# Authentication API Routes
-# Chứa các endpoints liên quan đến authentication: đăng ký, đăng nhập, refresh token
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
-# Tạo router cho authentication
+from app.core.database import get_db
+from app.core.security import create_access_token
+from app.schemas.user import UserCreate, UserLogin, UserResponse
+from app.schemas.token import Token
+from app.crud import get_by_email, get_by_username, create, authenticate
+from loguru import logger
+
 router = APIRouter()
 
 
-@router.post("/register")
-async def register():
-    """
-    Endpoint đăng ký người dùng mới.
-
-    TODO: Implement logic đăng ký
-    - Validate dữ liệu đầu vào
-    - Hash password
-    - Lưu user vào database
-    - Return access token
-
-    Returns:
-        dict: Thông tin user và access token
-    """
-    return {"message": "Register endpoint - TODO: Implement"}
-
-
-@router.post("/login")
-async def login():
-    """
-    Endpoint đăng nhập.
-
-    TODO: Implement logic đăng nhập
-    - Validate username/email và password
-    - Verify password hash
-    - Generate access token và refresh token
-    - Return tokens
-
-    Returns:
-        dict: Access token và refresh token
-    """
-    return {"message": "Login endpoint - TODO: Implement"}
+@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
+    existing_email = await get_by_email(db, user_in.email)
+    if existing_email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+    
+    existing_username = await get_by_username(db, user_in.username)
+    if existing_username:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username already taken"
+        )
+    
+    user = await create(db, user_in)
+    logger.info(f"New user registered: {user.email}")
+    return user
 
 
-@router.post("/refresh")
-async def refresh_token():
-    """
-    Endpoint làm mới access token.
-
-    TODO: Implement logic refresh token
-    - Validate refresh token
-    - Kiểm tra token có expired không
-    - Generate access token mới
-
-    Returns:
-        dict: Access token mới
-    """
-    return {"message": "Refresh token endpoint - TODO: Implement"}
-
-
-@router.post("/logout")
-async def logout():
-    """
-    Endpoint đăng xuất.
-
-    TODO: Implement logic logout
-    - Invalidate refresh token
-    - Xóa token khỏi blacklist (nếu có)
-
-    Returns:
-        dict: Thông báo đăng xuất thành công
-    """
-    return {"message": "Logout endpoint - TODO: Implement"}
+@router.post("/login", response_model=Token)
+async def login(user_credentials: UserLogin, db: AsyncSession = Depends(get_db)):
+    user = await authenticate(db, user_credentials.email, user_credentials.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Inactive user"
+        )
+    
+    access_token = create_access_token(data={"sub": str(user.id), "rank": user.rank})
+    logger.info(f"User logged in: {user.email}")
+    return {"access_token": access_token, "token_type": "bearer"}

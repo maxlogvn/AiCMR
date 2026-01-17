@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # MySQL Database
   mysql:
@@ -37,6 +35,7 @@ services:
       - /app/__pycache__
     environment:
       - DATABASE_URL=mysql+aiomysql://${DB_USER}:${DB_PASSWORD}@mysql:3306/${DB_NAME}
+      - REDIS_URL=redis://redis:6379/0
       - SECRET_KEY=${SECRET_KEY}
       - DEBUG=true
     expose:
@@ -88,14 +87,31 @@ services:
     networks:
       - aicmr-network
 
+  # Redis Cache
+  redis:
+    image: redis:alpine
+    container_name: aicmr-redis-dev
+    restart: unless-stopped
+    expose:
+      - "6379"
+    networks:
+      - aicmr-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # Nginx Reverse Proxy
   nginx:
     image: nginx:alpine
     container_name: aicmr-nginx
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
     depends_on:
       - frontend
       - backend
