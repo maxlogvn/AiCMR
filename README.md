@@ -29,8 +29,12 @@ Dự án AiCMR là hệ thống quản lý hồ sơ y tế tích hợp AI, bao g
 │
 ├── backend/                        # FastAPI Backend
 │   ├── Dockerfile                  # Docker image cho backend
-│   ├── requirements.txt            # Python dependencies (fastapi)
+│   ├── requirements.txt            # Python dependencies (đã sửa lỗi xung đột email-validator)
 │   └── app/                        # Mã nguồn FastAPI
+│       ├── core/                   # Cấu hình hệ thống và Database
+│       ├── models/                 # SQLAlchemy Models (đã có User model)
+│       ├── schemas/                # Pydantic Schemas (Validation)
+│       └── api/                    # API Endpoints (Auth, Users)
 │
 ├── frontend/                       # Next.js Frontend (v16+)
 │   ├── Dockerfile                  # Docker image cho frontend (Node 20+)
@@ -88,5 +92,13 @@ docker compose up -d --build
 ## Lưu ý Phát triển
 
 - **Frontend**: Sử dụng Next.js 16 với Turbopack để tăng tốc độ phát triển.
-- **Backend**: FastAPI đã được cài đặt bản tiêu chuẩn để tối ưu hiệu năng.
+- **Backend**: FastAPI đã được cấu hình tự động kết nối MySQL và khởi tạo database.
+- **Database**: Các bảng (Tables) sẽ được tự động tạo khi ứng dụng khởi động thông qua hàm `init_db` trong `app/core/database.py`. Đảm bảo các model mới được import vào `app/models/__init__.py`.
 - **Nginx**: Đóng vai trò Reverse Proxy, điều hướng toàn bộ yêu cầu qua cổng 80.
+
+## Troubleshooting
+
+Nếu gặp lỗi kết nối Database hoặc Backend không khởi động:
+1. Kiểm tra log của backend: `docker compose logs -f backend`
+2. Kiểm tra trạng thái MySQL: `docker compose ps`
+3. Đảm bảo file `.env` chứa thông tin đăng nhập chính xác.
