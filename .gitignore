@@ -1,0 +1,32 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker
+.docker
+*.log
+
+# Environment variables
+.env
+.env.local
+
+# IDEs
+.vscode/
+.idea/
+
+# Node.js (Root level if any)
+node_modules/
+.next/
+dist/
+build/
+
+# Python (Root level if any)
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+.pytest_cache/
+
+# Project specific
+temp_backup/

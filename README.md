@@ -1,0 +1,92 @@
+# AiCMR Project
+
+Dự án AiCMR là hệ thống quản lý hồ sơ y tế tích hợp AI, bao gồm Frontend Next.js, Backend FastAPI, Cơ sở dữ liệu MySQL và công cụ quản lý phpMyAdmin.
+
+## Kiến trúc Hệ thống
+
+```text
+┌─────────────┐      ┌─────────────┐      ┌─────────────┐      ┌─────────────┐
+│  Browser    │      │    Nginx    │      │  Next.js    │      │  FastAPI    │
+│ aicmr.local │◄────►│ (Port 80)   │◄────►│  Frontend   │◄────►│   Backend   │
+└─────────────┘      └─────────────┘      └─────────────┘      └─────────────┘
+                                                 ▲                    │
+                                                 │      ┌─────────────┐
+                                                 ├──────┤   MySQL     │
+                                                 │      │  Database   │
+                                                 │      └─────────────┘
+                                                 │      ┌─────────────┐
+                                                 └──────┤ phpMyAdmin  │
+                                                        └─────────────┘
+```
+
+## Cấu trúc Dự án
+
+```text
+/home/AiCMR/
+├── docker-compose.yml              # Docker Compose cấu hình toàn bộ hệ thống
+├── .env                            # Environment variables (local)
+├── README.md                       # File này (tổng quan dự án)
+│
+├── backend/                        # FastAPI Backend
+│   ├── Dockerfile                  # Docker image cho backend
+│   ├── requirements.txt            # Python dependencies (fastapi)
+│   └── app/                        # Mã nguồn FastAPI
+│
+├── frontend/                       # Next.js Frontend (v16+)
+│   ├── Dockerfile                  # Docker image cho frontend (Node 20+)
+│   ├── package.json                # Node.js dependencies (Tailwind CSS)
+│   ├── README.md                   # Chi tiết về Frontend
+│   └── src/                        # Mã nguồn Next.js (App Router)
+│
+└── nginx/                          # Nginx Reverse Proxy
+    └── conf.d/
+        └── default.conf            # Cấu hình routing cho aicmr.local
+```
+
+## Yêu cầu Cài đặt
+
+- Docker Engine 20.10+
+- Docker Compose 2.0+
+
+## Cấu hình Tên miền Local
+
+Để truy cập dự án qua tên miền `aicmr.local`, bạn cần thêm dòng sau vào file `hosts`:
+
+- **Windows**: `C:\Windows\System32\drivers\etc\hosts`
+- **Linux/macOS**: `/etc/hosts`
+
+```text
+127.0.0.1 aicmr.local
+```
+
+## Quick Start
+
+### 1. Setup Environment Variables
+
+```bash
+# Kiểm tra và cấu hình .env
+cat .env
+```
+
+### 2. Khởi động dự án
+
+```bash
+docker compose up -d --build
+```
+
+### 3. Các địa chỉ truy cập
+
+- **Frontend**: [http://aicmr.local](http://aicmr.local)
+- **Backend API Docs**: [http://aicmr.local/backend/docs](http://aicmr.local/backend/docs)
+- **phpMyAdmin**: [http://aicmr.local/phpmyadmin](http://aicmr.local/phpmyadmin)
+
+## Quản lý Cơ sở dữ liệu
+
+- **phpMyAdmin**: Sử dụng để quản lý MySQL trực quan.
+- **MySQL Auth**: Sử dụng `mysql_native_password` để tương thích tốt nhất với các công cụ quản lý.
+
+## Lưu ý Phát triển
+
+- **Frontend**: Sử dụng Next.js 16 với Turbopack để tăng tốc độ phát triển.
+- **Backend**: FastAPI đã được cài đặt bản tiêu chuẩn để tối ưu hiệu năng.
+- **Nginx**: Đóng vai trò Reverse Proxy, điều hướng toàn bộ yêu cầu qua cổng 80.

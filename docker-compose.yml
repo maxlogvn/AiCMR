@@ -1,0 +1,110 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: aicmr-mysql-dev
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_ROOT_HOST: '%'
+    volumes:
+      - mysql-data-dev:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - aicmr-network
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: aicmr-backend-dev
+    restart: unless-stopped
+    volumes:
+      - ./backend:/app
+      - /app/__pycache__
+    environment:
+      - DATABASE_URL=mysql+aiomysql://${DB_USER}:${DB_PASSWORD}@mysql:3306/${DB_NAME}
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=true
+    expose:
+      - "8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - aicmr-network
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Next.js Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: aicmr-frontend-dev
+    restart: unless-stopped
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NEXT_PUBLIC_API_URL=http://aicmr.local/backend
+      - NEXT_PUBLIC_APP_URL=http://aicmr.local
+    expose:
+      - "3000"
+    depends_on:
+      - backend
+    networks:
+      - aicmr-network
+    command: npm run dev
+
+  # phpMyAdmin
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: aicmr-phpmyadmin
+    restart: unless-stopped
+    environment:
+      - PMA_HOST=mysql
+      - PMA_PORT=3306
+      - PMA_ABSOLUTE_URI=http://aicmr.local/phpmyadmin/
+      - UPLOAD_LIMIT=64M
+    expose:
+      - "80"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - aicmr-network
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: aicmr-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - aicmr-network
+
+volumes:
+  mysql-data-dev:
+
+networks:
+  aicmr-network:
+    driver: bridge
