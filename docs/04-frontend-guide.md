@@ -4,18 +4,28 @@ Tài liệu này mô tả các quy chuẩn phát triển Frontend cho dự án A
 
 ## Công nghệ sử dụng
 - **Framework**: Next.js 16 (App Router) & React 19.
-- **Styling**: Tailwind CSS 4.
-- **State Management**: TanStack Query (React Query).
+- **Styling**: Tailwind CSS 4 & **shadcn/ui**.
+- **State Management**: TanStack Query (Server State) & **Zustand** (Client State).
+- **Animation**: **Framer Motion**.
 - **Form**: React Hook Form + Zod.
+- **Notification**: **Sonner**.
+
+## Thư viện & Công cụ bổ sung
+- **shadcn/ui**: Hệ thống component UI cơ bản. Cài đặt thêm bằng `npx shadcn@latest add [component]`.
+- **Zustand**: Quản lý client state (ví dụ: theme, trạng thái sidebar). Lưu trữ tại `src/store/`.
+- **sonner**: Hiển thị thông báo (toast). Sử dụng qua hàm `toast.success()` hoặc `toast.error()`.
+- **framer-motion**: Xử lý các hiệu ứng chuyển động mượt mà.
+- **cn() utility**: Sử dụng hàm `cn` trong `src/lib/utils.ts` để kết hợp Tailwind classes động.
 
 ## Cấu trúc thư mục (`frontend/src/`)
 - `app/`: Routing và Pages (App Router).
 - `components/`:
-  - `ui/`: Các component nguyên tử (Button, Input...).
+  - `ui/`: Các component nguyên tử từ shadcn/ui.
   - `auth/`: Các component liên quan bảo mật (AuthGuard...).
   - `layout/`: Navbar, Sidebar, Footer.
 - `hooks/`: Custom hooks (useAuth, useDebounce...).
-- `lib/`: Cấu hình thư viện (Axios instance, utils).
+- `lib/`: Cấu hình thư viện (Axios instance, utils, shadcn config).
+- `store/`: Quản lý client state với Zustand.
 - `types/`: Định nghĩa TypeScript interfaces.
 
 ## Quy trình gọi API

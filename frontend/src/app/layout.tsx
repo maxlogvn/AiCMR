@@ -2,6 +2,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ClientProvider from '@/components/providers/QueryProvider';
 import { ToastProvider } from '@/hooks/useToast';
+import { Toaster } from 'sonner';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import InstallGuard from '@/components/auth/InstallGuard';
 import CsrfTokenProvider from '@/components/providers/CsrfTokenProvider';
@@ -59,6 +60,7 @@ export default function RootLayout({
               <ClientProvider>
                 <ToastProvider>
                   {children}
+                  <Toaster position="top-right" richColors closeButton />
                 </ToastProvider>
               </ClientProvider>
             </ThemeProvider>
