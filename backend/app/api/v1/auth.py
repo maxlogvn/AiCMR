@@ -6,7 +6,7 @@ from jose import jwt, JWTError
 from app.core.database import get_db
 from app.core.security import create_access_token
 from app.core.config import get_settings
-from app.schemas.user import UserCreate, UserLogin, UserResponse, ForgotPassword, ResetPassword
+from app.schemas.user import UserCreate, UserRegister, UserLogin, UserResponse, ForgotPassword, ResetPassword
 from app.schemas.token import Token
 from app.crud import get_by_email, get_by_username, create, authenticate, get_by_id, update_password
 from loguru import logger
@@ -16,7 +16,7 @@ router = APIRouter()
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
+async def register(user_in: UserRegister, db: AsyncSession = Depends(get_db)):
     existing_email = await get_by_email(db, user_in.email)
     if existing_email:
         raise HTTPException(
@@ -31,7 +31,12 @@ async def register(user_in: UserCreate, db: AsyncSession = Depends(get_db)):
             detail="Username already taken"
         )
     
-    user = await create(db, user_in)
+    user_data = UserCreate(
+        email=user_in.email,
+        username=user_in.username,
+        password=user_in.password
+    )
+    user = await create(db, user_data)
     logger.info(f"New user registered: {user.email}")
     return user
 

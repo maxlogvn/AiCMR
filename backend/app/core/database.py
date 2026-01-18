@@ -81,6 +81,7 @@ async def init_db() -> None:
     """
     # Import tất cả models ở đây để SQLAlchemy metadata nhận diện được các tables
     from app.models.user import User  # noqa: F401
+    from app.models.settings import Setting  # noqa: F401
     
     async with engine.begin() as conn:
         # Tạo tất cả tables từ Base metadata

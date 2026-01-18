@@ -27,14 +27,14 @@ Dự án AiCMR là hệ thống quản lý hồ sơ y tế tích hợp AI, bao g
 ├── .env                            # Environment variables (local)
 ├── README.md                       # File này (tổng quan dự án)
 │
-├── backend/                        # FastAPI Backend
-│   ├── Dockerfile                  # Docker image cho backend
-│   ├── requirements.txt            # Python dependencies (đã sửa lỗi xung đột email-validator)
-│   └── app/                        # Mã nguồn FastAPI
-│       ├── core/                   # Cấu hình hệ thống và Database
-│       ├── models/                 # SQLAlchemy Models (đã có User model)
-│       ├── schemas/                # Pydantic Schemas (Validation)
-│       └── api/                    # API Endpoints (Auth, Users)
+ ├── backend/                        # FastAPI Backend
+ │   ├── Dockerfile                  # Docker image cho backend
+ │   ├── requirements.txt            # Python dependencies
+ │   └── app/                        # Mã nguồn FastAPI
+ │       ├── core/                   # Cấu hình hệ thống và Database
+ │       ├── models/                 # SQLAlchemy Models (User, Settings)
+ │       ├── schemas/                # Pydantic Schemas (Validation)
+ │       └── api/                    # API Endpoints (Auth, Users, Install)
 │
 ├── frontend/                       # Next.js Frontend (v16+)
 │   ├── Dockerfile                  # Docker image cho frontend (Node 20+)
@@ -62,6 +62,22 @@ Dự án AiCMR là hệ thống quản lý hồ sơ y tế tích hợp AI, bao g
 ```text
 127.0.0.1 aicmr.local
 ```
+
+## Environment Variables
+
+Các biến môi trường quan trọng cần thiết lập trong file `.env` để hệ thống hoạt động:
+
+```bash
+SECRET_KEY=your-super-secret-key-change-this-in-production-32-chars
+INSTALL_SECRET=your_random_install_secret_change_this_in_production
+DATABASE_URL=mysql+aiomysql://aicmr_user:password@localhost/aicmr
+REDIS_URL=redis://localhost:6379/0
+```
+
+- **`SECRET_KEY`**: Mã khóa để mã hóa JWT token.
+- **`INSTALL_SECRET`**: Mã khóa bảo mật dùng trong quá trình cài đặt ban đầu (Chống cài đặt trái phép).
+- **`DATABASE_URL`**: Chuỗi kết nối MySQL.
+- **`REDIS_URL`**: Địa chỉ Redis cho caching.
 
 ## Quick Start
 

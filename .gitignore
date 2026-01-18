@@ -31,3 +31,6 @@ venv/
 # Project specific
 temp_backup/
 nginx/ssl/
+
+# Agent Plans
+.opencode/

@@ -10,6 +10,13 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
+    """Schema cho internal use (install, admin create user)"""
+    password: str = Field(..., min_length=6)
+    rank: int = Field(default=0, ge=0, le=5)
+
+
+class UserRegister(UserBase):
+    """Schema cho public register - không cho phép set rank"""
     password: str = Field(..., min_length=6)
 
 

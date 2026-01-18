@@ -1,11 +1,13 @@
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
+  helperText?: string;
 }
 
 export function Input({
   label,
   error,
+  helperText,
   id,
   className = '',
   ...props
@@ -28,6 +30,11 @@ export function Input({
         } ${className}`}
         {...props}
       />
+      {helperText && !error && (
+        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+          {helperText}
+        </p>
+      )}
       {error && (
         <p className="mt-1 text-sm text-red-600 dark:text-red-400">
           {error}

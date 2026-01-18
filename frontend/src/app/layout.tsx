@@ -3,6 +3,7 @@ import "./globals.css";
 import ClientProvider from '@/components/providers/QueryProvider';
 import { ToastProvider } from '@/hooks/useToast';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
+import InstallGuard from '@/components/auth/InstallGuard';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -51,13 +52,15 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        <ThemeProvider>
-          <ClientProvider>
-            <ToastProvider>
-              {children}
-            </ToastProvider>
-          </ClientProvider>
-        </ThemeProvider>
+        <InstallGuard>
+          <ThemeProvider>
+            <ClientProvider>
+              <ToastProvider>
+                {children}
+              </ToastProvider>
+            </ClientProvider>
+          </ThemeProvider>
+        </InstallGuard>
       </body>
     </html>
   );

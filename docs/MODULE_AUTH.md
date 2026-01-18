@@ -77,9 +77,11 @@ class User(Base):
 ### UI Components
 - **`Toast`**: Thông báo trạng thái (Success/Error)
 - **`AuthGuard`**: Bảo vệ các trang dashboard/profile, tự động redirect về login nếu chưa xác thực
+- **`InstallGuard`**: Kiểm tra trạng thái cài đặt hệ thống. Redirect về `/install` nếu chưa cài đặt, hoặc chặn `/install` nếu đã cài đặt.
 
 ### Pages
 - **`/`**: Trang chủ giới thiệu hệ thống
+- **`/install`**: Trang cài đặt ban đầu (Tạo Admin + Cấu hình hệ thống). Chỉ hiển thị khi `installed: false`.
 - **`/login`**: Form đăng nhập với validation
 - **`/register`**: Form đăng ký
 - **`/dashboard/profile`**: Dashboard cá nhân hiển thị thông tin và rank
@@ -91,6 +93,7 @@ class User(Base):
 - **Form Validation**: Client-side validation với Zod schemas
 - **Responsive Design**: Tailwind CSS với dark mode support
 - **Data Caching**: TanStack Query cho optimized API calls
+- **Installation Flow**: Sử dụng `InstallGuard` để quản lý trạng thái cài đặt hệ thống. Chuyển hướng tự động đến `/install` nếu chưa cài đặt.
 
 ## Security Considerations
 
@@ -104,6 +107,7 @@ class User(Base):
 Yêu cầu trong file `.env`:
 ```bash
 SECRET_KEY=your-secret-key-here
+INSTALL_SECRET=your_random_install_secret_change_this_in_production
 DATABASE_URL=mysql+aiomysql://user:password@localhost/dbname
 REDIS_URL=redis://localhost:6379/0
 ```

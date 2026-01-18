@@ -29,7 +29,7 @@ async def create(db: AsyncSession, obj_in: UserCreate) -> User:
         username=obj_in.username,
         hashed_password=hashed_password,
         is_active=obj_in.is_active,
-        rank=0  # Luôn mặc định là 0 khi tạo mới qua UserCreate
+        rank=obj_in.rank
     )
     db.add(db_obj)
     await db.flush()

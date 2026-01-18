@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "your-secret-key"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    INSTALL_SECRET: str = "change-me-in-production"
 
     # Cấu hình CORS - Danh sách các origin được phép truy cập
     ALLOWED_ORIGINS: list = ["http://localhost:3000"]

@@ -37,9 +37,27 @@ Tài liệu này liệt kê chi tiết các endpoint API trong version 1.
 - **UserUpdate**: `email`, `username`, `rank`, `is_active` (optional)
 - **ChangePassword**: `old_password`, `new_password`
 
+### Pagination
+- Các endpoint trả về danh sách sử dụng `fastapi-pagination`.
+- Trả về cấu trúc: `{ items: [], total: int, page: int, size: int }`.
+
 ---
 
-## Middleware & Security
+## Installation (`/install`)
+
+ | Method | Endpoint | Description | Auth Required | Rank |
+ | :--- | :--- | :--- | :--- | :--- |
+ | GET | `/status` | Kiểm tra trạng thái cài đặt | No | - |
+ | POST | `/setup` | Cài đặt ban đầu (Tạo Admin + Cấu hình hệ thống) | No | - |
+
+### Schemas
+- **InstallSetupRequest**: `install_secret`, `email`, `username`, `password`, `site_name`, `logo_url`
+- **InstallStatusResponse**: `installed` (boolean), `step` (string)
+
+### Notes
+- Endpoint `/setup` yêu cầu `INSTALL_SECRET` từ environment variables.
+- Chỉ cho phép cài đặt khi chưa có user nào và chưa cài đặt trước đó.
+- Sử dụng Transaction để đảm bảo toàn bộ dữ liệu được tạo cùng lúc (Rollback nếu lỗi).
 
 ### Dependency Injection
 - `get_db`: Cung cấp AsyncSession cho SQLAlchemy.

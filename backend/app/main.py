@@ -10,7 +10,7 @@ import sys
 from contextlib import asynccontextmanager
 
 # Import API routers
-from .api.v1 import auth, users
+from .api.v1 import auth, users, install
 
 # Import settings và database functions
 from .core.config import get_settings
@@ -67,6 +67,7 @@ app.add_middleware(
 # Include API routers
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Auth"])
 app.include_router(users.router, prefix="/api/v1/users", tags=["Users"])
+app.include_router(install.router, prefix="/api/v1/install", tags=["Install"])
 
 # Root endpoint
 @app.get("/")

@@ -13,9 +13,9 @@ Tài liệu này mô tả cấu trúc và các quy chuẩn phát triển Fronten
 
 ## Cấu trúc thư mục (`frontend/src/`)
 - `app/`: Các trang (Pages) và Layouts theo App Router.
-  - `(auth)/`: Nhóm các trang xác thực (Login, Register, Forgot Password).
-  - `(dashboard)/`: Nhóm các trang yêu cầu đăng nhập (Profile, Settings).
-  - `(admin)/`: Các trang quản trị (User Management).
+  - `auth/`: Nhóm các trang xác thực (Login, Register, Install, Forgot Password).
+  - `dashboard/`: Nhóm các trang yêu cầu đăng nhập (Profile, Settings).
+  - `admin/`: Các trang quản trị (User Management).
 - `components/`: Các React Components tái sử dụng.
   - `ui/`: Các component cơ bản (Button, Input, Card, etc.).
   - `auth/`: Các component liên quan đến xác thực (AuthGuard).
@@ -37,6 +37,15 @@ Sử dụng component `AuthGuard` để bảo vệ các route yêu cầu đăng 
 <AuthGuard>
   <YourProtectedComponent />
 </AuthGuard>
+```
+
+## Installation Guard
+Sử dụng component `InstallGuard` để bảo vệ route `/install` và kiểm tra trạng thái cài đặt hệ thống:
+```tsx
+// Trong RootLayout (đã tích hợp sẵn)
+<InstallGuard>
+  <YourComponents />
+</InstallGuard>
 ```
 
 ## Styling Guidelines
