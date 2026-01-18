@@ -1,14 +1,21 @@
-from datetime import timedelta
-from fastapi import APIRouter, Depends, HTTPException, status
+from datetime import timedelta, datetime, timezone
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from jose import jwt, JWTError
 
 from app.core.database import get_db
-from app.core.security import create_access_token
+from app.core.security import create_access_token, create_refresh_token, verify_refresh_token, validate_csrf
 from app.core.config import get_settings
+from app.core.constants import RATE_LIMIT_REGISTER, RATE_LIMIT_LOGIN, RATE_LIMIT_PASSWORD_RESET, PASSWORD_RESET_EXPIRE_MINUTES, ERROR_EMAIL_EXISTS, ERROR_USERNAME_TAKEN, ERROR_INVALID_CREDENTIALS, ERROR_INACTIVE_USER
+from app.core.exceptions import InvalidCredentials, InactiveUser
+from app.core.rate_limit import limiter
 from app.schemas.user import UserCreate, UserRegister, UserLogin, UserResponse, ForgotPassword, ResetPassword
-from app.schemas.token import Token
+from app.schemas.token import Token, RefreshTokenRequest
 from app.crud import get_by_email, get_by_username, create, authenticate, get_by_id, update_password
+from app.models.user import User
+from app.api.deps import get_current_active_user
 from loguru import logger
 
 settings = get_settings()
@@ -16,75 +23,83 @@ router = APIRouter()
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-async def register(user_in: UserRegister, db: AsyncSession = Depends(get_db)):
-    existing_email = await get_by_email(db, user_in.email)
-    if existing_email:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
+@limiter.limit(RATE_LIMIT_REGISTER)
+async def register(request: Request, user_in: UserRegister, db: AsyncSession = Depends(get_db), csrf_token: str = Depends(validate_csrf)):
+    # Normalize email to lowercase
+    user_in.email = user_in.email.lower()
+
+    try:
+        user_data = UserCreate(
+            email=user_in.email,
+            username=user_in.username,
+            password=user_in.password
         )
-    
-    existing_username = await get_by_username(db, user_in.username)
-    if existing_username:
+        user = await create(db, user_data)
+        logger.info(f"New user registered: {user.email}")
+        return user
+    except IntegrityError as e:
+        logger.warning(f"Race condition in registration: {e}")
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username already taken"
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Email or username already exists"
         )
-    
-    user_data = UserCreate(
-        email=user_in.email,
-        username=user_in.username,
-        password=user_in.password
-    )
-    user = await create(db, user_data)
-    logger.info(f"New user registered: {user.email}")
-    return user
 
 
 @router.post("/login", response_model=Token)
-async def login(user_credentials: UserLogin, db: AsyncSession = Depends(get_db)):
-    user = await authenticate(db, user_credentials.email, user_credentials.password)
+@limiter.limit(RATE_LIMIT_LOGIN)
+async def login(request: Request, user_credentials: UserLogin, db: AsyncSession = Depends(get_db), csrf_token: str = Depends(validate_csrf)):
+    # Normalize email to lowercase
+    email = user_credentials.email.lower()
+
+    user = await authenticate(db, email, user_credentials.password)
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
+        raise InvalidCredentials()
+
     if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Inactive user"
-        )
-    
+        raise InactiveUser()
+
     access_token = create_access_token(data={"sub": str(user.id), "rank": user.rank})
+    refresh_token = create_refresh_token(data={"sub": str(user.id)})
+
+    # Save refresh token to database
+    from app.models.refresh_token import RefreshToken
+    token_record = RefreshToken(
+        id=refresh_token[:100],
+        user_id=user.id,
+        token=refresh_token,
+        expires_at=datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    )
+    db.add(token_record)
+    await db.commit()
+
     logger.info(f"User logged in: {user.email}")
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
 
 
 @router.post("/forgot-password")
-async def forgot_password(data: ForgotPassword, db: AsyncSession = Depends(get_db)):
+@limiter.limit(RATE_LIMIT_PASSWORD_RESET)
+async def forgot_password(request: Request, data: ForgotPassword, db: AsyncSession = Depends(get_db)):
     user = await get_by_email(db, data.email)
     if not user:
-        # Để bảo mật, không xác nhận email có tồn tại hay không
-        return {"message": "Nếu email tồn tại trong hệ thống, bạn sẽ nhận được mã khôi phục."}
-    
+        # Always return same message to prevent user enumeration
+        return {"message": "If the email exists, a password reset link has been sent"}
+
     # Tạo token reset (hết hạn sau 15 phút)
     reset_token = create_access_token(
         data={"sub": str(user.id), "scope": "reset_password"},
-        expires_delta=timedelta(minutes=15)
+        expires_delta=timedelta(minutes=PASSWORD_RESET_EXPIRE_MINUTES)
     )
-    
-    # TODO: Gửi email thực tế ở đây
+
     logger.info(f"Password reset token for {user.email}: {reset_token}")
-    
+
     return {
-        "message": "Mã khôi phục đã được gửi vào email của bạn."
+        "message": "If the email exists, a password reset link has been sent"
     }
 
 
 @router.post("/reset-password")
-async def reset_password(data: ResetPassword, db: AsyncSession = Depends(get_db)):
+@limiter.limit(RATE_LIMIT_PASSWORD_RESET)
+async def reset_password(request: Request, data: ResetPassword, db: AsyncSession = Depends(get_db), csrf_token: str = Depends(validate_csrf)):
     try:
         payload = jwt.decode(data.token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         if payload.get("scope") != "reset_password":
@@ -95,11 +110,83 @@ async def reset_password(data: ResetPassword, db: AsyncSession = Depends(get_db)
         user_id = int(sub)
     except (JWTError, ValueError):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Mã khôi phục không hợp lệ hoặc đã hết hạn.")
-    
+
     user = await get_by_id(db, user_id)
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Người dùng không tồn tại.")
-    
+
     await update_password(db, user, data.new_password)
     logger.info(f"User {user.email} reset password successfully")
     return {"message": "Mật khẩu đã được cập nhật thành công."}
+
+
+@router.post("/refresh", response_model=Token)
+async def refresh_token(request_data: RefreshTokenRequest, db: AsyncSession = Depends(get_db)):
+    from app.models.refresh_token import RefreshToken
+
+    try:
+        payload = verify_refresh_token(request_data.refresh_token)
+        user_id = int(payload.sub) if payload.sub else None
+
+        if not user_id:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+
+        user = await get_by_id(db, user_id)
+        if not user or not user.is_active:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+
+        result = await db.execute(
+            select(RefreshToken).where(
+                RefreshToken.token == request_data.refresh_token,
+                RefreshToken.revoked == False,
+                RefreshToken.expires_at > datetime.now(timezone.utc)
+            )
+        )
+        token_record = result.scalar_one_or_none()
+
+        if not token_record:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired refresh token")
+
+        token_record.revoked = True
+        access_token = create_access_token(data={"sub": str(user.id), "rank": user.rank})
+        new_refresh_token = create_refresh_token(data={"sub": str(user.id)})
+
+        new_token_record = RefreshToken(
+            id=new_refresh_token[:100],
+            user_id=user.id,
+            token=new_refresh_token,
+        expires_at=datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+        )
+        db.add(new_token_record)
+        await db.commit()
+
+        logger.info(f"User {user.email} refreshed token")
+        return {"access_token": access_token, "refresh_token": new_refresh_token, "token_type": "bearer"}
+
+    except HTTPException:
+        await db.rollback()
+        raise
+    except Exception as e:
+        await db.rollback()
+        logger.error(f"Refresh token error: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to refresh token")
+
+
+@router.post("/logout")
+async def logout(request: Request, request_data: RefreshTokenRequest, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_active_user), csrf_token: str = Depends(validate_csrf)):
+    from app.models.refresh_token import RefreshToken
+
+    result = await db.execute(
+        select(RefreshToken).where(
+            RefreshToken.token == request_data.refresh_token,
+            RefreshToken.user_id == current_user.id
+        )
+    )
+    token_record = result.scalar_one_or_none()
+
+    if token_record:
+        token_record.revoked = True
+        await db.commit()
+        logger.info(f"User {current_user.email} logged out")
+
+    return {"message": "Logged out successfully"}
