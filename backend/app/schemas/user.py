@@ -26,6 +26,12 @@ class UserBase(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     is_active: bool = True
 
+
+class UserCreate(UserBase):
+    """Schema cho internal use (install, admin create user)"""
+    password: str = Field(..., min_length=8)
+    rank: int = Field(default=0, ge=0, le=5)
+
     @field_validator('username')
     @classmethod
     def validate_username(cls, v: str) -> str:
@@ -35,18 +41,21 @@ class UserBase(BaseModel):
             )
         return v
 
-
-class UserCreate(UserBase):
-    """Schema cho internal use (install, admin create user)"""
-    password: str = Field(..., min_length=8)
-    rank: int = Field(default=0, ge=0, le=5)
-
     _validate_password = field_validator('password')(validate_password_strength)
 
 
 class UserRegister(UserBase):
     """Schema cho public register - không cho phép set rank"""
     password: str = Field(..., min_length=8)
+
+    @field_validator('username')
+    @classmethod
+    def validate_username(cls, v: str) -> str:
+        if not re.match(r'^[a-zA-Z0-9_-]{3,50}$', v):
+            raise ValueError(
+                'Username must be 3-50 characters long and contain only letters, numbers, underscores, and hyphens'
+            )
+        return v
 
     _validate_password = field_validator('password')(validate_password_strength)
 
