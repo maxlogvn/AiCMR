@@ -62,7 +62,7 @@ api.interceptors.response.use(
     const originalRequest = error.config as CustomRequestConfig;
 
     // Handle CSRF token expiration/invalid
-    if (error.response?.status === 403 && (error.response.data as any)?.detail === "Invalid CSRF token") {
+    if (error.response?.status === 403 && (error.response.data as { detail?: string })?.detail === "Invalid CSRF token") {
       csrfTokenPromise = null;
       const newToken = await getCsrfToken();
       if (newToken && originalRequest.headers) {
