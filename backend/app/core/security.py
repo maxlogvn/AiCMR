@@ -21,11 +21,15 @@ def generate_csrf_token() -> str:
     return secrets.token_urlsafe(32)
 
 
-def validate_csrf(request: Request, x_csrf_token: str = Header(None, alias="X-CSRF-Token")):
+def validate_csrf(
+    request: Request, x_csrf_token: str = Header(None, alias="X-CSRF-Token")
+):
     """Validate CSRF token"""
     session_token = request.session.get("csrf_token")
     if not session_token or session_token != x_csrf_token:
-        logger.warning(f"CSRF validation failed. Session Token: {str(session_token)[:8]}..., Header Token: {str(x_csrf_token)[:8]}...")
+        logger.warning(
+            f"CSRF validation failed. Session Token: {str(session_token)[:8]}..., Header Token: {str(x_csrf_token)[:8]}..."
+        )
         raise HTTPException(status_code=403, detail="Invalid CSRF token")
     return x_csrf_token
 
@@ -43,9 +47,13 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(timezone.utc) + timedelta(
+            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+        )
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    encoded_jwt = jwt.encode(
+        to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
+    )
     return encoded_jwt
 
 
@@ -54,9 +62,13 @@ def create_refresh_token(data: dict, expires_delta: Optional[timedelta] = None) 
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+        expire = datetime.now(timezone.utc) + timedelta(
+            days=settings.REFRESH_TOKEN_EXPIRE_DAYS
+        )
     to_encode.update({"exp": expire, "type": "refresh"})
-    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    encoded_jwt = jwt.encode(
+        to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
+    )
     return encoded_jwt
 
 
@@ -74,7 +86,9 @@ async def verify_token(token: str = Depends(oauth2_scheme)) -> TokenPayload:
     )
 
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
         token_data = TokenPayload(**payload)
     except ExpiredSignatureError:
         raise expired_exception
@@ -95,7 +109,9 @@ def verify_refresh_token(token: str) -> TokenPayload:
     )
 
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
         token_data = TokenPayload(**payload)
 
         if payload.get("type") != "refresh":

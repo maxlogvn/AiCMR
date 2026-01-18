@@ -12,10 +12,7 @@ ModelType = TypeVar("ModelType")
 
 
 async def get_by_field(
-    db: AsyncSession,
-    model: Type[ModelType],
-    field: str,
-    value: Any
+    db: AsyncSession, model: Type[ModelType], field: str, value: Any
 ) -> Optional[ModelType]:
     result = await db.execute(select(model).where(getattr(model, field) == value))
     return result.scalar_one_or_none()
@@ -23,15 +20,15 @@ async def get_by_field(
 
 @cache(expire=300, namespace="user")
 async def get_by_email(db: AsyncSession, email: str) -> Optional[User]:
-    return await get_by_field(db, User, 'email', email)
+    return await get_by_field(db, User, "email", email)
 
 
 async def get_by_username(db: AsyncSession, username: str) -> Optional[User]:
-    return await get_by_field(db, User, 'username', username)
+    return await get_by_field(db, User, "username", username)
 
 
 async def get_by_id(db: AsyncSession, user_id: int) -> Optional[User]:
-    return await get_by_field(db, User, 'id', user_id)
+    return await get_by_field(db, User, "id", user_id)
 
 
 async def create(db: AsyncSession, obj_in: UserCreate) -> User:
@@ -41,7 +38,7 @@ async def create(db: AsyncSession, obj_in: UserCreate) -> User:
         username=obj_in.username,
         hashed_password=hashed_password,
         is_active=obj_in.is_active,
-        rank=obj_in.rank
+        rank=obj_in.rank,
     )
     db.add(db_obj)
     await db.flush()
@@ -49,15 +46,19 @@ async def create(db: AsyncSession, obj_in: UserCreate) -> User:
     return db_obj
 
 
-async def update(db: AsyncSession, db_obj: User, obj_in: Union[UserUpdate, UserUpdateMe, dict[str, Any]]) -> User:
+async def update(
+    db: AsyncSession,
+    db_obj: User,
+    obj_in: Union[UserUpdate, UserUpdateMe, dict[str, Any]],
+) -> User:
     if isinstance(obj_in, dict):
         update_data = obj_in
     else:
         update_data = obj_in.model_dump(exclude_unset=True)
-    
+
     for field, value in update_data.items():
         setattr(db_obj, field, value)
-    
+
     await db.flush()
     await db.refresh(db_obj)
     await FastAPICache.clear(namespace="user")
@@ -81,13 +82,16 @@ async def authenticate(db: AsyncSession, email: str, password: str) -> Optional[
     return user
 
 
-async def get_all_users(db: AsyncSession, skip: int = 0, limit: int = 100) -> list[User]:
+async def get_all_users(
+    db: AsyncSession, skip: int = 0, limit: int = 100
+) -> list[User]:
     result = await db.execute(select(User).offset(skip).limit(limit))
     return result.scalars().all()
 
 
 async def count_users(db: AsyncSession) -> int:
     from sqlalchemy import func
+
     result = await db.execute(select(func.count()).select_from(User))
     return result.scalar()
 

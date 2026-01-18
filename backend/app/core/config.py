@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     DB_NAME: str = "aicmr"
     DB_USER: str = "aicmr_user"
     DB_PASSWORD: str = "password"
-    
+
     @property
     def DATABASE_URL(self) -> str:
         """
@@ -27,6 +27,7 @@ class Settings(BaseSettings):
         Ưu tiên sử dụng biến môi trường DATABASE_URL nếu có.
         """
         import os
+
         env_url = os.getenv("DATABASE_URL")
         if env_url:
             return env_url
@@ -34,32 +35,31 @@ class Settings(BaseSettings):
 
     # Cấu hình Security - JWT và password hashing
     SECRET_KEY: str = Field(
-        default=...,
-        description="JWT signing secret - MUST be changed in production"
+        default=..., description="JWT signing secret - MUST be changed in production"
     )
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     INSTALL_SECRET: str = "change-me-in-production"
 
-    @field_validator('SECRET_KEY')
+    @field_validator("SECRET_KEY")
     @classmethod
     def validate_secret_key(cls, v: str, info) -> str:
         # Allow default key in development
-        if info.data.get('DEBUG') and v == 'your-secret-key':
+        if info.data.get("DEBUG") and v == "your-secret-key":
             logger.warning("Using default SECRET_KEY in development mode")
             return v
 
         # Reject default key in production
-        if v == 'your-secret-key':
+        if v == "your-secret-key":
             raise ValueError(
-                'SECRET_KEY must be set to a secure value in production. '
+                "SECRET_KEY must be set to a secure value in production. "
                 'Generate one with: python -c "import secrets; print(secrets.token_urlsafe(32))"'
             )
 
         # Enforce minimum length
         if len(v) < 32:
-            raise ValueError('SECRET_KEY must be at least 32 characters long')
+            raise ValueError("SECRET_KEY must be at least 32 characters long")
 
         return v
 
@@ -73,7 +73,7 @@ class Settings(BaseSettings):
         "http://localhost:3000",
         "http://aicmr.local",
         "https://aicmr.local",
-        "http://127.0.0.1:3000"
+        "http://127.0.0.1:3000",
     ]
 
     # Cấu hình Redis (cho Caching)

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import api from '@/lib/api';
-import type { User } from '@/types';
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import api from "@/lib/api";
+import type { User } from "@/types";
 
 export function useUser() {
   const [isClient] = useState(true);
@@ -14,9 +14,9 @@ export function useUser() {
     error,
     refetch,
   } = useQuery<User>({
-    queryKey: ['user', 'me'],
+    queryKey: ["user", "me"],
     queryFn: async () => {
-      const response = await api.get<User>('/users/me');
+      const response = await api.get<User>("/users/me");
       return response.data;
     },
     enabled: isClient,

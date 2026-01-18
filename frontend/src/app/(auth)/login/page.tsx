@@ -1,20 +1,20 @@
 "use client";
 
-import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { LogIn } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/useToast';
-import { Input } from '@/components/ui/input-wrapped';
-import { Button } from '@/components/ui/button-wrapped';
-import { Card } from '@/components/ui/card-wrapped';
-import type { LoginRequest } from '@/types';
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { LogIn } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/useToast";
+import { Input } from "@/components/ui/input-wrapped";
+import { Button } from "@/components/ui/button-wrapped";
+import { Card } from "@/components/ui/card-wrapped";
+import type { LoginRequest } from "@/types";
 
 const loginSchema = z.object({
-  email: z.string().email('Email không hợp lệ'),
-  password: z.string().min(6, 'Mật khẩu phải có ít nhất 6 ký tự'),
+  email: z.string().email("Email không hợp lệ"),
+  password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -35,10 +35,29 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginRequest) => {
     try {
       await login(data);
-      showSuccess('Đăng nhập thành công!');
-      setTimeout(() => router.push('/dashboard/profile'), 1000);
+      showSuccess("Đăng nhập thành công!");
+
+      const response = await fetch("/backend/api/v1/users/me", {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        },
+      });
+
+      if (response.ok) {
+        const user = await response.json();
+        if (user.rank >= 3) {
+          router.push("/dashboard/stats");
+        } else {
+          router.push("/");
+        }
+      } else {
+        router.push("/");
+      }
     } catch (error) {
-      showError((error as { response?: { data?: { detail?: string } } })?.response?.data?.detail || 'Đăng nhập thất bại');
+      showError(
+        (error as { response?: { data?: { detail?: string } } })?.response?.data
+          ?.detail || "Đăng nhập thất bại",
+      );
     }
   };
 
@@ -56,32 +75,34 @@ export default function LoginPage() {
           label="Email"
           type="email"
           error={errors.email?.message}
-          {...register('email')}
+          {...register("email")}
         />
 
         <Input
           label="Mật khẩu"
           type="password"
           error={errors.password?.message}
-          {...register('password')}
+          {...register("password")}
         />
 
-        <Button
-          type="submit"
-          isLoading={isSubmitting}
-          fullWidth
-        >
+        <Button type="submit" isLoading={isSubmitting} fullWidth>
           Đăng nhập
         </Button>
 
         <div className="flex flex-col items-center space-y-2 text-sm">
           <div className="text-zinc-600 dark:text-zinc-400">
-            Chưa có tài khoản?{' '}
-            <a href="/register" className="font-medium text-zinc-900 dark:text-white hover:underline">
+            Chưa có tài khoản?{" "}
+            <a
+              href="/register"
+              className="font-medium text-zinc-900 dark:text-white hover:underline"
+            >
               Đăng ký ngay
             </a>
           </div>
-          <a href="/forgot-password" className="text-zinc-600 dark:text-zinc-400 hover:underline">
+          <a
+            href="/forgot-password"
+            className="text-zinc-600 dark:text-zinc-400 hover:underline"
+          >
             Quên mật khẩu?
           </a>
         </div>

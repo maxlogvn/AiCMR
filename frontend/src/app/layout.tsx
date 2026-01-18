@@ -1,11 +1,11 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import ClientProvider from '@/components/providers/QueryProvider';
-import { ToastProvider } from '@/hooks/useToast';
-import { Toaster } from 'sonner';
-import { ThemeProvider } from '@/components/providers/ThemeProvider';
-import InstallGuard from '@/components/auth/InstallGuard';
-import CsrfTokenProvider from '@/components/providers/CsrfTokenProvider';
+import ClientProvider from "@/components/providers/QueryProvider";
+import { ToastProvider } from "@/hooks/useToast";
+import { Toaster } from "sonner";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import InstallGuard from "@/components/auth/InstallGuard";
+import CsrfTokenProvider from "@/components/providers/CsrfTokenProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,8 +30,8 @@ export default function RootLayout({
   return (
     <html lang="vi" suppressHydrationWarning>
       <head>
-        <meta charSet="utf-8"/>
-        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -46,7 +46,7 @@ export default function RootLayout({
                   }
                 } catch (e) {}
               })();
-            `
+            `,
           }}
         />
       </head>

@@ -13,9 +13,12 @@ export class PerformanceMonitor {
     const endTime = performance.now();
     const duration = endTime - startTime;
 
-    this.metricsHistory.set(key, [...(this.metricsHistory.get(key) || []), duration]);
+    this.metricsHistory.set(key, [
+      ...(this.metricsHistory.get(key) || []),
+      duration,
+    ]);
 
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === "development") {
       console.log(`[Performance] ${key}: ${duration.toFixed(2)}ms`);
     }
 

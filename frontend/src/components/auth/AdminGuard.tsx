@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useUser } from '@/hooks/useUser';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useUser } from "@/hooks/useUser";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 
 interface AdminGuardProps {
   children: React.ReactNode;
@@ -17,9 +17,9 @@ export default function AdminGuard({ children }: AdminGuardProps) {
   useEffect(() => {
     if (mounted && !isLoading) {
       if (!user) {
-        router.push('/login');
+        router.push("/login");
       } else if (user.rank < 5) {
-        router.push('/dashboard/profile'); // Redirect non-admin users
+        router.push("/user/profile"); // Redirect non-admin users
       }
     }
   }, [user, isLoading, router, mounted]);

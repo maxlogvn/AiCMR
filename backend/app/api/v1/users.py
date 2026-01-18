@@ -8,7 +8,14 @@ from fastapi_cache.decorator import cache
 from app.core.database import get_db
 from app.api.deps import get_current_active_user, require_min_rank, get_current_user
 from app.core.security import verify_password, validate_csrf
-from app.core.constants import ADMIN_RANK, MODERATOR_RANK, DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, CACHE_USER_INFO_SECONDS, CACHE_USER_LIST_SECONDS
+from app.core.constants import (
+    ADMIN_RANK,
+    MODERATOR_RANK,
+    DEFAULT_PAGE_SIZE,
+    MAX_PAGE_SIZE,
+    CACHE_USER_INFO_SECONDS,
+    CACHE_USER_LIST_SECONDS,
+)
 from app.core.exceptions import UserNotFound, NotEnoughPermissions
 from app.models.user import User
 from app.schemas.user import UserResponse, UserUpdate, UserUpdateMe, ChangePassword
@@ -20,8 +27,7 @@ router = APIRouter()
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(
-    request: Request,
-    current_user: User = Depends(get_current_active_user)
+    request: Request, current_user: User = Depends(get_current_active_user)
 ):
     """
     Get current user info.
@@ -29,13 +35,14 @@ async def get_current_user_info(
     """
     return current_user
 
+
 @router.patch("/me", response_model=UserResponse)
 async def update_current_user(
     request: Request,
     user_in: UserUpdateMe,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-    csrf_token: str = Depends(validate_csrf)
+    csrf_token: str = Depends(validate_csrf),
 ):
     updated_user = await update(db, current_user, user_in)
 
@@ -49,14 +56,13 @@ async def change_current_user_password(
     password_data: ChangePassword,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
-    csrf_token: str = Depends(validate_csrf)
+    csrf_token: str = Depends(validate_csrf),
 ):
     if not verify_password(password_data.old_password, current_user.hashed_password):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Incorrect old password"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect old password"
         )
-    
+
     await update_password(db, current_user, password_data.new_password)
     logger.info(f"User changed password: {current_user.email}")
     return {"message": "Password updated successfully"}
@@ -69,7 +75,7 @@ async def list_users(
     page: int = Query(1, ge=1),
     size: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_min_rank(ADMIN_RANK))
+    current_user: User = Depends(require_min_rank(ADMIN_RANK)),
 ):
     """
     List users with pagination.
@@ -81,7 +87,7 @@ async def list_users(
     if size > MAX_PAGE_SIZE:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Page size cannot exceed {MAX_PAGE_SIZE}"
+            detail=f"Page size cannot exceed {MAX_PAGE_SIZE}",
         )
 
     skip = (page - 1) * size
@@ -93,7 +99,7 @@ async def list_users(
 async def get_user(
     user_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     if current_user.rank >= MODERATOR_RANK or current_user.id == user_id:
         user = await get_by_id(db, user_id)
@@ -110,21 +116,46 @@ async def update_user_by_id(
     user_id: int,
     user_in: UserUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_min_rank(ADMIN_RANK)),
-    csrf_token: str = Depends(validate_csrf)
+    current_user: User = Depends(require_min_rank(MODERATOR_RANK)),
+    csrf_token: str = Depends(validate_csrf),
 ):
     user = await get_by_id(db, user_id)
     if not user:
         raise UserNotFound()
 
-    updated_user = await update(db, user, user_in)
+    if current_user.rank == ADMIN_RANK:
+        updated_user = await update(db, user, user_in)
 
-    # Invalidate cache for user list and user info
-    await FastAPICache.clear(namespace="users")
-    await FastAPICache.clear(namespace="user")
+        await FastAPICache.clear(namespace="users")
+        await FastAPICache.clear(namespace="user")
 
-    logger.info(f"Admin {current_user.email} updated user {user.email}")
-    return updated_user
+        logger.info(f"Admin {current_user.email} updated user {user.email}")
+        return updated_user
+    elif current_user.rank == MODERATOR_RANK:
+        for field in user_in.model_fields_set:
+            if field != "is_active":
+                raise NotEnoughPermissions("Moderator chỉ có thể thay đổi is_active")
+
+        if user.rank == ADMIN_RANK:
+            raise NotEnoughPermissions("Moderator không được thay đổi trạng thái Admin")
+
+        if user.rank > current_user.rank:
+            raise NotEnoughPermissions(
+                f"Moderator không được thay đổi trạng thái user có Rank cao hơn ({user.rank})"
+            )
+
+        update_data = {"is_active": user_in.is_active}
+        updated_user = await update(db, user, update_data)
+
+        await FastAPICache.clear(namespace="users")
+        await FastAPICache.clear(namespace="user")
+
+        logger.info(
+            f"Moderator {current_user.email} updated is_active of user {user.email}"
+        )
+        return updated_user
+    else:
+        raise NotEnoughPermissions("Not enough permissions")
 
 
 @router.delete("/{user_id}")
@@ -133,12 +164,11 @@ async def delete_user(
     user_id: int,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_min_rank(ADMIN_RANK)),
-    csrf_token: str = Depends(validate_csrf)
+    csrf_token: str = Depends(validate_csrf),
 ):
     if user_id == current_user.id:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot delete yourself"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot delete yourself"
         )
 
     success = await delete(db, user_id)

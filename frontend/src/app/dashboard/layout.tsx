@@ -1,7 +1,7 @@
 "use client";
 
-import AuthGuard from '@/components/auth/AuthGuard';
-import Navbar from '@/components/layout/Navbar';
+import ModeratorGuard from "@/components/auth/ModeratorGuard";
+import AdminSidebar from "@/components/admin/AdminSidebar";
 
 export default function DashboardLayout({
   children,
@@ -9,13 +9,11 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <AuthGuard>
-      <div className="min-h-screen bg-zinc-50 dark:bg-black">
-        <Navbar />
-        <main className="py-8">
-          {children}
-        </main>
+    <ModeratorGuard>
+      <div className="flex min-h-screen bg-zinc-50 dark:bg-black">
+        <AdminSidebar />
+        <main className="flex-1 p-8">{children}</main>
       </div>
-    </AuthGuard>
+    </ModeratorGuard>
   );
 }

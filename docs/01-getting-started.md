@@ -35,14 +35,15 @@ DATABASE_URL=mysql+aiomysql://user:password@db/aicmr
 REDIS_URL=redis://redis:6379/0
 
 # App Settings
-ALLOWED_ORIGINS=http://localhost:3000,http://aicmr.local
+ALLOWED_ORIGINS=http://aicmr.local
 REDIS_CACHE_TTL=300
 ```
 
 ## Luồng cài đặt ban đầu (Installation Flow)
 Sau khi khởi động container lần đầu tiên:
 
-1. Truy cập `http://localhost/install` (hoặc thông qua domain đã cấu hình).
+1. Truy cập `http://aicmr.local/install`.
+   - **Lưu ý**: Đảm bảo bạn đã thêm `127.0.0.1 aicmr.local` vào file hosts của hệ điều hành.
 2. Hệ thống sẽ kiểm tra trạng thái qua endpoint `/api/v1/install/status`.
 3. Nếu chưa cài đặt, bạn sẽ được dẫn tới form Setup:
    - Nhập `INSTALL_SECRET` (từ file .env).

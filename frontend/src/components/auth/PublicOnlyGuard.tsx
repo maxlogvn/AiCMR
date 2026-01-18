@@ -1,8 +1,8 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from 'react';
-import { authService } from '@/lib/auth';
-import { useRouter } from 'next/navigation';
+import { ReactNode, useEffect, useState } from "react";
+import { authService } from "@/lib/auth";
+import { useRouter } from "next/navigation";
 
 interface PublicOnlyGuardProps {
   children: ReactNode;
@@ -21,7 +21,7 @@ export default function PublicOnlyGuard({ children }: PublicOnlyGuardProps) {
 
   useEffect(() => {
     if (mounted && token) {
-      router.push('/dashboard/profile');
+      router.push("/user/profile");
     }
   }, [mounted, token, router]);
 

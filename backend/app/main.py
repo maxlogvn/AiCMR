@@ -20,19 +20,15 @@ from .core.security import generate_csrf_token
 
 # Create Prometheus metrics
 http_requests_total = Counter(
-    'http_requests_total',
-    'Total HTTP requests',
-    ['method', 'endpoint', 'status']
+    "http_requests_total", "Total HTTP requests", ["method", "endpoint", "status"]
 )
 
 http_request_duration_seconds = Histogram(
-    'http_request_duration_seconds',
-    'HTTP request duration',
-    ['method', 'endpoint']
+    "http_request_duration_seconds", "HTTP request duration", ["method", "endpoint"]
 )
 
 # Import API routers
-from .api.v1 import auth, users, install
+from .api.v1 import auth, users, install, settings_dashboard, stats
 
 # Import settings và database functions
 from .core.config import get_settings
@@ -72,6 +68,7 @@ logger.add(
     level="ERROR",
 )
 
+
 # Startup & Shutdown lifespan
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -80,18 +77,21 @@ async def lifespan(app: FastAPI):
     """
     # Khởi tạo database
     await init_db()
-    
+
     # Khởi tạo Redis Cache
     try:
-        redis = aioredis.from_url(settings.REDIS_URL, encoding="utf8", decode_responses=True)
+        redis = aioredis.from_url(
+            settings.REDIS_URL, encoding="utf8", decode_responses=True
+        )
         FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
         logger.info("Successfully connected to Redis for caching")
     except Exception as e:
         logger.error(f"Failed to connect to Redis: {e}")
-    
+
     logger.info("Application startup complete")
     yield
     logger.info("Application shutdown")
+
 
 # Tạo FastAPI app instance với title và version
 app = FastAPI(
@@ -126,6 +126,7 @@ app.add_middleware(
     https_only=False,
 )
 
+
 # Add Prometheus Middleware for metrics tracking
 @app.middleware("http")
 async def prometheus_middleware(request: Request, call_next):
@@ -145,25 +146,34 @@ async def prometheus_middleware(request: Request, call_next):
         raise
     finally:
         duration = time.time() - start_time
-        http_requests_total.labels(method=method, endpoint=path, status=status_code).inc()
-        http_request_duration_seconds.labels(method=method, endpoint=path).observe(duration)
+        http_requests_total.labels(
+            method=method, endpoint=path, status=status_code
+        ).inc()
+        http_request_duration_seconds.labels(method=method, endpoint=path).observe(
+            duration
+        )
 
     return response
+
 
 # Add custom exception handler for rate limiting
 @app.exception_handler(RateLimitExceeded)
 async def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
     return JSONResponse(
         status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-        content={
-            "detail": "Too many requests. Please try again later."
-        }
+        content={"detail": "Too many requests. Please try again later."},
     )
+
 
 # Include API routers
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Auth"])
 app.include_router(users.router, prefix="/api/v1/users", tags=["Users"])
 app.include_router(install.router, prefix="/api/v1/install", tags=["Install"])
+app.include_router(
+    settings_dashboard.router, prefix="/api/v1/settings", tags=["Settings"]
+)
+app.include_router(stats.router, prefix="/api/v1/stats", tags=["Stats"])
+
 
 # CSRF token endpoint
 @app.get("/api/v1/csrf-token")
@@ -181,11 +191,14 @@ async def get_csrf_token(request: Request):
     except Exception as e:
         logger.error(f"CSRF Token Error: {e}")
         import traceback
+
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
+
 # Thêm Pagination vào app
 add_pagination(app)
+
 
 # Root endpoint
 @app.get("/")
@@ -195,6 +208,7 @@ async def root():
     """
     return {"message": "Welcome to AiCMR API", "version": settings.APP_VERSION}
 
+
 # Health check endpoint
 @app.get("/health")
 async def health_check():
@@ -202,6 +216,7 @@ async def health_check():
     Health check endpoint.
     """
     return {"status": "healthy"}
+
 
 # Prometheus metrics endpoint
 metrics_app = make_asgi_app()

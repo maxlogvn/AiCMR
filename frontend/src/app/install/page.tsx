@@ -1,23 +1,27 @@
 "use client";
 
-import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Shield, Mail, User } from 'lucide-react';
-import api from '@/lib/api';
-import { useToast } from '@/hooks/useToast';
-import { Card } from '@/components/ui/card-wrapped';
-import { Button } from '@/components/ui/button-wrapped';
-import { Input } from '@/components/ui/input-wrapped';
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Shield, Mail, User } from "lucide-react";
+import api from "@/lib/api";
+import { useToast } from "@/hooks/useToast";
+import { Card } from "@/components/ui/card-wrapped";
+import { Button } from "@/components/ui/button-wrapped";
+import { Input } from "@/components/ui/input-wrapped";
 
 const installSchema = z.object({
-  install_secret: z.string().min(1, 'Vui lòng nhập mã cài đặt'),
-  email: z.string().email('Email không hợp lệ'),
-  username: z.string().min(3, 'Tên đăng nhập phải có ít nhất 3 ký tự'),
-  password: z.string().min(6, 'Mật khẩu phải có ít nhất 6 ký tự'),
-  site_name: z.string().min(1, 'Vui lòng nhập tên ứng dụng'),
-  logo_url: z.string().url('Logo URL không hợp lệ').optional().or(z.literal('')),
+  install_secret: z.string().min(1, "Vui lòng nhập mã cài đặt"),
+  email: z.string().email("Email không hợp lệ"),
+  username: z.string().min(3, "Tên đăng nhập phải có ít nhất 3 ký tự"),
+  password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
+  site_name: z.string().min(1, "Vui lòng nhập tên ứng dụng"),
+  logo_url: z
+    .string()
+    .url("Logo URL không hợp lệ")
+    .optional()
+    .or(z.literal("")),
 });
 
 type InstallFormData = z.infer<typeof installSchema>;
@@ -33,28 +37,30 @@ export default function InstallPage() {
   } = useForm<InstallFormData>({
     resolver: zodResolver(installSchema),
     defaultValues: {
-      install_secret: '',
-      email: '',
-      username: '',
-      password: '',
-      site_name: '',
-      logo_url: '',
+      install_secret: "",
+      email: "",
+      username: "",
+      password: "",
+      site_name: "",
+      logo_url: "",
     },
   });
 
   const onSubmit = async (data: InstallFormData) => {
     try {
-      await api.post('/install/setup', {
+      await api.post("/install/setup", {
         ...data,
         logo_url: data.logo_url || undefined,
       });
-      showSuccess('Cài đặt thành công! Đang chuyển hướng...');
+      showSuccess("Cài đặt thành công! Đang chuyển hướng...");
       setTimeout(() => {
-        router.push('/login');
+        router.push("/login");
       }, 1500);
     } catch (error: unknown) {
       const err = error as { response?: { data?: { detail?: string } } };
-      showError(err.response?.data?.detail || 'Không thể cài đặt. Vui lòng thử lại.');
+      showError(
+        err.response?.data?.detail || "Không thể cài đặt. Vui lòng thử lại.",
+      );
     }
   };
 
@@ -81,7 +87,7 @@ export default function InstallPage() {
                 label="Mã cài đặt bảo mật (INSTALL_SECRET)"
                 type="password"
                 error={errors.install_secret?.message}
-                {...register('install_secret')}
+                {...register("install_secret")}
                 helperText="Tìm mã này trong file .env hoặc cấu hình server của bạn"
               />
             </div>
@@ -96,18 +102,18 @@ export default function InstallPage() {
                 label="Email"
                 type="email"
                 error={errors.email?.message}
-                {...register('email')}
+                {...register("email")}
               />
               <Input
                 label="Tên đăng nhập"
                 error={errors.username?.message}
-                {...register('username')}
+                {...register("username")}
               />
               <Input
                 label="Mật khẩu"
                 type="password"
                 error={errors.password?.message}
-                {...register('password')}
+                {...register("password")}
               />
             </div>
 
@@ -120,13 +126,13 @@ export default function InstallPage() {
               <Input
                 label="Tên ứng dụng"
                 error={errors.site_name?.message}
-                {...register('site_name')}
+                {...register("site_name")}
               />
               <Input
                 label="URL Logo (Tùy chọn)"
                 type="url"
                 error={errors.logo_url?.message}
-                {...register('logo_url')}
+                {...register("logo_url")}
                 helperText="Để trống nếu không có logo"
               />
             </div>
@@ -137,7 +143,7 @@ export default function InstallPage() {
               className="w-full"
               size="lg"
             >
-              {isSubmitting ? 'Đang cài đặt...' : 'Hoàn tất cài đặt'}
+              {isSubmitting ? "Đang cài đặt..." : "Hoàn tất cài đặt"}
             </Button>
           </form>
         </Card>

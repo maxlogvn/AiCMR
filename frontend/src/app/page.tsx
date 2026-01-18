@@ -1,9 +1,9 @@
 "use client";
 
-import Link from 'next/link';
-import { LogIn, UserPlus, UserCircle } from 'lucide-react';
-import { authService } from '@/lib/auth';
-import { useState, useEffect } from 'react';
+import Link from "next/link";
+import { LogIn, UserPlus, UserCircle } from "lucide-react";
+import { authService } from "@/lib/auth";
+import { useState, useEffect } from "react";
 
 export default function HomePage() {
   const [mounted, setMounted] = useState(false);
@@ -34,7 +34,7 @@ export default function HomePage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-12">
           {token ? (
             <Link
-              href="/dashboard/profile"
+              href="/user/profile"
               className="group flex flex-col items-center p-6 bg-white dark:bg-zinc-900 rounded-lg shadow-lg hover:shadow-xl transition-shadow sm:col-span-2"
             >
               <UserCircle className="h-12 w-12 text-zinc-600 dark:text-zinc-400 mb-4" />
@@ -82,20 +82,36 @@ export default function HomePage() {
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
             <div className="flex items-center">
-              <span className="w-8 h-8 flex items-center justify-center bg-zinc-200 dark:bg-zinc-700 rounded text-zinc-900 dark:text-white font-bold mr-3">0</span>
-              <span className="text-sm text-zinc-700 dark:text-zinc-300">Khách</span>
+              <span className="w-8 h-8 flex items-center justify-center bg-zinc-200 dark:bg-zinc-700 rounded text-zinc-900 dark:text-white font-bold mr-3">
+                0
+              </span>
+              <span className="text-sm text-zinc-700 dark:text-zinc-300">
+                Khách
+              </span>
             </div>
             <div className="flex items-center">
-              <span className="w-8 h-8 flex items-center justify-center bg-zinc-200 dark:bg-zinc-700 rounded text-zinc-900 dark:text-white font-bold mr-3">1-2</span>
-              <span className="text-sm text-zinc-700 dark:text-zinc-300">Thành viên</span>
+              <span className="w-8 h-8 flex items-center justify-center bg-zinc-200 dark:bg-zinc-700 rounded text-zinc-900 dark:text-white font-bold mr-3">
+                1-2
+              </span>
+              <span className="text-sm text-zinc-700 dark:text-zinc-300">
+                Thành viên
+              </span>
             </div>
             <div className="flex items-center">
-              <span className="w-8 h-8 flex items-center justify-center bg-zinc-300 dark:bg-zinc-600 rounded text-zinc-900 dark:text-white font-bold mr-3">3-4</span>
-              <span className="text-sm text-zinc-700 dark:text-zinc-300">Moderator</span>
+              <span className="w-8 h-8 flex items-center justify-center bg-zinc-300 dark:bg-zinc-600 rounded text-zinc-900 dark:text-white font-bold mr-3">
+                3-4
+              </span>
+              <span className="text-sm text-zinc-700 dark:text-zinc-300">
+                Moderator
+              </span>
             </div>
             <div className="flex items-center">
-              <span className="w-8 h-8 flex items-center justify-center bg-zinc-900 dark:bg-zinc-100 rounded text-white dark:text-zinc-900 font-bold mr-3">5</span>
-              <span className="text-sm text-zinc-700 dark:text-zinc-300">Admin</span>
+              <span className="w-8 h-8 flex items-center justify-center bg-zinc-900 dark:bg-zinc-100 rounded text-white dark:text-zinc-900 font-bold mr-3">
+                5
+              </span>
+              <span className="text-sm text-zinc-700 dark:text-zinc-300">
+                Admin
+              </span>
             </div>
           </div>
         </div>

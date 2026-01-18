@@ -1,8 +1,13 @@
 "use client";
 
-import { useState } from 'react';
-import { authService } from '@/lib/auth';
-import type { LoginRequest, RegisterRequest, TokenResponse, User } from '@/types';
+import { useState } from "react";
+import { authService } from "@/lib/auth";
+import type {
+  LoginRequest,
+  RegisterRequest,
+  TokenResponse,
+  User,
+} from "@/types";
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -17,7 +22,7 @@ export function useAuth() {
 
   const login = async (credentials: LoginRequest): Promise<TokenResponse> => {
     const response = await authService.login(credentials);
-    setState(prev => ({ ...prev, isAuthenticated: true }));
+    setState((prev) => ({ ...prev, isAuthenticated: true }));
     return response;
   };
 
