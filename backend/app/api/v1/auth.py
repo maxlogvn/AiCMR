@@ -67,7 +67,7 @@ async def login(request: Request, user_credentials: UserLogin, db: AsyncSession 
         id=refresh_token[:100],
         user_id=user.id,
         token=refresh_token,
-        expires_at=datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+        expires_at=datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     )
     db.add(token_record)
     await db.commit()
@@ -90,7 +90,7 @@ async def forgot_password(request: Request, data: ForgotPassword, db: AsyncSessi
         expires_delta=timedelta(minutes=PASSWORD_RESET_EXPIRE_MINUTES)
     )
 
-    logger.info(f"Password reset token for {user.email}: {reset_token}")
+    logger.info(f"Password reset token generated for {user.email}")
 
     return {
         "message": "If the email exists, a password reset link has been sent"
@@ -155,7 +155,7 @@ async def refresh_token(request_data: RefreshTokenRequest, db: AsyncSession = De
             id=new_refresh_token[:100],
             user_id=user.id,
             token=new_refresh_token,
-        expires_at=datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+            expires_at=datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
         )
         db.add(new_token_record)
         await db.commit()
