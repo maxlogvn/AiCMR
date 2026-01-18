@@ -4,6 +4,7 @@ import ClientProvider from '@/components/providers/QueryProvider';
 import { ToastProvider } from '@/hooks/useToast';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import InstallGuard from '@/components/auth/InstallGuard';
+import { CsrfTokenProvider } from '@/components/providers/csrfTokenProvider';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -52,15 +53,17 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        <InstallGuard>
-          <ThemeProvider>
-            <ClientProvider>
-              <ToastProvider>
-                {children}
-              </ToastProvider>
-            </ClientProvider>
-          </ThemeProvider>
-        </InstallGuard>
+        <CsrfTokenProvider>
+          <InstallGuard>
+            <ThemeProvider>
+              <ClientProvider>
+                <ToastProvider>
+                  {children}
+                </ToastProvider>
+              </ClientProvider>
+            </ThemeProvider>
+          </InstallGuard>
+        </CsrfTokenProvider>
       </body>
     </html>
   );
