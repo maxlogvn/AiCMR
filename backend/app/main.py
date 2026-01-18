@@ -1,5 +1,5 @@
 # FastAPI Entry Point - Điểm khởi động của application
-from fastapi import FastAPI, Request, status, Header
+from fastapi import FastAPI, Request, status, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi_pagination import add_pagination
@@ -99,24 +99,9 @@ app = FastAPI(
     version=settings.APP_VERSION,
     debug=settings.DEBUG,
     lifespan=lifespan,
+    openapi_url="/openapi.json",
+    docs_url="/docs",
 )
-
-# Prometheus Middleware
-@app.middleware("http")
-async def prometheus_middleware(request: Request, call_next):
-    start_time = time.time()
-    method = request.method
-    path = request.url.path
-    
-    response = await call_next(request)
-    
-    duration = time.time() - start_time
-    status_code = response.status_code
-    
-    http_requests_total.labels(method=method, endpoint=path, status=status_code).inc()
-    http_request_duration_seconds.labels(method=method, endpoint=path).observe(duration)
-    
-    return response
 
 # Set limiter to app state
 app.state.limiter = limiter
@@ -125,10 +110,10 @@ app.state.limiter = limiter
 # Cho phép frontend (Next.js) gọi API từ domain khác
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,  # Danh sách domain được phép
-    allow_credentials=True,  # Cho phép gửi cookies
-    allow_methods=["*"],  # Cho phép tất cả HTTP methods (GET, POST, etc.)
-    allow_headers=["*"],  # Cho phép tất cả headers
+    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Add Session Middleware for CSRF tokens
@@ -140,6 +125,30 @@ app.add_middleware(
     same_site="lax",
     https_only=False,
 )
+
+# Add Prometheus Middleware for metrics tracking
+@app.middleware("http")
+async def prometheus_middleware(request: Request, call_next):
+    """
+    Track HTTP requests and duration for Prometheus metrics.
+    """
+    method = request.method
+    path = request.url.path
+    start_time = time.time()
+    status_code = 200
+
+    try:
+        response = await call_next(request)
+        status_code = response.status_code
+    except Exception:
+        status_code = 500
+        raise
+    finally:
+        duration = time.time() - start_time
+        http_requests_total.labels(method=method, endpoint=path, status=status_code).inc()
+        http_request_duration_seconds.labels(method=method, endpoint=path).observe(duration)
+
+    return response
 
 # Add custom exception handler for rate limiting
 @app.exception_handler(RateLimitExceeded)
@@ -160,11 +169,23 @@ app.include_router(install.router, prefix="/api/v1/install", tags=["Install"])
 @app.get("/api/v1/csrf-token")
 async def get_csrf_token(request: Request):
     """Generate and store CSRF token if not exists"""
-    csrf_token = request.session.get("csrf_token")
-    if not csrf_token:
-        csrf_token = generate_csrf_token()
-        request.session["csrf_token"] = csrf_token
-    return {"csrf_token": csrf_token}
+    try:
+        csrf_token = request.session.get("csrf_token")
+        if not csrf_token:
+            csrf_token = generate_csrf_token()
+            request.session["csrf_token"] = csrf_token
+            logger.debug("Generated new CSRF token in session")
+        else:
+            logger.debug("Reusing CSRF token from session")
+        return {"csrf_token": csrf_token}
+    except Exception as e:
+        logger.error(f"CSRF Token Error: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+# Thêm Pagination vào app
+add_pagination(app)
 
 # Root endpoint
 @app.get("/")
@@ -185,6 +206,3 @@ async def health_check():
 # Prometheus metrics endpoint
 metrics_app = make_asgi_app()
 app.mount("/metrics", metrics_app)
-
-# Thêm Pagination vào app (cần đặt sau cùng để middleware hoạt động đúng)
-add_pagination(app)

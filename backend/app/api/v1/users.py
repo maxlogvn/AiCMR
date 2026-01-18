@@ -1,6 +1,6 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Query
-from fastapi_pagination import Page, paginate, add_pagination
+from fastapi_pagination import Page, paginate
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi_cache import FastAPICache
 from fastapi_cache.decorator import cache

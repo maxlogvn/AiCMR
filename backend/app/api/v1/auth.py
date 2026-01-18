@@ -15,7 +15,9 @@ from app.schemas.user import UserCreate, UserRegister, UserLogin, UserResponse, 
 from app.schemas.token import Token, RefreshTokenRequest
 from app.crud import get_by_email, get_by_username, create, authenticate, get_by_id, update_password
 from app.models.user import User
+from app.models.refresh_token import RefreshToken
 from app.api.deps import get_current_active_user
+from app.core.security import generate_csrf_token
 from loguru import logger
 
 settings = get_settings()
@@ -66,7 +68,6 @@ async def login(request: Request, user_credentials: UserLogin, db: AsyncSession 
         refresh_token = create_refresh_token(data={"sub": str(user.id)})
 
         # Save refresh token to database
-        from app.models.refresh_token import RefreshToken
         token_record = RefreshToken(
             user_id=user.id,
             token=refresh_token,
@@ -130,8 +131,6 @@ async def reset_password(request: Request, data: ResetPassword, db: AsyncSession
 
 @router.post("/refresh", response_model=Token)
 async def refresh_token(request_data: RefreshTokenRequest, db: AsyncSession = Depends(get_db)):
-    from app.models.refresh_token import RefreshToken
-
     try:
         payload = verify_refresh_token(request_data.refresh_token)
         user_id = int(payload.sub) if payload.sub else None
@@ -181,8 +180,6 @@ async def refresh_token(request_data: RefreshTokenRequest, db: AsyncSession = De
 
 @router.post("/logout")
 async def logout(request: Request, request_data: RefreshTokenRequest, db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_active_user), csrf_token: str = Depends(validate_csrf)):
-    from app.models.refresh_token import RefreshToken
-
     result = await db.execute(
         select(RefreshToken).where(
             RefreshToken.token == request_data.refresh_token,
