@@ -17,6 +17,15 @@ async def get_all_settings(db: AsyncSession) -> Dict[str, Any]:
     return {setting.key: setting.value for setting in settings}
 
 
+async def get_setting(db: AsyncSession, key: str, default: Any = None) -> Any:
+    """
+    Lấy giá trị của một setting cụ thể.
+    """
+    result = await db.execute(select(Setting).where(Setting.key == key))
+    setting = result.scalar_one_or_none()
+    return setting.value if setting else default
+
+
 async def update_settings(
     db: AsyncSession, settings_in: SettingsUpdate
 ) -> Dict[str, Any]:

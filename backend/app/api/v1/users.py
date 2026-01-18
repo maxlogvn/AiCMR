@@ -1,4 +1,3 @@
-from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Query
 from fastapi_pagination import Page, paginate
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,14 +5,13 @@ from fastapi_cache import FastAPICache
 from fastapi_cache.decorator import cache
 
 from app.core.database import get_db
-from app.api.deps import get_current_active_user, require_min_rank, get_current_user
+from app.api.deps import get_current_active_user, require_min_rank
 from app.core.security import verify_password, validate_csrf
 from app.core.constants import (
     ADMIN_RANK,
     MODERATOR_RANK,
     DEFAULT_PAGE_SIZE,
     MAX_PAGE_SIZE,
-    CACHE_USER_INFO_SECONDS,
     CACHE_USER_LIST_SECONDS,
 )
 from app.core.exceptions import UserNotFound, NotEnoughPermissions

@@ -38,12 +38,36 @@ Lưu trữ thông tin người dùng và phân quyền:
 - `rank`: Cấp bậc từ 0 đến 5.
 - `is_active`: Trạng thái kích hoạt tài khoản.
 
+### Attachment Model
+Lưu trữ thông tin tập tin đã tải lên:
+- `id`: Primary Key.
+- `filename`: Tên gốc của tập tin.
+- `file_path`: Đường dẫn tương đối trong hệ thống lưu trữ.
+- `content_type`: Định dạng MIME của tập tin.
+- `file_size`: Dung lượng tính bằng byte.
+- `user_id`: Foreign key liên kết tới User đã tải lên.
+
 ### Refresh Token Model
 Quản lý phiên đăng nhập và cơ chế rotation:
 - `token`: Mã định danh duy nhất.
 - `user_id`: Foreign key liên kết tới User.
 - `expires_at`: Thời gian hết hạn.
 - `is_revoked`: Trạng thái thu hồi.
+
+## Cơ chế Lưu trữ Tập tin (Storage Architecture)
+
+AiCMR sử dụng cơ chế **Bind Mount** để chia sẻ dữ liệu tĩnh giữa Backend và Frontend một cách hiệu quả mà không cần qua API trung gian để tải file.
+
+### Cấu trúc Mount
+Dựa trên cấu hình trong `docker-compose.yml`:
+- **Backend**: Gắn kết `./public/uploads` (Host) vào `/app/static/uploads` (Container).
+- **Frontend**: Gắn kết `./public` (Host) vào `/app/public` (Container).
+
+### Luồng xử lý
+1. **Upload**: Backend nhận file, lưu vào `/app/static/uploads/YYYY/MM/DD/`. Do cơ chế mount, file thực tế sẽ nằm tại `./public/uploads/...` trên máy chủ (Host).
+2. **Access**: Frontend truy cập file trực tiếp qua thư mục `public/` của mình. Ví dụ: `http://aicmr.local/uploads/2026/01/19/uuid_file.jpg`.
+
+Cơ chế này giúp tối ưu hiệu suất, giảm tải cho Backend khi cần phục vụ (serve) các file tĩnh lớn.
 
 ## Giám sát (Monitoring)
 Hệ thống tích hợp sẵn endpoint `/metrics` theo chuẩn Prometheus:

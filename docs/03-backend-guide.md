@@ -43,6 +43,23 @@ async def list_users():
     return paginate(users)
 ```
 
+## Xử lý Tập tin (File I/O)
+Để đảm bảo hiệu năng và không chặn (block) event loop của FastAPI, tất cả các thao tác với tập tin phải được thực hiện bất đồng bộ.
+- **Thư viện**: Sử dụng `aiofiles` cho các thao tác đọc/ghi file.
+- **Quy trình**:
+  1. Kiểm tra định dạng và dung lượng trước khi lưu.
+  2. Tạo thư mục theo cấu trúc `uploads/YYYY/MM/DD/`.
+  3. Sử dụng `uuid` để tạo tên file duy nhất nhằm tránh ghi đè.
+  4. Ghi file bằng `async with aiofiles.open(...)`.
+
+Ví dụ:
+```python
+import aiofiles
+
+async with aiofiles.open(file_path, "wb") as f:
+    await f.write(content)
+```
+
 ## Xử lý Lỗi (Custom Exceptions)
 Các lỗi nghiệp vụ được quản lý tập trung trong `app/core/exceptions.py`:
 - `UserNotFound`, `InvalidCredentials`, `NotEnoughPermissions`, v.v.

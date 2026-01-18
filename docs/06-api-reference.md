@@ -33,7 +33,17 @@ Tất cả các API đều có tiền tố: `/backend/api/v1`
 | GET | `/status` | Kiểm tra trạng thái cài đặt | Trả về `installed: bool` |
 | POST | `/setup` | Thiết lập hệ thống ban đầu | Cần `INSTALL_SECRET` |
 
-## 4. System & Monitoring
+## 4. Upload Management (`/uploads`)
+
+Mọi request upload/delete yêu cầu `X-CSRF-Token` và tài khoản đã đăng nhập.
+
+| Method | Endpoint | Mô tả | Rank |
+| :--- | :--- | :--- | :--- |
+| POST | `/` | Tải tập tin lên hệ thống | 1+ |
+| GET | `/{id}` | Lấy thông tin metadata file | 1+ (Cá nhân), 3+ (Tất cả) |
+| DELETE | `/{id}` | Xóa tập tin | 1+ (Cá nhân), 5 (Admin) |
+
+## 5. System & Monitoring
 
 | Method | Endpoint | Mô tả |
 | :--- | :--- | :--- |

@@ -1,7 +1,8 @@
 # FastAPI Entry Point - Điểm khởi động của application
-from fastapi import FastAPI, Request, status, Header, HTTPException
+from fastapi import FastAPI, Request, status, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi_pagination import add_pagination
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
@@ -9,26 +10,40 @@ from redis import asyncio as aioredis
 from slowapi.errors import RateLimitExceeded
 from loguru import logger
 from starlette.middleware.sessions import SessionMiddleware
-from prometheus_client import Counter, Histogram, make_asgi_app
+from prometheus_client import Counter, Histogram, make_asgi_app, REGISTRY
 import sys
 import time
+import os
 from contextlib import asynccontextmanager
 
 # Import rate limiter
 from .core.rate_limit import limiter
 from .core.security import generate_csrf_token
 
-# Create Prometheus metrics
-http_requests_total = Counter(
-    "http_requests_total", "Total HTTP requests", ["method", "endpoint", "status"]
+
+# Use REGISTRY to check if collectors are already registered to avoid errors in tests
+def get_metric(metric_class, name, *args, **kwargs):
+    if name in REGISTRY._names_to_collectors:
+        return REGISTRY._names_to_collectors[name]
+    return metric_class(name, *args, **kwargs)
+
+
+http_requests_total = get_metric(
+    Counter,
+    "http_requests_total",
+    "Total HTTP requests",
+    ["method", "endpoint", "status"],
 )
 
-http_request_duration_seconds = Histogram(
-    "http_request_duration_seconds", "HTTP request duration", ["method", "endpoint"]
+http_request_duration_seconds = get_metric(
+    Histogram,
+    "http_request_duration_seconds",
+    "HTTP request duration",
+    ["method", "endpoint"],
 )
 
 # Import API routers
-from .api.v1 import auth, users, install, settings_dashboard, stats
+from .api.v1 import auth, users, install, settings_dashboard, stats, uploads
 
 # Import settings và database functions
 from .core.config import get_settings
@@ -173,6 +188,14 @@ app.include_router(
     settings_dashboard.router, prefix="/api/v1/settings", tags=["Settings"]
 )
 app.include_router(stats.router, prefix="/api/v1/stats", tags=["Stats"])
+app.include_router(uploads.router, prefix="/api/v1/uploads", tags=["Uploads"])
+
+# Mount static files
+# FE có thể truy cập qua http://domain/static/uploads/...
+if not os.path.exists(settings.UPLOAD_DIR):
+    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 # CSRF token endpoint

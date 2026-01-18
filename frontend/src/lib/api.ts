@@ -1,4 +1,6 @@
-import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
+import axios, { AxiosError, InternalAxiosRequestConfig, AxiosProgressEvent } from "axios";
+
+export type { AxiosProgressEvent };
 
 interface CustomRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
@@ -16,7 +18,6 @@ export async function getCsrfToken(): Promise<string | null> {
   if (!csrfTokenPromise) {
     csrfTokenPromise = (async () => {
       try {
-        // Đảm bảo URL chính xác và gửi credentials
         const response = await axios.get("/backend/api/v1/csrf-token", {
           withCredentials: true,
           headers: { "Cache-Control": "no-cache" },
@@ -65,7 +66,6 @@ api.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as CustomRequestConfig;
 
-    // Handle CSRF token expiration/invalid
     if (
       error.response?.status === 403 &&
       (error.response.data as { detail?: string })?.detail ===
@@ -140,12 +140,32 @@ api.interceptors.response.use(
   },
 );
 
-import type { Settings, StatsOverview, UpdateSettingsRequest } from "@/types";
+import type {
+  Attachment,
+  Settings,
+  StatsOverview,
+  UpdateSettingsRequest,
+} from "@/types";
 
 export const settingsApi = {
-  getSettings: () => api.get<Settings>("/settings"),
+  getSettings: () => api.get<Settings>("/settings/"),
   updateSettings: (data: UpdateSettingsRequest) =>
-    api.put<Settings>("/settings", data),
+    api.put<Settings>("/settings/", data),
+};
+
+export const uploadsApi = {
+  uploadFile: (file: File, onUploadProgress?: (progressEvent: AxiosProgressEvent) => void) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return api.post<Attachment>("/uploads/", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      onUploadProgress,
+    });
+  },
+  getAttachment: (id: number) => api.get<Attachment>(`/uploads/${id}/`),
+  deleteAttachment: (id: number) => api.delete(`/uploads/${id}/`),
 };
 
 export const statsApi = {

@@ -89,6 +89,11 @@ class Settings(BaseSettings):
     LOG_ROTATION: str = "100 MB"
     LOG_RETENTION: str = "30 days"
 
+    # Cấu hình Upload
+    UPLOAD_DIR: str = "static/uploads"
+    MAX_UPLOAD_SIZE: int = 10 * 1024 * 1024  # 10MB default
+    ALLOWED_EXTENSIONS: str = "jpg,jpeg,png,gif,pdf,doc,docx,xls,xlsx,txt"
+
     class Config:
         env_file = ".env"
         case_sensitive = True

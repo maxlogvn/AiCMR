@@ -10,7 +10,7 @@ from app.schemas.settings import InstallSetupRequest, InstallStatusResponse
 from app.schemas.user import UserCreate
 from app.models.user import User
 from app.models.settings import Setting
-from app.crud import create, get_by_email
+from app.crud import create
 from loguru import logger
 
 router = APIRouter()
@@ -95,9 +95,6 @@ async def setup_install(data: InstallSetupRequest, db: AsyncSession = Depends(ge
 
             db.add_all(settings_to_save)
             await db.flush()
-
-            # Explicitly commit the transaction before returning response
-            await db.commit()
 
             # Clear cache for status endpoint
             await FastAPICache.clear(namespace="get_install_status")

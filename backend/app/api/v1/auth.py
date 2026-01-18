@@ -18,10 +18,6 @@ from app.core.constants import (
     RATE_LIMIT_LOGIN,
     RATE_LIMIT_PASSWORD_RESET,
     PASSWORD_RESET_EXPIRE_MINUTES,
-    ERROR_EMAIL_EXISTS,
-    ERROR_USERNAME_TAKEN,
-    ERROR_INVALID_CREDENTIALS,
-    ERROR_INACTIVE_USER,
 )
 from app.core.exceptions import InvalidCredentials, InactiveUser
 from app.core.rate_limit import limiter
@@ -36,7 +32,6 @@ from app.schemas.user import (
 from app.schemas.token import Token, RefreshTokenRequest
 from app.crud import (
     get_by_email,
-    get_by_username,
     create,
     authenticate,
     get_by_id,
@@ -45,7 +40,6 @@ from app.crud import (
 from app.models.user import User
 from app.models.refresh_token import RefreshToken
 from app.api.deps import get_current_active_user
-from app.core.security import generate_csrf_token
 from loguru import logger
 
 settings = get_settings()
@@ -115,7 +109,6 @@ async def login(
             + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
         )
         db.add(token_record)
-        await db.commit()
 
         logger.info(f"User logged in successfully: {user.email}")
         return {
@@ -241,7 +234,6 @@ async def refresh_token(
             + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
         )
         db.add(new_token_record)
-        await db.commit()
 
         logger.info(f"User {user.email} refreshed token")
         return {
@@ -280,7 +272,6 @@ async def logout(
 
     if token_record:
         token_record.revoked = True
-        await db.commit()
         logger.info(f"User {current_user.email} logged out")
 
     return {"message": "Logged out successfully"}

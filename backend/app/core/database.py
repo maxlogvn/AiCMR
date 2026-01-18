@@ -83,6 +83,7 @@ async def init_db() -> None:
     from app.models.user import User  # noqa: F401
     from app.models.settings import Setting  # noqa: F401
     from app.models.refresh_token import RefreshToken  # noqa: F401
+    from app.models.attachment import Attachment  # noqa: F401
 
     async with engine.begin() as conn:
         # Tạo tất cả tables từ Base metadata

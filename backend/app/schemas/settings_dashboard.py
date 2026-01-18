@@ -1,6 +1,5 @@
 from typing import Optional, Dict, List
 from pydantic import BaseModel, Field
-from datetime import datetime
 from app.schemas.user import UserResponse
 
 
@@ -26,6 +25,8 @@ class SettingsResponse(BaseModel):
     canonical_url: Optional[str] = None
     google_analytics_id: Optional[str] = None
     custom_meta: Optional[str] = None
+    upload_allowed_extensions: Optional[str] = None
+    upload_max_size_mb: Optional[str] = None
 
 
 class SettingsUpdate(BaseModel):
@@ -48,6 +49,8 @@ class SettingsUpdate(BaseModel):
     canonical_url: Optional[str] = Field(None, max_length=500)
     google_analytics_id: Optional[str] = Field(None, max_length=50)
     custom_meta: Optional[str] = None
+    upload_allowed_extensions: Optional[str] = None
+    upload_max_size_mb: Optional[str] = None
 
 
 class StatsOverview(BaseModel):

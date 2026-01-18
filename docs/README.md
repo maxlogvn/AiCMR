@@ -27,6 +27,9 @@ Chào mừng bạn đến với hệ thống tài liệu kỹ thuật của AiCM
 7. [**07. Hướng dẫn Opencode CLI (CLI Guide)**](./07-opencode-cli-guide.md)
    - Cách tương tác với AI Agent, các công cụ hỗ trợ và quy trình làm việc hiệu quả.
 
+8. [**08. Module Upload Tập tin (Upload Module)**](./08-upload-module.md)
+   - Hướng dẫn cấu hình, sử dụng component tải lên và cơ chế lưu trữ tập tin.
+
 ---
 
 ## Liên hệ & Hỗ trợ

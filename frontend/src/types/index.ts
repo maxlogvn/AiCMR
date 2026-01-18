@@ -69,6 +69,8 @@ export interface Settings {
   canonical_url?: string;
   google_analytics_id?: string;
   custom_meta?: string;
+  upload_allowed_extensions?: string;
+  upload_max_size_mb?: string;
 }
 
 export interface StatsOverview {
@@ -99,4 +101,17 @@ export interface UpdateSettingsRequest {
   canonical_url?: string;
   google_analytics_id?: string;
   custom_meta?: string;
+  upload_allowed_extensions?: string;
+  upload_max_size_mb?: string;
+}
+
+export interface Attachment {
+  id: number;
+  filename: string;
+  file_path: string;
+  content_type: string;
+  file_size: number;
+  user_id: number;
+  created_at: string;
+  url: string;
 }
