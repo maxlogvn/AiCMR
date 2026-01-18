@@ -4,7 +4,7 @@ import ClientProvider from '@/components/providers/QueryProvider';
 import { ToastProvider } from '@/hooks/useToast';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
 import InstallGuard from '@/components/auth/InstallGuard';
-import { CsrfTokenProvider } from '@/components/providers/csrfTokenProvider';
+import { CsrfTokenProvider } from '@/components/providers/CsrfTokenProvider';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
