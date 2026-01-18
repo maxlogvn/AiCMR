@@ -1,6 +1,9 @@
 # Cấu hình hệ thống FastAPI - Đọc từ environment variables
 from functools import lru_cache
 
+import secrets
+from loguru import logger
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -30,19 +33,61 @@ class Settings(BaseSettings):
         return f"mysql+aiomysql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
     # Cấu hình Security - JWT và password hashing
-    SECRET_KEY: str = "your-secret-key"
+    SECRET_KEY: str = Field(
+        default=...,
+        description="JWT signing secret - MUST be changed in production"
+    )
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     INSTALL_SECRET: str = "change-me-in-production"
 
+    @field_validator('SECRET_KEY')
+    @classmethod
+    def validate_secret_key(cls, v: str, info) -> str:
+        # Allow default key in development
+        if info.data.get('DEBUG') and v == 'your-secret-key':
+            logger.warning("Using default SECRET_KEY in development mode")
+            return v
+
+        # Reject default key in production
+        if v == 'your-secret-key':
+            raise ValueError(
+                'SECRET_KEY must be set to a secure value in production. '
+                'Generate one with: python -c "import secrets; print(secrets.token_urlsafe(32))"'
+            )
+
+        # Enforce minimum length
+        if len(v) < 32:
+            raise ValueError('SECRET_KEY must be at least 32 characters long')
+
+        return v
+
+    @staticmethod
+    def generate_secret() -> str:
+        """Generate a secure random SECRET_KEY"""
+        return secrets.token_urlsafe(32)
+
     # Cấu hình CORS - Danh sách các origin được phép truy cập
-    ALLOWED_ORIGINS: list = ["http://localhost:3000"]
+    ALLOWED_ORIGINS: list = [
+        "http://localhost:3000",
+        "http://aicmr.local",
+        "https://aicmr.local",
+        "http://127.0.0.1:3000"
+    ]
 
     # Cấu hình Redis (cho Caching)
     REDIS_URL: str = "redis://localhost:6379/0"
 
     # Cấu hình Sentry (tùy chọn)
     SENTRY_DSN: str = ""
+
+    # Cấu hình Loguru
+    LOG_LEVEL: str = "INFO"
+    LOG_FILE: str = "logs/app.log"
+    LOG_ERROR_FILE: str = "logs/app_error.log"
+    LOG_ROTATION: str = "100 MB"
+    LOG_RETENTION: str = "30 days"
 
     class Config:
         env_file = ".env"

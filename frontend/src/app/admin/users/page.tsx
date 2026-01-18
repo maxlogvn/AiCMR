@@ -1,14 +1,17 @@
 "use client";
 
-import { useState } from 'react';
+import dynamic from 'next/dynamic';
+import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Shield, Trash2, Edit, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Shield } from 'lucide-react';
 import api from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import type { User, PaginatedResponse } from '@/types';
+
+const UserRow = dynamic(() => import('./UserRow').then(mod => ({ default: mod.UserRow })));
 
 export default function AdminUsersPage() {
   const [page, setPage] = useState(1);
@@ -38,20 +41,12 @@ export default function AdminUsersPage() {
     },
   });
 
+  const handleDelete = useCallback((userId: number) => {
+    deleteMutation.mutate(userId);
+  }, [deleteMutation]);
+
   if (isLoading) return <LoadingSpinner />;
   if (error) return <div className="text-red-500 p-8 text-center">Đã xảy ra lỗi khi tải danh sách người dùng.</div>;
-
-  const getRankLabel = (rank: number) => {
-    const labels: Record<number, string> = {
-      0: 'Guest',
-      1: 'Member',
-      2: 'Member',
-      3: 'Moderator',
-      4: 'Moderator',
-      5: 'Admin',
-    };
-    return labels[rank] || 'Unknown';
-  };
 
   return (
     <div className="max-w-6xl mx-auto px-4">
@@ -79,43 +74,7 @@ export default function AdminUsersPage() {
             </thead>
             <tbody>
               {data?.items.map((user) => (
-                <tr key={user.id} className="border-b border-zinc-100 dark:border-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
-                  <td className="p-4 text-zinc-600 dark:text-zinc-400 font-mono text-sm">{user.id}</td>
-                  <td className="p-4 text-zinc-900 dark:text-white">{user.email}</td>
-                  <td className="p-4 text-zinc-900 dark:text-white">{user.username}</td>
-                  <td className="p-4">
-                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">
-                      {getRankLabel(user.rank)}
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      user.is_active 
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
-                        : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                    }`}>
-                      {user.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center justify-end space-x-2">
-                      <Button variant="secondary" size="sm">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="danger" 
-                        size="sm" 
-                        onClick={() => {
-                          if (confirm(`Bạn có chắc chắn muốn xóa người dùng ${user.username}?`)) {
-                            deleteMutation.mutate(user.id);
-                          }
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
+                <UserRow key={user.id} user={user} onDelete={handleDelete} />
               ))}
               {data?.items.length === 0 && (
                 <tr>

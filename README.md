@@ -65,19 +65,17 @@ Dự án AiCMR là hệ thống quản lý hồ sơ y tế tích hợp AI, bao g
 
 ## Environment Variables
 
-Các biến môi trường quan trọng cần thiết lập trong file `.env` để hệ thống hoạt động:
+Các biến môi trường quan trọng cần thiết lập trong file `.env`. Tham khảo [01. Getting Started](docs/01-getting-started.md) để biết chi tiết.
 
 ```bash
-SECRET_KEY=your-super-secret-key-change-this-in-production-32-chars
-INSTALL_SECRET=your_random_install_secret_change_this_in_production
-DATABASE_URL=mysql+aiomysql://aicmr_user:password@localhost/aicmr
-REDIS_URL=redis://localhost:6379/0
-```
+# Security
+SECRET_KEY=your-super-secret-key-at-least-32-chars
+INSTALL_SECRET=your_random_install_secret
 
-- **`SECRET_KEY`**: Mã khóa để mã hóa JWT token.
-- **`INSTALL_SECRET`**: Mã khóa bảo mật dùng trong quá trình cài đặt ban đầu (Chống cài đặt trái phép).
-- **`DATABASE_URL`**: Chuỗi kết nối MySQL.
-- **`REDIS_URL`**: Địa chỉ Redis cho caching.
+# Database & Redis
+DATABASE_URL=mysql+aiomysql://aicmr_user:password@db/aicmr
+REDIS_URL=redis://redis:6379/0
+```
 
 ## Quick Start
 
@@ -107,16 +105,22 @@ docker compose up -d --build
 
 ## Tài liệu Chi tiết
 
-- [Module Auth & User](docs/MODULE_AUTH.md) - Hướng dẫn đầy đủ về hệ thống xác thực và quản lý người dùng
-- [Hướng dẫn cho AI Agents](AGENTS.md) - Coding conventions, build commands, và quy tắc phát triển
-- [Frontend Documentation](frontend/README.md) - Chi tiết về Frontend Next.js
+Hệ thống tài liệu được tổ chức tại thư mục `docs/`:
+
+- [**Tài liệu Tổng quan (README)**](docs/README.md) - Mục lục và hướng dẫn đọc tài liệu.
+- [**01. Hướng dẫn bắt đầu**](docs/01-getting-started.md) - Cài đặt môi trường, Docker và thiết lập ban đầu.
+- [**02. Kiến trúc hệ thống**](docs/02-architecture.md) - Chi tiết hạ tầng và sơ đồ dữ liệu.
+- [**03. Quy chuẩn Backend**](docs/03-backend-guide.md) - Code style, API và Database patterns.
+- [**04. Quy chuẩn Frontend**](docs/04-frontend-guide.md) - Next.js patterns, State và UI components.
+- [**05. Xác thực & Phân quyền**](docs/05-authentication.md) - JWT, Refresh Token, CSRF và Rank system.
+- [**Hướng dẫn cho AI Agents**](AGENTS.md) - Quy tắc dành cho các AI Coding Assistant.
 
 ## Lưu ý Phát triển
 
-- **Frontend**: Sử dụng Next.js 16 với Turbopack để tăng tốc độ phát triển.
-- **Backend**: FastAPI đã được cấu hình tự động kết nối MySQL và khởi tạo database.
-- **Database**: Các bảng (Tables) sẽ được tự động tạo khi ứng dụng khởi động thông qua hàm `init_db` trong `app/core/database.py`. Đảm bảo các model mới được import vào `app/models/__init__.py`.
-- **Nginx**: Đóng vai trò Reverse Proxy, điều hướng toàn bộ yêu cầu qua cổng 80.
+- **Frontend**: Sử dụng Next.js 16 (App Router), React 19 và Tailwind CSS 4.
+- **Backend**: FastAPI (Python 3.11+), SQLAlchemy 2.0 (Async) và Pydantic v2.
+- **Database**: Tự động tạo bảng thông qua `init_db`. Luôn sử dụng Alembic cho migrations.
+- **Tài liệu**: Luôn cập nhật thư mục `docs/` khi có thay đổi lớn về kiến trúc hoặc logic nghiệp vụ.
 
 ## Troubleshooting
 

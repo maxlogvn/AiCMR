@@ -24,6 +24,9 @@ fastapi-pagination>=0.12.40
 fastapi-cache2[redis]==0.2.1
 loguru==0.7.2
 sentry-sdk[fastapi]==1.39.1
+slowapi>=0.1.9
+prometheus-client>=0.16.0
+itsdangerous>=2.1.0
 
 # Testing
 pytest==7.4.3

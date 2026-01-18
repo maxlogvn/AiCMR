@@ -50,30 +50,38 @@ async def register(request: Request, user_in: UserRegister, db: AsyncSession = D
 async def login(request: Request, user_credentials: UserLogin, db: AsyncSession = Depends(get_db), csrf_token: str = Depends(validate_csrf)):
     # Normalize email to lowercase
     email = user_credentials.email.lower()
+    logger.debug(f"Attempting login for email: {email}")
 
-    user = await authenticate(db, email, user_credentials.password)
-    if not user:
-        raise InvalidCredentials()
+    try:
+        user = await authenticate(db, email, user_credentials.password)
+        if not user:
+            logger.warning(f"Authentication failed for: {email}")
+            raise InvalidCredentials()
 
-    if not user.is_active:
-        raise InactiveUser()
+        if not user.is_active:
+            logger.warning(f"Inactive user attempt: {email}")
+            raise InactiveUser()
 
-    access_token = create_access_token(data={"sub": str(user.id), "rank": user.rank})
-    refresh_token = create_refresh_token(data={"sub": str(user.id)})
+        access_token = create_access_token(data={"sub": str(user.id), "rank": user.rank})
+        refresh_token = create_refresh_token(data={"sub": str(user.id)})
 
-    # Save refresh token to database
-    from app.models.refresh_token import RefreshToken
-    token_record = RefreshToken(
-        id=refresh_token[:100],
-        user_id=user.id,
-        token=refresh_token,
-        expires_at=datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-    )
-    db.add(token_record)
-    await db.commit()
+        # Save refresh token to database
+        from app.models.refresh_token import RefreshToken
+        token_record = RefreshToken(
+            user_id=user.id,
+            token=refresh_token,
+            expires_at=datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+        )
+        db.add(token_record)
+        await db.commit()
 
-    logger.info(f"User logged in: {user.email}")
-    return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
+        logger.info(f"User logged in successfully: {user.email}")
+        return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
+    except Exception as e:
+        logger.error(f"Login error for {email}: {str(e)}")
+        if isinstance(e, HTTPException):
+            raise e
+        raise HTTPException(status_code=500, detail=f"Internal server error during login: {str(e)}")
 
 
 @router.post("/forgot-password")
@@ -152,10 +160,9 @@ async def refresh_token(request_data: RefreshTokenRequest, db: AsyncSession = De
         new_refresh_token = create_refresh_token(data={"sub": str(user.id)})
 
         new_token_record = RefreshToken(
-            id=new_refresh_token[:100],
             user_id=user.id,
             token=new_refresh_token,
-            expires_at=datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+            expires_at=datetime.utcnow() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
         )
         db.add(new_token_record)
         await db.commit()

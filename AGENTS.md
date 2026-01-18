@@ -1,176 +1,103 @@
 # AGENTS.md - Hướng dẫn cho AI Coding Agents
 
-## Tổng quan dự án
-- **Frontend**: Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS 4.
+> **LƯU Ý QUAN TRỌNG**: File này cung cấp các quy tắc nhanh cho AI. Để hiểu sâu hơn về kiến trúc và quy chuẩn chi tiết, hãy đọc [**Tài liệu Hệ thống (docs/)**](./docs/README.md).
+
+## 🚀 Tổng quan công nghệ
+- **Frontend**: Next.js 15+ (App Router), React 19, TypeScript, Tailwind CSS 4.
 - **Backend**: FastAPI, Python 3.11+, SQLAlchemy 2.0 (Async), Pydantic v2.
-- **Database**: MySQL 8.0, Redis (Caching).
+- **Database**: MySQL 8.0, Redis (Caching/FastAPI-Cache2).
 - **Infrastructure**: Docker Compose, Nginx (Reverse Proxy).
 
-## Lệnh Build/Lint/Test
+---
 
-### Backend (FastAPI)
-Chạy từ `backend/` hoặc qua Docker:
+## 🛠 Lệnh Build/Lint/Test
+
+### 🐍 Backend (FastAPI)
 - **Dev Server**: `uvicorn app.main:app --reload`
-- **Tất cả Test**: `pytest`
-- **Một File Test**: `pytest tests/test_main.py`
-- **Một Test cụ thể**: `pytest tests/test_main.py::test_root`
-- **Test với Coverage**: `pytest --cov=app --cov-report=term-missing`
-- **Tạo Migration**: `alembic revision --autogenerate -m "desc"`
-- **Áp dụng Migration**: `alembic upgrade head`
-- **Docker Test**: `docker compose exec backend pytest tests/test_main.py::test_root`
+- **Chạy Tests**: 
+  - Tất cả: `pytest`
+  - Một file: `pytest tests/test_main.py`
+  - Một test cụ thể: `pytest tests/test_main.py::test_root`
+  - Với Coverage: `pytest --cov=app --cov-report=term-missing`
+- **Migrations (Alembic)**:
+  - Tạo: `alembic revision --autogenerate -m "desc"`
+  - Áp dụng: `alembic upgrade head`
+- **Docker Exec**: `docker compose exec backend pytest <path_to_test>`
 
-### Frontend (Next.js)
-Chạy từ `frontend/`:
+### ⚛️ Frontend (Next.js)
 - **Dev Server**: `npm run dev`
 - **Build**: `npm run build`
 - **Lint**: `npm run lint`
 
-### Docker Compose
-Chạy từ thư mục gốc:
+### 🐳 Docker Compose
 - **Khởi động**: `docker compose up -d --build`
-- **Logs Backend**: `docker compose logs -f backend`
+- **Logs**: `docker compose logs -f backend`
 - **Dừng**: `docker compose down`
 
 ---
 
-## Code Style - Backend
+## 📐 Quy chuẩn Code
 
-### Thứ tự Import
-1. Thư viện chuẩn (Standard library)
-2. Thư viện bên thứ ba (Third-party)
-3. Local modules (absolute import: `app.xxx`)
+### 🔹 Backend (FastAPI)
+- **Imports**: (1) Standard Lib, (2) Third-party, (3) Local (`app.xxx`).
+- **Types**: **BẮT BUỘC** Type Hints cho mọi function/variable.
+- **Naming**: Class (`PascalCase`), Function/Var (`snake_case`), Const (`UPPER_SNAKE_CASE`).
+- **Logging**: Dùng `loguru`. Cấm dùng `print()`.
+- **Async**: Luôn `await` cho Database và API calls.
+- **Models**: Đồng bộ hóa SQLAlchemy Model ↔️ Pydantic Schema.
+- **CRUD**: Tái sử dụng `app.crud.base` (ví dụ: `get_by_field`).
 
-### Type Hints & Docstrings
-- **BẮT BUỘC** dùng Type Hints cho tất cả function/variable
-- Docstrings: Tiếng Việt, mô tả ngắn gọn mục đích/Args/Returns
-```python
-async def get_user(db: AsyncSession, user_id: int) -> Optional[User]:
-    """Lấy thông tin user theo ID"""
-    result = await db.execute(select(User).where(User.id == user_id))
-    return result.scalar_one_or_none()
+### 🔹 Frontend (Next.js)
+- **Imports**: (1) React/Next, (2) Libs, (3) Components (`@/components`), (4) Local Utils.
+- **State**: Dùng **TanStack Query** (`useQuery`, `useMutation`).
+- **API**: Dùng Axios instance tại `src/lib/api.ts` (đã cấu hình CSRF & Auth).
+- **Components**: Functional Components + Props Interface. 
+- **Forms**: `react-hook-form` + `zod`.
+
+---
+
+## 🔐 Security & Guardrails
+- **Secrets**: **CẤM** commit `.env`. Dùng `app.core.config` để truy cập config.
+- **CSRF**: Các request POST/PUT/DELETE bắt buộc phải có header `X-CSRF-Token`.
+- **Rank System**: 0=Guest, 1-2=Member, 3-4=Moderator, 5=Admin.
+  - Backend: Dùng `Depends(validate_csrf)` và `Depends(get_current_active_user)`.
+- **Database**: ID của `refresh_tokens` phải là `Integer AUTO_INCREMENT`.
+
+---
+
+## 🤖 Quy trình cho AI Agent (Workflows)
+
+1. **Context Discovery**: Luôn dùng `ContextScout` để tìm file `.md` trong `.opencode/context/` trước khi làm.
+2. **Master Planning**: Tạo kế hoạch tại `.tmp/sessions/` trước khi code.
+3. **MVI Principle**: Giữ file context ngắn gọn, tập trung vào concept, ví dụ và lỗi thường gặp.
+4. **Validation**: Sau khi sửa code, chạy `pytest` (backend) hoặc `npm run lint` (frontend).
+
+### Cấu trúc Thư mục Chính
 ```
-
-### Naming Conventions
-- Classes: `PascalCase`
-- Functions/Variables: `snake_case`
-- Constants: `UPPER_SNAKE_CASE`
-
-### Error Handling & Logging
-- Dùng `loguru` thay vì `print()`/`logging`: `logger.info("Message")`, `logger.error("Error: {}", e)`
-- Database sessions: `db: AsyncSession = Depends(get_db)`
-- Redis: Cấu hình trong `app/main.py` qua `FastAPICache`
-
-### API & Models Structure
-- Models: `app/models/`, Schemas: `app/schemas/`
-- Routers: `app/api/v1/` với prefix và tags rõ ràng
-- Phân trang: `fastapi_pagination.Page[Schema]` + `paginate(data)`
-- **Sync Models**: Cập nhật Database Model → Cập nhật Pydantic Schema tương ứng
-
-### Pydantic v2 Patterns
-```python
-class UserCreate(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-    email: EmailStr
-    rank: int = Field(default=1, ge=0, le=5)
-
-class UserResponse(UserBase):
-    id: int
-    created_at: datetime
+/
+├── backend/app/
+│   ├── api/v1/     # Endpoints
+│   ├── core/       # Security, Config, Database
+│   ├── crud/       # DB Operations
+│   ├── models/     # SQLAlchemy
+│   └── schemas/    # Pydantic
+└── frontend/src/
+    ├── app/        # Pages & Layouts
+    ├── components/ # UI Components
+    ├── hooks/      # Custom Hooks
+    └── lib/        # API & Utils
 ```
 
 ---
 
-## Code Style - Frontend
-
-### Thứ tự Import
-1. React/Next.js core hooks và components
-2. Thư viện bên thứ ba (lucide-react, axios, ...)
-3. Components nội bộ (alias `@/components/...`)
-4. Hooks, Types, Utils nội bộ
-
-### Components & Props
-```typescript
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary';
-  isLoading?: boolean;
-}
-
-export function Button({ children, variant, ...props }: ButtonProps) {
-  return <button {...props}>{children}</button>;
-}
-```
-- Functional Components với interface Props
-- `"use client"` chỉ khi cần hooks/tương tác người dùng
-
-### Tailwind CSS & Styling
-- Utility classes với prefix responsive: `sm:`, `md:`, `lg:`
-- Dark mode: `dark:` prefix
-- Không custom CSS, dùng Tailwind utilities
-
-### State & Data Fetching
-- **TanStack Query** cho request: `useQuery`, `useMutation`
-- Axios: `src/lib/api.ts` (có auth interceptors)
-- Forms: `react-hook-form` + `zod`
-```typescript
-const { data, isLoading } = useQuery({ queryKey: ['user'], queryFn: fetchUser });
-const mutation = useMutation({ mutationFn: updateUser });
-```
-
-### Pattern Organization
-- **Hooks**: `src/hooks/useX.ts` (logic fetch data)
-- **Services**: `src/lib/auth.ts` (API calls)
-- **Types**: `src/types/index.ts` (TypeScript interfaces)
-
----
-
-## Quy tắc đặc thù
-- **Path Aliases**: `@/*` → `./src/*`, KHÔNG dùng `../../`
-- **Secrets**: KHÔNG BAO GIỜ commit `.env` hoặc hardcode keys
-- **Hệ thống Rank**: 0=Guest, 1-2=Member, 3-4=Moderator, 5=Admin
-  - Backend: `require_min_rank(rank)` để bảo vệ route
-- **Atomic Design**: `ui/` (Button), `features/` (AuthForm), `layouts/` (MainLayout)
-- **Sync Models**: Cập nhật DB Model → Cập nhật Pydantic Schema
-
----
-
-## Cấu trúc Backend
-```
-app/
-├── api/v1/        # Endpoints by domain (auth.py, users.py)
-├── core/          # Config (config.py, security.py, database.py)
-├── crud/          # Database operations (CRUD)
-├── models/        # SQLAlchemy models
-└── schemas/       # Pydantic request/response models
-```
-
-## Quy trình Migration
-```bash
-# 1. Tạo revision
-docker compose exec backend alembic revision --autogenerate -m "thông báo"
-
-# 2. Kiểm tra file backend/alembic/versions/
-
-# 3. Áp dụng migration
-docker compose exec backend alembic upgrade head
-```
-
-## Mẫu Testing
+## 📝 Mẫu Testing
 ```python
 @pytest.mark.asyncio
 async def test_endpoint(client: AsyncClient):
     response = await client.get("/api/v1/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "healthy"}
+    assert response.json()["status"] == "healthy"
 ```
 
-## Lỗi thường gặp
-1. **Sync vs Async**: Luôn `await` DB operations và API calls
-2. **Missing Imports**: Kiểm tra `app/models/__init__.py` khi thêm model mới
-3. **Hydration Error**: Dùng `"use client"` khi dùng hooks trong Next.js
-
-## Ghi chú
-- Nginx: `nginx/conf.d/default.conf`
-- Domain: `aicmr.local` (add to `/etc/hosts`)
-- phpMyAdmin: `http://aicmr.local/phpmyadmin`
-- API Docs: `http://aicmr.local/backend/docs`
-
+---
+*Cập nhật lần cuối: 2026-01-18*

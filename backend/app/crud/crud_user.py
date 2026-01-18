@@ -1,25 +1,37 @@
-from typing import Optional, Union, Any
+from typing import Optional, Union, Any, Type, TypeVar
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from fastapi_cache import FastAPICache
+from fastapi_cache.decorator import cache
 
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate, UserUpdateMe
 from app.core.security import get_password_hash, verify_password
 
+ModelType = TypeVar("ModelType")
 
-async def get_by_email(db: AsyncSession, email: str) -> Optional[User]:
-    result = await db.execute(select(User).where(User.email == email))
+
+async def get_by_field(
+    db: AsyncSession,
+    model: Type[ModelType],
+    field: str,
+    value: Any
+) -> Optional[ModelType]:
+    result = await db.execute(select(model).where(getattr(model, field) == value))
     return result.scalar_one_or_none()
+
+
+@cache(expire=300, namespace="user")
+async def get_by_email(db: AsyncSession, email: str) -> Optional[User]:
+    return await get_by_field(db, User, 'email', email)
 
 
 async def get_by_username(db: AsyncSession, username: str) -> Optional[User]:
-    result = await db.execute(select(User).where(User.username == username))
-    return result.scalar_one_or_none()
+    return await get_by_field(db, User, 'username', username)
 
 
 async def get_by_id(db: AsyncSession, user_id: int) -> Optional[User]:
-    result = await db.execute(select(User).where(User.id == user_id))
-    return result.scalar_one_or_none()
+    return await get_by_field(db, User, 'id', user_id)
 
 
 async def create(db: AsyncSession, obj_in: UserCreate) -> User:
@@ -48,6 +60,7 @@ async def update(db: AsyncSession, db_obj: User, obj_in: Union[UserUpdate, UserU
     
     await db.flush()
     await db.refresh(db_obj)
+    await FastAPICache.clear(namespace="user")
     return db_obj
 
 
@@ -55,6 +68,7 @@ async def update_password(db: AsyncSession, user: User, new_password: str) -> Us
     user.hashed_password = get_password_hash(new_password)
     await db.flush()
     await db.refresh(user)
+    await FastAPICache.clear(namespace="user")
     return user
 
 
@@ -84,4 +98,5 @@ async def delete(db: AsyncSession, user_id: int) -> bool:
         return False
     await db.delete(user)
     await db.flush()
+    await FastAPICache.clear(namespace="user")
     return True

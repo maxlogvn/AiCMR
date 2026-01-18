@@ -5,5 +5,6 @@
 from .base import Base
 from .user import User
 from .settings import Setting
+from .refresh_token import RefreshToken
 
-__all__ = ["Base", "User", "Setting"]
+__all__ = ["Base", "User", "Setting", "RefreshToken"]

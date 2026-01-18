@@ -12,12 +12,8 @@ interface InstallGuardProps {
 export default function InstallGuard({ children }: InstallGuardProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [mounted, setMounted] = useState(false);
+  const [mounted] = useState(true);
   const [checking, setChecking] = useState(true);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (mounted) {

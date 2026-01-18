@@ -1,13 +1,35 @@
 # FastAPI Entry Point - Điểm khởi động của application
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status, Header
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi_pagination import add_pagination
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 from redis import asyncio as aioredis
+from slowapi.errors import RateLimitExceeded
 from loguru import logger
+from starlette.middleware.sessions import SessionMiddleware
+from prometheus_client import Counter, Histogram, make_asgi_app
 import sys
+import time
 from contextlib import asynccontextmanager
+
+# Import rate limiter
+from .core.rate_limit import limiter
+from .core.security import generate_csrf_token
+
+# Create Prometheus metrics
+http_requests_total = Counter(
+    'http_requests_total',
+    'Total HTTP requests',
+    ['method', 'endpoint', 'status']
+)
+
+http_request_duration_seconds = Histogram(
+    'http_request_duration_seconds',
+    'HTTP request duration',
+    ['method', 'endpoint']
+)
 
 # Import API routers
 from .api.v1 import auth, users, install
@@ -19,10 +41,36 @@ from .core.database import init_db
 # Lấy configuration từ environment variables
 settings = get_settings()
 
-# Cấu hình Loguru
+# Cấu hình Loguru với structured logging
 logger.remove()
-logger.add(sys.stdout, format="{time} | {level} | {message}", level="INFO")
-logger.add("logs/app.log", rotation="10 MB", level="DEBUG")
+
+# Console logging with colors
+logger.add(
+    sys.stdout,
+    format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
+    colorize=True,
+    level=settings.LOG_LEVEL,
+)
+
+# File logging with rotation
+logger.add(
+    settings.LOG_FILE,
+    format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} - {message}",
+    rotation=settings.LOG_ROTATION,
+    retention=settings.LOG_RETENTION,
+    compression="zip",
+    level="DEBUG",
+)
+
+# Error logging to separate file
+logger.add(
+    settings.LOG_ERROR_FILE,
+    format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} - {message}",
+    rotation=settings.LOG_ROTATION,
+    retention=settings.LOG_RETENTION,
+    compression="zip",
+    level="ERROR",
+)
 
 # Startup & Shutdown lifespan
 @asynccontextmanager
@@ -50,9 +98,28 @@ app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
     debug=settings.DEBUG,
-    root_path="/backend",
     lifespan=lifespan,
 )
+
+# Prometheus Middleware
+@app.middleware("http")
+async def prometheus_middleware(request: Request, call_next):
+    start_time = time.time()
+    method = request.method
+    path = request.url.path
+    
+    response = await call_next(request)
+    
+    duration = time.time() - start_time
+    status_code = response.status_code
+    
+    http_requests_total.labels(method=method, endpoint=path, status=status_code).inc()
+    http_request_duration_seconds.labels(method=method, endpoint=path).observe(duration)
+    
+    return response
+
+# Set limiter to app state
+app.state.limiter = limiter
 
 # Configure CORS Middleware
 # Cho phép frontend (Next.js) gọi API từ domain khác
@@ -64,10 +131,40 @@ app.add_middleware(
     allow_headers=["*"],  # Cho phép tất cả headers
 )
 
+# Add Session Middleware for CSRF tokens
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.SECRET_KEY,
+    session_cookie="aicmr_session",
+    max_age=3600,
+    same_site="lax",
+    https_only=False,
+)
+
+# Add custom exception handler for rate limiting
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+        content={
+            "detail": "Too many requests. Please try again later."
+        }
+    )
+
 # Include API routers
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Auth"])
 app.include_router(users.router, prefix="/api/v1/users", tags=["Users"])
 app.include_router(install.router, prefix="/api/v1/install", tags=["Install"])
+
+# CSRF token endpoint
+@app.get("/api/v1/csrf-token")
+async def get_csrf_token(request: Request):
+    """Generate and store CSRF token if not exists"""
+    csrf_token = request.session.get("csrf_token")
+    if not csrf_token:
+        csrf_token = generate_csrf_token()
+        request.session["csrf_token"] = csrf_token
+    return {"csrf_token": csrf_token}
 
 # Root endpoint
 @app.get("/")
@@ -84,6 +181,10 @@ async def health_check():
     Health check endpoint.
     """
     return {"status": "healthy"}
+
+# Prometheus metrics endpoint
+metrics_app = make_asgi_app()
+app.mount("/metrics", metrics_app)
 
 # Thêm Pagination vào app (cần đặt sau cùng để middleware hoạt động đúng)
 add_pagination(app)

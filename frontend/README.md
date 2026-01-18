@@ -1,23 +1,25 @@
 # AiCMR Frontend
 
-Dự án Frontend cho hệ thống AiCMR, được xây dựng bằng **Next.js 16** (App Router) và **Tailwind CSS**.
+Dự án Frontend cho hệ thống AiCMR, được xây dựng bằng **Next.js 16** (App Router) và **Tailwind CSS 4**.
+
+> **Xem tài liệu chi tiết tại:** [**04. Frontend Guide**](../../docs/04-frontend-guide.md)
 
 ## Công nghệ sử dụng
 
-- **Framework:** [Next.js 16](https://nextjs.org/) (Turbopack)
-- **Styling:** [Tailwind CSS](https://tailwindcss.com/)
-- **Language:** [TypeScript](https://www.typescriptlang.org/)
+- **Framework:** [Next.js 16](https://nextjs.org/) (App Router) & React 19
+- **Styling:** [Tailwind CSS 4](https://tailwindcss.com/)
+- **State Management:** [TanStack Query](https://tanstack.com/query/latest)
+- **Form:** React Hook Form + Zod
 - **Icons:** [Lucide React](https://lucide.dev/)
-- **Components:** Được tổ chức theo cấu trúc Atomic Design hoặc theo tính năng.
 
-## Cấu trúc thư mục
+## Cấu trúc thư mục (`src/`)
 
-- `src/app`: Chứa các route, layout và page (App Router).
-- `src/components`: Các component dùng chung.
-- `src/hooks`: Các custom hooks.
-- `src/services`: Các file gọi API tới Backend.
-- `src/types`: Định nghĩa kiểu dữ liệu TypeScript.
-- `public`: Các tài nguyên tĩnh (hình ảnh, fonts).
+- `app/`: Routing và Pages (App Router).
+- `components/`: Các component UI, layout và logic theo domain.
+- `hooks/`: Các custom hooks dùng chung.
+- `lib/`: Cấu hình thư viện (Axios instance, utils, constants).
+- `types/`: Định nghĩa kiểu dữ liệu TypeScript.
+- `public/`: Tài nguyên tĩnh.
 
 ## Phát triển
 

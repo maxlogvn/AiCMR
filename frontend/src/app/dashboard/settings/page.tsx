@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from 'next/dynamic';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -8,7 +9,10 @@ import api from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+
+const Card = dynamic(() => import('@/components/ui/Card').then(mod => ({ default: mod.Card })), {
+  loading: () => <div className="animate-pulse h-64 bg-zinc-200 rounded-lg dark:bg-zinc-800" />
+});
 
 const changePasswordSchema = z.object({
   old_password: z.string().min(1, 'Vui lòng nhập mật khẩu cũ'),

@@ -1,6 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from fastapi_cache import FastAPICache
+from fastapi_cache.decorator import cache
 
 from app.core.database import get_db
 from app.core.config import get_settings
@@ -15,16 +17,21 @@ router = APIRouter()
 settings = get_settings()
 
 @router.get("/status", response_model=InstallStatusResponse)
-async def get_install_status(db: AsyncSession = Depends(get_db)):
+@cache(expire=60, namespace="get_install_status")
+async def get_install_status(
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+):
     """
     Kiểm tra trạng thái cài đặt hệ thống.
+    Cached for 60 seconds to reduce DB load.
     """
     try:
         result = await db.execute(select(Setting).where(Setting.key == "is_installed"))
         setting = result.scalar_one_or_none()
-        
+
         is_installed = setting is not None and setting.value == "true"
-        
+
         return InstallStatusResponse(
             installed=is_installed,
             step="setup_done" if is_installed else "ready"
@@ -72,28 +79,43 @@ async def setup_install(
         )
 
     # 4. Thực hiện Transaction tạo dữ liệu
-    async with db.begin_nested():
-        # Tạo User Admin
-        user_data = UserCreate(
-            email=data.email,
-            username=data.username,
-            password=data.password,
-            rank=5 # Admin
+    try:
+        async with db.begin_nested():
+            # Tạo User Admin
+            user_data = UserCreate(
+                email=data.email,
+                username=data.username,
+                password=data.password,
+                rank=5 # Admin
+            )
+            admin_user = await create(db, user_data)
+
+            # Lưu cấu hình hệ thống
+            settings_to_save = [
+                Setting(key="is_installed", value="true"),
+                Setting(key="site_name", value=data.site_name),
+            ]
+
+            if data.logo_url:
+                settings_to_save.append(Setting(key="logo_url", value=data.logo_url))
+
+            db.add_all(settings_to_save)
+            await db.flush()
+            
+            # Explicitly commit the transaction before returning response
+            await db.commit()
+            
+            # Clear cache for status endpoint
+            await FastAPICache.clear(namespace="get_install_status")
+
+            logger.info(f"Hệ thống đã được cài đặt bởi Admin: {admin_user.email}")
+
+    except Exception as e:
+        logger.error(f"Lỗi cài đặt: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Cài đặt thất bại. Vui lòng thử lại."
         )
-        admin_user = await create(db, user_data)
-        
-        # Lưu cấu hình hệ thống
-        settings_to_save = [
-            Setting(key="is_installed", value="true"),
-            Setting(key="site_name", value=data.site_name),
-        ]
-        
-        if data.logo_url:
-            settings_to_save.append(Setting(key="logo_url", value=data.logo_url))
-        
-        db.add_all(settings_to_save)
-        
-        logger.info(f"Hệ thống đã được cài đặt bởi Admin: {admin_user.email}")
         
     return {
         "message": "Cài đặt thành công. Vui lòng đăng nhập.",
