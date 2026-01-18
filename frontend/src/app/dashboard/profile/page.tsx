@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { User, Edit2 } from 'lucide-react';
 import { useUser } from '@/hooks/useUser';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { Card } from '@/components/ui/Card';
+import { Card } from '@/components/ui/card-wrapped';
 
 export default function ProfilePage() {
   const { user, isLoading, error } = useUser();

@@ -7,9 +7,9 @@ import { z } from 'zod';
 import { LogIn } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/useToast';
-import { Input } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { Input } from '@/components/ui/input-wrapped';
+import { Button } from '@/components/ui/button-wrapped';
+import { Card } from '@/components/ui/card-wrapped';
 import type { LoginRequest } from '@/types';
 
 const loginSchema = z.object({

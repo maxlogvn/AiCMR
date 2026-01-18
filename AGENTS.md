@@ -1,103 +1,126 @@
 # AGENTS.md - Hướng dẫn cho AI Coding Agents
 
-> **LƯU Ý QUAN TRỌNG**: File này cung cấp các quy tắc nhanh cho AI. Để hiểu sâu hơn về kiến trúc và quy chuẩn chi tiết, hãy đọc [**Tài liệu Hệ thống (docs/)**](./docs/README.md).
+> **LƯU Ý QUAN TRỌNG**: File này cung cấp các quy tắc và tiêu chuẩn cốt lõi cho AI. Agent **BẮT BUỘC** phải tuân thủ các quy trình này để đảm bảo tính nhất quán và an toàn cho codebase. Chi tiết hơn xem tại [**docs/**](./docs/README.md).
 
 ## 🚀 Tổng quan công nghệ
-- **Frontend**: Next.js 15+ (App Router), React 19, TypeScript, Tailwind CSS 4.
+- **Frontend**: Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS 4.
 - **Backend**: FastAPI, Python 3.11+, SQLAlchemy 2.0 (Async), Pydantic v2.
 - **Database**: MySQL 8.0, Redis (Caching/FastAPI-Cache2).
-- **Infrastructure**: Docker Compose, Nginx (Reverse Proxy).
+- **Libraries**: shadcn/ui, Zustand, Framer Motion, Sonner, Loguru, Pytest.
 
 ---
 
 ## 🛠 Lệnh Build/Lint/Test
 
 ### 🐍 Backend (FastAPI)
+- **Cài đặt**: `pip install -r requirements.txt`
 - **Dev Server**: `uvicorn app.main:app --reload`
 - **Chạy Tests**: 
   - Tất cả: `pytest`
-  - Một file: `pytest tests/test_main.py`
-  - Một test cụ thể: `pytest tests/test_main.py::test_root`
+  - Một file: `pytest tests/test_auth.py`
+  - Một test cụ thể: `pytest tests/test_auth.py::test_login_success`
   - Với Coverage: `pytest --cov=app --cov-report=term-missing`
 - **Migrations (Alembic)**:
-  - Tạo: `alembic revision --autogenerate -m "desc"`
+  - Tạo: `alembic revision --autogenerate -m "description"`
   - Áp dụng: `alembic upgrade head`
-- **Docker Exec**: `docker compose exec backend pytest <path_to_test>`
 
 ### ⚛️ Frontend (Next.js)
+- **Cài đặt**: `npm install`
 - **Dev Server**: `npm run dev`
 - **Build**: `npm run build`
 - **Lint**: `npm run lint`
-
-### 🐳 Docker Compose
-- **Khởi động**: `docker compose up -d --build`
-- **Logs**: `docker compose logs -f backend`
-- **Dừng**: `docker compose down`
+- **shadcn/ui**: `npx shadcn@latest add [component]`
 
 ---
 
-## 📐 Quy chuẩn Code
+## 📐 Quy chuẩn Code (Code Style)
 
 ### 🔹 Backend (FastAPI)
-- **Imports**: (1) Standard Lib, (2) Third-party, (3) Local (`app.xxx`).
-- **Types**: **BẮT BUỘC** Type Hints cho mọi function/variable.
-- **Naming**: Class (`PascalCase`), Function/Var (`snake_case`), Const (`UPPER_SNAKE_CASE`).
-- **Logging**: Dùng `loguru`. Cấm dùng `print()`.
-- **Async**: Luôn `await` cho Database và API calls.
-- **Models**: Đồng bộ hóa SQLAlchemy Model ↔️ Pydantic Schema.
-- **CRUD**: Tái sử dụng `app.crud.base` (ví dụ: `get_by_field`).
+- **Imports**: Theo thứ tự: (1) Standard Lib, (2) Third-party, (3) Local (`app.xxx`).
+- **Types**: **BẮT BUỘC** Type Hints cho mọi function/variable. Dùng `Optional`, `List`, `Dict` từ `typing`.
+- **Naming**: 
+  - Class: `PascalCase` (ví dụ: `UserService`).
+  - Function/Var: `snake_case` (ví dụ: `get_user_by_id`).
+  - Constants: `UPPER_SNAKE_CASE`.
+- **Error Handling**: 
+  - Luôn sử dụng `HTTPException` với status code phù hợp từ `fastapi.status`.
+  - Logging lỗi bằng `loguru.logger.error` kèm context. Cấm dùng `print()`.
+- **Async**: Sử dụng `async def` và `await` cho mọi thao tác I/O (Database, API, Cache).
 
 ### 🔹 Frontend (Next.js)
-- **Imports**: (1) React/Next, (2) Libs, (3) Components (`@/components`), (4) Local Utils.
-- **State**: Dùng **TanStack Query** (`useQuery`, `useMutation`).
-- **API**: Dùng Axios instance tại `src/lib/api.ts` (đã cấu hình CSRF & Auth).
-- **Components**: Functional Components + Props Interface. 
-- **Forms**: `react-hook-form` + `zod`.
+- **Components**: Functional Components + Props Interface. Ưu tiên Server Components.
+- **Styling**: Tailwind CSS 4. Sử dụng tiện ích `cn()` từ `@/lib/utils` để gộp class.
+- **State**: 
+  - Server State: `@tanstack/react-query`.
+  - Client State: `zustand` (định nghĩa store trong `src/store/`).
+- **Icons**: Sử dụng `lucide-react`.
+- **Notifications**: Sử dụng `sonner` (`toast.success`, `toast.error`).
+- **Formatting**: Ưu tiên sử dụng `prettier` và `eslint` theo cấu hình dự án.
 
 ---
 
 ## 🔐 Security & Guardrails
-- **Secrets**: **CẤM** commit `.env`. Dùng `app.core.config` để truy cập config.
-- **CSRF**: Các request POST/PUT/DELETE bắt buộc phải có header `X-CSRF-Token`.
-- **Rank System**: 0=Guest, 1-2=Member, 3-4=Moderator, 5=Admin.
-  - Backend: Dùng `Depends(validate_csrf)` và `Depends(get_current_active_user)`.
-- **Database**: ID của `refresh_tokens` phải là `Integer AUTO_INCREMENT`.
+- **Secrets**: **KHÔNG BAO GIỜ** commit `.env`. Truy cập qua `app.core.config.get_settings()`.
+- **Authentication**: Luôn kiểm tra `rank` của user (0-5) để phân quyền.
+- **Validation**: 
+  - Backend: Sử dụng Pydantic `field_validator` để kiểm tra dữ liệu (mật khẩu mạnh, email hợp lệ).
+  - Frontend: Sử dụng `zod` schema kết hợp với `react-hook-form`.
+- **CSRF**: Các request thay đổi dữ liệu (POST/PUT/DELETE) bắt buộc phải có `X-CSRF-Token`.
 
 ---
 
 ## 🤖 Quy trình cho AI Agent (Workflows)
 
-1. **Context Discovery**: Luôn dùng `ContextScout` để tìm file `.md` trong `.opencode/context/` trước khi làm.
-2. **Master Planning**: Tạo kế hoạch tại `.tmp/sessions/` trước khi code.
-3. **MVI Principle**: Giữ file context ngắn gọn, tập trung vào concept, ví dụ và lỗi thường gặp.
-4. **Validation**: Sau khi sửa code, chạy `pytest` (backend) hoặc `npm run lint` (frontend).
+1. **Phân tích (Analyze)**: Sử dụng `ContextScout` để tìm context liên quan (`.opencode/context/`).
+2. **Lập kế hoạch (Plan)**: Tạo Todo list rõ ràng. Nếu task phức tạp (>3 file), sử dụng `TaskManager`.
+3. **Thực thi (Execute)**:
+   - Đọc file trước khi sửa.
+   - Viết code sạch, dễ hiểu, tuân thủ convention hiện có.
+   - Thêm logging/toast phù hợp.
+4. **Kiểm chứng (Validate)**: 
+   - Chạy `pytest` (backend) hoặc `npm run lint` (frontend) sau khi sửa.
+   - Tự rà soát (Self-review) lại các thay đổi.
+5. **Dọn dẹp (Cleanup)**: Xóa các file session tạm thời sau khi hoàn thành và được người dùng xác nhận.
 
 ### Cấu trúc Thư mục Chính
 ```
 /
 ├── backend/app/
-│   ├── api/v1/     # Endpoints
-│   ├── core/       # Security, Config, Database
-│   ├── crud/       # DB Operations
-│   ├── models/     # SQLAlchemy
-│   └── schemas/    # Pydantic
+│   ├── api/v1/     # Endpoints (routes)
+│   ├── core/       # Security, Config, Exceptions, Constants
+│   ├── crud/       # Database operations (CRUD)
+│   ├── models/     # SQLAlchemy models
+│   └── schemas/    # Pydantic models (Input/Output)
 └── frontend/src/
-    ├── app/        # Pages & Layouts
-    ├── components/ # UI Components
-    ├── hooks/      # Custom Hooks
-    └── lib/        # API & Utils
+    ├── app/        # Pages, Layouts, Providers
+    ├── components/ # ui/ (shadcn), auth/, layout/
+    ├── hooks/      # Custom React hooks
+    ├── lib/        # API clients, utils
+    └── store/      # Zustand stores
 ```
 
 ---
 
-## 📝 Mẫu Testing
-```python
-@pytest.mark.asyncio
-async def test_endpoint(client: AsyncClient):
-    response = await client.get("/api/v1/health")
-    assert response.status_code == 200
-    assert response.json()["status"] == "healthy"
-```
+## ⚠️ Lỗi Thường Gặp & Giải Pháp
+
+### 🐍 Backend
+- **"RuntimeError: Task <...> got Future <...> attached to a different loop"**:
+  - *Nguyên nhân*: Sử dụng thư viện không hỗ trợ async trong async function.
+  - *Giải pháp*: Luôn sử dụng các thư viện `async` (ví dụ: `httpx` thay vì `requests`).
+- **"Pydantic Validation Error"**:
+  - *Nguyên nhân*: Schema Input/Output không khớp với dữ liệu thực tế.
+  - *Giải pháp*: Kiểm tra kỹ `response_model` trong router và kiểu dữ liệu trả về từ CRUD.
+- **"Database IntegrityError"**:
+  - *Nguyên nhân*: Vi phạm ràng buộc Unique (Email/Username).
+  - *Giải pháp*: Luôn kiểm tra tồn tại trước khi tạo hoặc dùng `try-except IntegrityError`.
+
+### ⚛️ Frontend
+- **"Hydration failed"**:
+  - *Nguyên nhân*: Nội dung Render trên Server khác với Client (thường do `localStorage` hoặc `window`).
+  - *Giải pháp*: Sử dụng `useEffect` để chỉ thực thi các logic Client sau khi mount.
+- **"Query not found"**:
+  - *Nguyên nhân*: Component nằm ngoài `QueryClientProvider`.
+  - *Giải pháp*: Đảm bảo các Page/Component được bọc bởi `ClientProvider` trong `layout.tsx`.
 
 ---
-*Cập nhật lần cuối: 2026-01-18*
+*Cập nhật lần cuối: 2026-01-18 bởi Antigravity*

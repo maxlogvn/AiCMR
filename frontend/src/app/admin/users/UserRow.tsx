@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { Trash2, Edit } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button-wrapped';
 import type { User } from '@/types';
 
 interface UserRowProps {

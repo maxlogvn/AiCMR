@@ -7,9 +7,9 @@ import { z } from 'zod';
 import { Shield, Mail, User } from 'lucide-react';
 import api from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { Card } from '@/components/ui/card-wrapped';
+import { Button } from '@/components/ui/button-wrapped';
+import { Input } from '@/components/ui/input-wrapped';
 
 const installSchema = z.object({
   install_secret: z.string().min(1, 'Vui lòng nhập mã cài đặt'),

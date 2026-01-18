@@ -48,6 +48,11 @@ Các lỗi nghiệp vụ được quản lý tập trung trong `app/core/excepti
 - `UserNotFound`, `InvalidCredentials`, `NotEnoughPermissions`, v.v.
 - Sử dụng: `raise UserNotFound()` thay vì raise trực tiếp HTTPException ở nhiều nơi.
 
+## Bảo mật & Validation
+- **Rate Limiting**: Sử dụng `@limiter.limit("n/minute")` để bảo vệ endpoint.
+- **Password Complexity**: Luôn validate mật khẩu mạnh (8+ ký tự, đủ loại ký tự) trong Pydantic schemas.
+- **Email Normalization**: Luôn chuyển email về lowercase trước khi lưu hoặc authenticate.
+
 ## Database & CRUD Pattern
 - **Models**: Định nghĩa trong `app/models/`.
 - **Schemas**: Pydantic models trong `app/schemas/`.

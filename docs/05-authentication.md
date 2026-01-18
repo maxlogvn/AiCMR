@@ -31,6 +31,12 @@ Sử dụng `slowapi` với Redis để giới hạn tần suất request từ m
 - `Forgot Password`: 3 lần/phút.
 - `CSRF Token`: 30 lần/phút.
 
+## Quy chuẩn Mật khẩu (Password Complexity)
+Mọi mật khẩu trong hệ thống (Register, Change, Reset) phải tuân thủ:
+- Độ dài: Tối thiểu 8 ký tự.
+- Thành phần: Chữ hoa, chữ thường, số, và ít nhất một ký tự đặc biệt (`!@#$%^&*()`).
+- Kiểm tra: Không được trùng với các mật khẩu phổ biến (như `password123`).
+
 ## Luồng Đăng xuất (Logout)
 Khi người dùng đăng xuất:
 1. Gửi request tới `/api/v1/auth/logout`.

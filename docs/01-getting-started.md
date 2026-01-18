@@ -26,7 +26,8 @@ Tạo file `.env` tại thư mục gốc của dự án dựa trên các tham s�
 
 ```bash
 # Security
-SECRET_KEY=your-secret-key-at-least-32-chars  # Khóa ký JWT
+SECRET_KEY=your-secret-key-at-least-32-chars  # Khóa JWT (Bắt buộc >= 32 ký tự trong production)
+DEBUG=false                                   # Set true để dùng secret-key mặc định khi dev
 INSTALL_SECRET=your-random-install-secret     # Khóa dùng cho bước cài đặt
 
 # Database & Redis
@@ -73,6 +74,6 @@ uvicorn app.main:app --reload
 **Frontend:**
 ```bash
 cd frontend
-npm install
+npm install # Bắt buộc để cài đặt các thư viện mới (shadcn, zustand, sonner...)
 npm run dev
 ```

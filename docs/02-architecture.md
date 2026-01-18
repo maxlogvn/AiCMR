@@ -5,10 +5,10 @@ Tài liệu này mô tả kiến trúc tổng thể và cách thức các thành
 ## Kiến trúc tổng quan
 Hệ thống được xây dựng theo mô hình Microservices-lite, đóng gói bằng Docker:
 
-- **Frontend**: Next.js (App Router) - Giao diện người dùng.
-- **Backend**: FastAPI - Xử lý logic nghiệp vụ và API.
+- **Frontend**: Next.js 16 (App Router), React 19, Tailwind CSS 4, **shadcn/ui**, **Zustand**.
+- **Backend**: FastAPI, Python 3.11+, SQLAlchemy 2.0 (Async), Pydantic v2.
 - **Database**: MySQL 8.0 - Lưu trữ dữ liệu quan hệ.
-- **Cache & Queue**: Redis - Caching, Rate Limiting và quản lý Session.
+- **Cache & Queue**: Redis - Caching (TTL 300s), Rate Limiting và quản lý Session.
 - **Reverse Proxy**: Nginx - Điều phối request và quản lý SSL/Static files.
 
 ## Hạ tầng (Infrastructure)

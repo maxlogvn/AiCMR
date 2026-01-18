@@ -7,10 +7,10 @@ import { z } from 'zod';
 import { Lock, Save } from 'lucide-react';
 import api from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
-import { Input } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/input-wrapped';
+import { Button } from '@/components/ui/button-wrapped';
 
-const Card = dynamic(() => import('@/components/ui/Card').then(mod => ({ default: mod.Card })), {
+const Card = dynamic(() => import('@/components/ui/card-wrapped').then(mod => ({ default: mod.Card })), {
   loading: () => <div className="animate-pulse h-64 bg-zinc-200 rounded-lg dark:bg-zinc-800" />
 });
 

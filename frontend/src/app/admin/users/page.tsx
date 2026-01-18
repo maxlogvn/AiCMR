@@ -6,8 +6,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, Shield } from 'lucide-react';
 import api from '@/lib/api';
 import { useToast } from '@/hooks/useToast';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/card-wrapped';
+import { Button } from '@/components/ui/button-wrapped';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import type { User, PaginatedResponse } from '@/types';
 
