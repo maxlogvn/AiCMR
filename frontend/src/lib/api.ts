@@ -145,6 +145,7 @@ import type {
   Settings,
   StatsOverview,
   UpdateSettingsRequest,
+  PublicSettingsResponse,
 } from "@/types";
 
 export const settingsApi = {
