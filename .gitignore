@@ -32,7 +32,10 @@ venv/
 temp_backup/
 nginx/ssl/
 
+# Upload directories
+storage/
+public/uploads/
+
 # Agent Plans
 .opencode/
 .tmp/
-storage/
