@@ -53,6 +53,31 @@ class SettingsUpdate(BaseModel):
     upload_max_size_mb: Optional[str] = None
 
 
+class PublicSettingsResponse(BaseModel):
+    """Schema cho public settings (SEO metadata) - Không yêu cầu authentication."""
+    model_config = {"from_attributes": True}
+
+    site_name: str
+    logo_url: Optional[str] = None
+    favicon_url: Optional[str] = None
+    seo_title: Optional[str] = None
+    seo_description: Optional[str] = None
+    seo_keywords: Optional[str] = None
+    og_title: Optional[str] = None
+    og_description: Optional[str] = None
+    og_image: Optional[str] = None
+    og_type: str = "website"
+    og_url: Optional[str] = None
+    twitter_card: str = "summary"
+    twitter_title: Optional[str] = None
+    twitter_description: Optional[str] = None
+    twitter_image: Optional[str] = None
+    robots: str = "index, follow"
+    canonical_url: Optional[str] = None
+    google_analytics_id: Optional[str] = None
+    custom_meta: Optional[str] = None
+
+
 class StatsOverview(BaseModel):
     total_users: int
     active_users: int

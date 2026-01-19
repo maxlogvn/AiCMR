@@ -105,6 +105,10 @@ export interface UpdateSettingsRequest {
   upload_max_size_mb?: string;
 }
 
+export interface PublicSettingsResponse extends Settings {
+  /* Public settings cho SEO metadata - không bao gồm cấu hình upload */
+}
+
 export interface Attachment {
   id: number;
   filename: string;

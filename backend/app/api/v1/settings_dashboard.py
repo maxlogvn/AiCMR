@@ -7,7 +7,7 @@ from app.core.security import validate_csrf
 from app.api.deps import require_min_rank
 from app.core.constants import ADMIN_RANK, MODERATOR_RANK, CACHE_SETTINGS_SECONDS
 from app.models.user import User
-from app.schemas.settings_dashboard import SettingsResponse, SettingsUpdate
+from app.schemas.settings_dashboard import SettingsResponse, SettingsUpdate, PublicSettingsResponse
 from app.crud.crud_settings import get_all_settings, update_settings
 from loguru import logger
 
@@ -47,3 +47,19 @@ async def update_system_settings(
     logger.info(f"Admin {current_user.email} updated system settings")
 
     return SettingsResponse(**updated_settings)
+
+
+@router.get("/public", response_model=PublicSettingsResponse)
+@cache(expire=CACHE_SETTINGS_SECONDS, namespace="settings_public")
+async def get_public_settings(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Lấy settings công khai cho SEO metadata.
+    Không yêu cầu authentication - cho phép layout fetch server-side.
+    """
+    settings_dict = await get_all_settings(db)
+
+    # Chỉ trả về các field cần thiết cho SEO (không bao gồm cấu hình upload)
+    return PublicSettingsResponse(**settings_dict)

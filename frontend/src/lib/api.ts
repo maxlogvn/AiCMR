@@ -149,6 +149,7 @@ import type {
 
 export const settingsApi = {
   getSettings: () => api.get<Settings>("/settings/"),
+  getPublicSettings: () => api.get<PublicSettingsResponse>("/settings/public"),
   updateSettings: (data: UpdateSettingsRequest) =>
     api.put<Settings>("/settings/", data),
 };
