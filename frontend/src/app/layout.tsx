@@ -54,8 +54,19 @@ async function getSettings() {
   }
 }
 
+// Cache settings để tránh fetch multiple lần trên mỗi request
+let cachedSettings: PublicSettingsResponse | null = null;
+
+async function getCachedSettings(): Promise<PublicSettingsResponse> {
+  if (cachedSettings) {
+    return cachedSettings;
+  }
+  cachedSettings = await getSettings();
+  return cachedSettings;
+}
+
 export async function generateMetadata() {
-  const settings = await getSettings();
+  const settings = await getCachedSettings();
 
   // Generate title với site_name từ settings
   const title = settings.seo_title || `${settings.site_name} - Hệ thống quản lý`;
