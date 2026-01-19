@@ -6,6 +6,7 @@ import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import InstallGuard from "@/components/auth/InstallGuard";
 import CsrfTokenProvider from "@/components/providers/CsrfTokenProvider";
+import type { PublicSettingsResponse } from "@/types";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

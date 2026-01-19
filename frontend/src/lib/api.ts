@@ -6,8 +6,10 @@ interface CustomRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
 
+const isServer = typeof window === "undefined";
+
 const api = axios.create({
-  baseURL: "/backend/api/v1",
+  baseURL: isServer ? "http://backend:8000/api/v1" : "/backend/api/v1",
 });
 
 let csrfTokenPromise: Promise<string | null> | null = null;
