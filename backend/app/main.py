@@ -190,13 +190,6 @@ app.include_router(
 app.include_router(stats.router, prefix="/api/v1/stats", tags=["Stats"])
 app.include_router(uploads.router, prefix="/api/v1/uploads", tags=["Uploads"])
 
-# Mount static files
-# FE có thể truy cập qua http://domain/static/uploads/...
-if not os.path.exists(settings.UPLOAD_DIR):
-    os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
-
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
 
 # CSRF token endpoint
 @app.get("/api/v1/csrf-token")

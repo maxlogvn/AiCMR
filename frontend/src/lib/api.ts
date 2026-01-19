@@ -166,6 +166,7 @@ export const uploadsApi = {
   },
   getAttachment: (id: number) => api.get<Attachment>(`/uploads/${id}/`),
   deleteAttachment: (id: number) => api.delete(`/uploads/${id}/`),
+  getFileUrl: (id: number | string) => `/backend/api/v1/uploads/file/${id}`,
 };
 
 export const statsApi = {

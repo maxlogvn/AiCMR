@@ -35,3 +35,4 @@ nginx/ssl/
 # Agent Plans
 .opencode/
 .tmp/
+storage/
