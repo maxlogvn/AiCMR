@@ -11,6 +11,7 @@ async def create(db: AsyncSession, obj_in: AttachmentCreate) -> Attachment:
         file_path=obj_in.file_path,
         content_type=obj_in.content_type,
         file_size=obj_in.file_size,
+        is_public=obj_in.is_public,
         user_id=obj_in.user_id,
     )
     db.add(db_obj)

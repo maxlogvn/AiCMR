@@ -28,9 +28,40 @@ Chào mừng bạn đến với hệ thống tài liệu kỹ thuật của AiCM
    - Cách tương tác với AI Agent, các công cụ hỗ trợ và quy trình làm việc hiệu quả.
 
 8. [**08. Module Upload Tập tin (Upload Module)**](./08-upload-module.md)
-   - Hướng dẫn cấu hình, sử dụng component tải lên và cơ chế lưu trữ tập tin.
+   - Hướng dẫn cấu hình, sử dụng component tải lên và cơ chế lưu trữ Hybrid (Public/Private) tối ưu SEO.
+
+9. [**AGENTS.md (Tài liệu AI Agent)**](../AGENTS.md)
+   - Quy tắc phát triển cho AI Coding Agents, lệnh Docker, và quy chuẩn code toàn diện.
+
+---
+
+## Ngôn ngữ & Tên gọi
+
+- **Tiếng Việt**: Tài liệu, comments trong code, giao tiếp với người dùng.
+- **Tiếng Anh**: Tên biến, hàm, file, thư viện, thuật ngữ kỹ thuật.
+
+## Nguồn lực bổ sung
+
+- **API Documentation**: [http://aicmr.local/backend/docs](http://aicmr.local/backend/docs)
+- **Docker Commands**: Tham khảo [AGENTS.md §1](../AGENTS.md#1-lệnh-vận-hành-docker-only)
+- **Test Accounts**: Tham khảo [AGENTS.md §5](../AGENTS.md#5-tài-khoản-thử-ngiệm-test-accounts)
+
+---
+
+## Tài liệu liên quan đến AI Agents
+
+Dự án sử dụng OpenAgents Control framework. Để làm việc với AI Agents:
+
+1. Đọc [AGENTS.md](../AGENTS.md) - Hướng dẫn cho AI Coding Agents
+2. Kiểm tra [AGENTS.md global](~/.config/opencode/AGENTS.md) - Quy tắc toàn cầu
+
+Các tài liệu OpenAgents:
+- [07. Opencode CLI Guide](./07-opencode-cli-guide.md) - Cách sử dụng CLI
+- [opencode-plugins-guide.md](./opencode-plugins-guide.md) - Plugins và extensions
+- [opencode-setup-plan.md](./opencode-setup-plan.md) - Plan cài đặt
 
 ---
 
 ## Liên hệ & Hỗ trợ
+
 Nếu có bất kỳ thắc mắc nào trong quá trình phát triển, vui lòng tham khảo file `AGENTS.md` ở thư mục gốc hoặc liên hệ với đội ngũ quản trị.

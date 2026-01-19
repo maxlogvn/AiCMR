@@ -158,10 +158,10 @@ export const settingsApi = {
 };
 
 export const uploadsApi = {
-  uploadFile: (file: File, onUploadProgress?: (progressEvent: AxiosProgressEvent) => void) => {
+  uploadFile: (file: File, onUploadProgress?: (progressEvent: AxiosProgressEvent) => void, isPublic: boolean = false) => {
     const formData = new FormData();
     formData.append("file", file);
-    return api.post<Attachment>("/uploads/", formData, {
+    return api.post<Attachment>(`/uploads/?is_public=${isPublic}`, formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
@@ -170,7 +170,41 @@ export const uploadsApi = {
   },
   getAttachment: (id: number) => api.get<Attachment>(`/uploads/${id}/`),
   deleteAttachment: (id: number) => api.delete(`/uploads/${id}/`),
-  getFileUrl: (id: number | string) => `/backend/api/v1/uploads/file/${id}`,
+  getFileUrl: (idOrUrl: number | string | null | undefined, isPublic: boolean = false, filename?: string) => {
+    if (!idOrUrl) return "";
+
+    // Nếu là URL đầy đủ (http...) thì trả về luôn
+    if (typeof idOrUrl === "string" && idOrUrl.startsWith("http")) {
+      return idOrUrl;
+    }
+
+    // Trích xuất ID nếu là proxy URL
+    let id = idOrUrl;
+    if (typeof idOrUrl === "string") {
+      if (idOrUrl.includes("/api/v1/uploads/file/")) {
+        id = idOrUrl.split("/").pop() || idOrUrl;
+      } else if (idOrUrl.includes("/api/v1/uploads/p/")) {
+        // URL public có dạng /p/{id}/{slug}
+        const parts = idOrUrl.split("/");
+        id = parts[parts.length - 2] || idOrUrl;
+      }
+    }
+
+    // Nếu là file public, trả về URL SEO đẹp qua Nginx proxy
+    if (isPublic) {
+      const slug = filename ? filename.toLowerCase().replace(/[^a-z0-9]+/g, "-") : "file";
+      return `/media/${id}/${slug}`;
+    }
+
+    const baseUrl = `/backend/api/v1/uploads/file/${id}`;
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("access_token");
+      if (token) {
+        return `${baseUrl}?token=${token}`;
+      }
+    }
+    return baseUrl;
+  },
 };
 
 export const statsApi = {

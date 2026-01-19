@@ -7,6 +7,7 @@ import { z } from "zod";
 import { Settings as SettingsIcon, Save, ExternalLink, Trash2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
+import { uploadsApi } from "@/lib/api";
 import { useUser } from "@/hooks/useUser";
 import { useToast } from "@/hooks/useToast";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
@@ -68,12 +69,17 @@ function ImageField({
   maxSizeMB = 5,
 }: ImageFieldProps) {
   const handleUploadSuccess = (attachment: Attachment) => {
+    // Lưu URL proxy từ backend (đã được backend tự động chọn URL SEO nếu is_public=true)
     setValue(fieldName, attachment.url);
   };
 
   const handleRemoveImage = () => {
     setValue(fieldName, "");
   };
+
+  // Kiểm tra xem URL có phải là file public không để hiển thị đúng
+  const isPublicFile = urlValue?.includes("/api/v1/uploads/p/");
+  const displayUrl = urlValue ? uploadsApi.getFileUrl(urlValue, isPublicFile) : null;
 
   return (
     <div className="space-y-3">
@@ -97,9 +103,10 @@ function ImageField({
         <div className="relative group">
           <div className="aspect-video w-full bg-muted rounded-lg overflow-hidden border-2 border-border relative">
             <Image
-              src={urlValue}
+              src={displayUrl || urlValue}
               alt={label}
               fill
+              referrerPolicy="no-referrer"
               className="object-contain"
               unoptimized
               onError={(e) => {
@@ -109,7 +116,7 @@ function ImageField({
           </div>
           <div className="flex gap-2 mt-2">
             <a
-              href={urlValue}
+              href={displayUrl || urlValue}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
@@ -124,6 +131,7 @@ function ImageField({
           onSuccess={handleUploadSuccess}
           allowedExtensions={allowedExtensions}
           maxSizeMB={maxSizeMB}
+          isPublic={true}
           className="max-w-full"
         />
       )}

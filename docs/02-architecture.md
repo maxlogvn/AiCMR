@@ -56,18 +56,25 @@ Quản lý phiên đăng nhập và cơ chế rotation:
 
 ## Cơ chế Lưu trữ Tập tin (Storage Architecture)
 
-AiCMR sử dụng cơ chế **Bind Mount** để chia sẻ dữ liệu tĩnh giữa Backend và Frontend một cách hiệu quả mà không cần qua API trung gian để tải file.
+AiCMR sử dụng cơ chế **Hybrid Storage** để cân bằng giữa bảo mật dữ liệu y tế và tối ưu hóa tìm kiếm (SEO).
 
 ### Cấu trúc Mount
 Dựa trên cấu hình trong `docker-compose.yml`:
-- **Backend**: Gắn kết `./public/uploads` (Host) vào `/app/static/uploads` (Container).
-- **Frontend**: Gắn kết `./public` (Host) vào `/app/public` (Container).
+- **Backend**: Gắn kết `./storage/uploads` (Host) vào `/app/storage/uploads` (Container).
+
+### Phân loại Lưu trữ (Ưu tiên Public)
+
+| Loại | Đối tượng áp dụng | Cơ chế truy cập | URL Ví dụ |
+|------|----------|-----------------|-----------|
+| **Public (Mặc định)** | Logo, Favicon, Ảnh bài viết, Tài liệu công khai | Không cần Token, hỗ trợ SEO Slug | `/media/20/logo-phong-kham.png` |
+| **Private (Nhạy cảm)** | Hồ sơ bệnh án, Kết quả xét nghiệm cá nhân | Bắt buộc JWT Token (Header/Query) | `/backend/api/v1/uploads/file/21` |
 
 ### Luồng xử lý
-1. **Upload**: Backend nhận file, lưu vào `/app/static/uploads/YYYY/MM/DD/`. Do cơ chế mount, file thực tế sẽ nằm tại `./public/uploads/...` trên máy chủ (Host).
-2. **Access**: Frontend truy cập file trực tiếp qua thư mục `public/` của mình. Ví dụ: `http://aicmr.local/uploads/2026/01/19/uuid_file.jpg`.
+1. **Upload**: Backend nhận file kèm tham số `is_public`. File lưu vào `storage/uploads/YYYY/MM/DD/`.
+2. **Public Access**: Nếu `is_public=true`, Backend cho phép truy cập qua endpoint `/p/{id}/{slug}` mà không kiểm tra auth.
+3. **Private Access**: Nếu `is_public=false`, Backend yêu cầu Token và kiểm tra quyền sở hữu/Rank trước khi stream file.
 
-Cơ chế này giúp tối ưu hiệu suất, giảm tải cho Backend khi cần phục vụ (serve) các file tĩnh lớn.
+Chi tiết đầy đủ xem [08. Module Upload Tập tin](./08-upload-module.md).
 
 ## Giám sát (Monitoring)
 Hệ thống tích hợp sẵn endpoint `/metrics` theo chuẩn Prometheus:

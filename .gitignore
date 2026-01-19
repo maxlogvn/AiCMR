@@ -34,7 +34,6 @@ nginx/ssl/
 
 # Upload directories
 storage/
-public/uploads/
 
 # Agent Plans
 .opencode/

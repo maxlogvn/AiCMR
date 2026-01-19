@@ -7,6 +7,7 @@ class AttachmentBase(BaseModel):
     filename: str
     content_type: str
     file_size: int
+    is_public: bool = False
 
 
 class AttachmentCreate(AttachmentBase):

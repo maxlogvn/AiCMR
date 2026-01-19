@@ -12,6 +12,7 @@ interface FileUploadProps {
   onSuccess?: (attachment: Attachment) => void;
   maxSizeMB?: number;
   allowedExtensions?: string[];
+  isPublic?: boolean;
   className?: string;
 }
 
@@ -19,6 +20,7 @@ export default function FileUpload({
   onSuccess,
   maxSizeMB = 10,
   allowedExtensions = ["jpg", "jpeg", "png", "pdf", "doc", "docx", "xls", "xlsx"],
+  isPublic = false,
   className,
 }: FileUploadProps) {
   const { showSuccess, showError } = useToast();
@@ -72,7 +74,7 @@ export default function FileUpload({
             const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
             setUploadProgress(progress);
           }
-        });
+        }, isPublic);
 
         showSuccess("Tải lên tập tin thành công!");
         onSuccess?.(response.data);
@@ -87,7 +89,7 @@ export default function FileUpload({
         resetState();
       }
     },
-    [validateFile, showError, showSuccess, onSuccess]
+    [validateFile, showError, showSuccess, onSuccess, isPublic]
   );
 
   const onDragOver = useCallback((e: React.DragEvent) => {

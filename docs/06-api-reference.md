@@ -39,7 +39,9 @@ Mọi request upload/delete yêu cầu `X-CSRF-Token` và tài khoản đã đă
 
 | Method | Endpoint | Mô tả | Rank |
 | :--- | :--- | :--- | :--- |
-| POST | `/` | Tải tập tin lên hệ thống | 1+ |
+| POST | `/` | Tải tập tin lên hệ thống (Query `is_public=true/false`) | 1+ |
+| GET | `/file/{id}` | Tải/Xem file Private (Cần Token) | 1+ (Cá nhân), 3+ (Tất cả) |
+| GET | `/p/{id}/{slug}` | Xem file Public (SEO Friendly, Không Token) | No Auth |
 | GET | `/{id}` | Lấy thông tin metadata file | 1+ (Cá nhân), 3+ (Tất cả) |
 | DELETE | `/{id}` | Xóa tập tin | 1+ (Cá nhân), 5 (Admin) |
 

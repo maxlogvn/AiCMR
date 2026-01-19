@@ -51,26 +51,26 @@ export interface UserWithRank extends User {
 
 export interface Settings {
   site_name: string;
-  logo_url?: string;
-  favicon_url?: string;
-  seo_title?: string;
-  seo_description?: string;
-  seo_keywords?: string;
-  og_title?: string;
-  og_description?: string;
-  og_image?: string;
-  og_type?: string;
-  og_url?: string;
-  twitter_card?: string;
-  twitter_title?: string;
-  twitter_description?: string;
-  twitter_image?: string;
-  robots?: string;
-  canonical_url?: string;
-  google_analytics_id?: string;
-  custom_meta?: string;
-  upload_allowed_extensions?: string;
-  upload_max_size_mb?: string;
+  logo_url: string | null;
+  favicon_url: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  seo_keywords: string | null;
+  og_title: string | null;
+  og_description: string | null;
+  og_image: string | null;
+  og_type: string | null;
+  og_url: string | null;
+  twitter_card: string | null;
+  twitter_title: string | null;
+  twitter_description: string | null;
+  twitter_image: string | null;
+  robots: string | null;
+  canonical_url: string | null;
+  google_analytics_id: string | null;
+  custom_meta: string | null;
+  upload_allowed_extensions: string | null;
+  upload_max_size_mb: string | null;
 }
 
 export interface StatsOverview {
@@ -105,8 +105,26 @@ export interface UpdateSettingsRequest {
   upload_max_size_mb?: string;
 }
 
-export interface PublicSettingsResponse extends Settings {
-  /* Public settings cho SEO metadata - không bao gồm cấu hình upload */
+export interface PublicSettingsResponse {
+  site_name: string;
+  logo_url: string | null;
+  favicon_url: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  seo_keywords: string | null;
+  og_title: string | null;
+  og_description: string | null;
+  og_image: string | null;
+  og_type: string | null;
+  og_url: string | null;
+  twitter_card: string | null;
+  twitter_title: string | null;
+  twitter_description: string | null;
+  twitter_image: string | null;
+  robots: string | null;
+  canonical_url: string | null;
+  google_analytics_id: string | null;
+  custom_meta: string | null;
 }
 
 export interface Attachment {

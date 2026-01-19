@@ -16,12 +16,13 @@ Cấu hình upload được quản lý linh hoạt thông qua Database (bảng `
 ## Kiến trúc Mới (Architecture Update)
 
 ### Private Storage & Proxy Download
-Từ phiên bản cập nhật, hệ thống đã chuyển sang kiến trúc bảo mật cao hơn:
+Hệ thống sử dụng kiến trúc bảo mật Private Storage:
 
 1. **Private Storage**: Tập tin được lưu trong `storage/uploads/` (không truy cập trực tiếp từ web).
 2. **Proxy Download**: Truy cập file qua endpoint `/backend/api/v1/uploads/file/{id}`.
 3. **Access Control**: Chỉ chủ sở hữu hoặc Rank >= 3 mới được xem file.
-4. **Streaming Upload**: Đọc/ghi file theo chunk 1MB để tối ưu RAM.
+4. **Authentication**: Hỗ trợ xác thực qua Header `Authorization` hoặc Query Parameter `?token=...` (dành cho thẻ `<img>`).
+5. **Streaming Upload**: Đọc/ghi file theo chunk 1MB để tối ưu RAM.
 
 ### Các Tính Năng Bảo Mới
 
@@ -32,6 +33,7 @@ Từ phiên bản cập nhật, hệ thống đã chuyển sang kiến trúc b�
 | Kiểm tra | Chỉ extension | Extension + Magic Bytes | Phát hiện file giả mạo |
 | Tên file | Giữ nguyên | Slugify + UUID | Tránh lỗi ký tự đặc biệt |
 | Download | Truy cập trực tiếp | Proxy với phân quyền | Bảo vệ tuyệt đối |
+| Xác thực | Không | Header hoặc Query Token | Linh hoạt cho thẻ `<img>` |
 
 ## Cơ chế Lưu trữ
 
@@ -44,7 +46,7 @@ Ví dụ: `storage/uploads/2026/01/19/550e8400-e29b-41d4-a716-446655440000_photo
 **Lưu ý**:
 - Thư mục `storage/uploads/` được mount từ host vào container backend.
 - Các thư mục con được tạo tự động theo ngày (YYYY/MM/DD).
-- File được lưu trong private storage, không thể truy cập trực tiếp qua URL.
+- File được lưu trong private storage, không thể truy cập trực tiếp qua URL tĩnh của Nginx.
 
 ### Tên Tập tin
 Hệ thống tự động:
@@ -71,6 +73,211 @@ async with aiofiles.open(file_full_path, "wb") as f:
         # Ghi chunk vào đĩa
         await f.write(chunk)
         actual_size += len(chunk)
+```
+
+**Lợi ích**:
+- Không load toàn bộ file vào RAM.
+- Có thể xử lý file GB mà không gây OOM (Out of Memory).
+- Progress tracking chính xác cho UI.
+
+## Quy trình Xử lý Backend
+
+### Upload Flow (Streaming)
+
+1. **Validation (Client)**: Frontend kiểm tra định dạng và kích thước file trước khi gửi.
+2. **Validation (Server)**:
+   - Kiểm tra Rank người dùng (Rank 1+ mới được upload).
+   - Verify CSRF Token.
+   - Kiểm tra định dạng file từ extension.
+   - Kiểm tra dung lượng từ header (nếu có).
+3. **Path Generation**: Tạo thư mục theo ngày hiện tại (`storage/uploads/YYYY/MM/DD/`).
+4. **Filename Sanitization**:
+   - Dùng `python-slugify` để chuyển tên file thành slug an toàn.
+   - Thêm UUID vào đầu để đảm bảo tính duy nhất.
+5. **Streaming Upload**:
+   - Đọc file theo chunk 1MB (`CHUNK_SIZE = 1024 * 1024`).
+   - Ghi từng chunk vào đĩa.
+   - Theo dõi tổng dung lượng để phát hiện file vượt giới hạn.
+6. **Magic Bytes Detection**:
+   - Dùng `python-magic` để kiểm tra nội dung thực sự của file.
+   - Phát hiện file giả mạo (ví dụ: `.exe` đổi thành `.jpg`).
+7. **Database Record**: Lưu thông tin vào bảng `attachments` với:
+   - `filename`: Tên gốc của file.
+   - `file_path`: Đường dẫn tương đối (`storage/uploads/YYYY/MM/DD/uuid_filename.ext`).
+   - `content_type`: MIME type được phát hiện.
+   - `file_size`: Kích thước thực tế (bytes).
+   - `user_id`: ID người upload.
+8. **Response**: Trả về thông tin file với URL proxy `/backend/api/v1/uploads/file/{id}`.
+
+### Download Flow (Proxy)
+
+1. **Authentication**: 
+   - Kiểm tra token từ Header `Authorization: Bearer <token>`.
+   - HOẶC kiểm tra token từ Query Parameter `?token=<token>`.
+2. **Authorization**:
+   - Kiểm tra quyền: Chủ sở hữu file OR Rank >= 3.
+   - Nếu không có quyền → trả về 403 Forbidden.
+3. **File Lookup**:
+   - Lấy thông tin file từ database (table `attachments`).
+   - Nếu không tồn tại → trả về 404 Not Found.
+4. **Stream File**:
+   - Đọc file từ `storage/uploads/` đường dẫn.
+   - Sử dụng `FileResponse` để stream nội dung.
+   - Hỗ trợ method `GET` và `HEAD`.
+5. **Cache Headers**: FastAPI tự động thêm ETag, Cache-Control.
+
+### Delete Flow
+
+1. **Authentication**: Kiểm tra token.
+2. **Authorization**:
+   - Chủ sở hữu file OR Rank 5 (Admin).
+   - Nếu không có quyền → 403 Forbidden.
+3. **Delete Physical File**: Xóa file khỏi `storage/uploads/`.
+4. **Delete Database Record**: Xóa row khỏi bảng `attachments`.
+5. **Response**: Trả về success message.
+
+## Cách sử dụng (API)
+
+### Upload Tập tin
+- **Endpoint**: `POST /backend/api/v1/uploads/`
+- **Body**: `multipart/form-data` với key `file`.
+- **Headers**: Yêu cầu `Authorization` (Bearer Token) và `X-CSRF-Token`.
+- **Response**:
+  ```json
+  {
+    "id": 15,
+    "filename": "photo.jpg",
+    "file_path": "storage/uploads/2026/01/19/uuid_photo.jpg",
+    "content_type": "image/jpeg",
+    "file_size": 102400,
+    "user_id": 16,
+    "created_at": "2026-01-19T00:16:33",
+    "url": "/backend/api/v1/uploads/file/15"
+  }
+  ```
+
+### Truy cập Tập tin (Proxy Download)
+- **Endpoint**: `GET /backend/api/v1/uploads/file/{id}`
+- **Headers**: Yêu cầu `Authorization` (Bearer Token).
+- **Query Params**: Có thể dùng `?token=...` thay cho Header.
+- **Authorization**: Chỉ chủ sở hữu file hoặc Rank >= 3 mới được truy cập.
+- **Response**: Binary content của file với đúng MIME type.
+
+**Ví dụ Frontend:**
+```typescript
+import { uploadsApi } from '@/lib/api';
+
+// Get proxy URL (tự động đính kèm token nếu chạy ở client)
+const fileUrl = uploadsApi.getFileUrl(attachmentId); 
+// Kết quả: "/backend/api/v1/uploads/file/15?token=eyJhbG..."
+
+// Sử dụng trong thẻ img
+<img src={fileUrl} alt="Photo" />
+```
+
+### Lấy Metadata
+- **Endpoint**: `GET /backend/api/v1/uploads/{id}/`
+- **Headers**: `Authorization` (Bearer Token).
+- **Response**: JSON metadata của attachment (không bao gồm content).
+
+### Xóa Tập tin
+- **Endpoint**: `DELETE /backend/api/v1/uploads/{id}/`
+- **Headers**: `Authorization` (Bearer Token) và `X-CSRF-Token`.
+- **Authorization**: Chỉ chủ sở hữu file hoặc Rank 5 (Admin) mới được xóa.
+- **Response**: `{"message": "Xóa file thành công"}`.
+
+## Bảo mật & Chiến lược Lưu trữ
+
+### Ưu tiên Public cho SEO
+Hệ thống được thiết kế để **ưu tiên tối đa cho chế độ Public**. Điều này đảm bảo:
+- Hình ảnh thương hiệu (Logo, Favicon) luôn hiển thị đúng.
+- Ảnh bài viết được Google lập chỉ mục tốt nhất.
+- Giảm tải cho hệ thống xác thực khi truy cập tài nguyên tĩnh.
+
+**Quy tắc**: Chỉ sử dụng chế độ Private khi dữ liệu mang tính chất riêng tư cá nhân hoặc nhạy cảm về mặt y tế.
+
+### Phân loại chi tiết
+
+1. **Public (is_public=true)**:
+   - **Dùng cho**: Logo, Favicon, ảnh minh họa bài viết, banner, tài liệu hướng dẫn sử dụng công khai.
+   - **URL**: `/media/{id}/{slug}`.
+
+2. **Private (is_public=false)**:
+   - **Dùng cho**: Ảnh chụp bệnh lý, kết quả xét nghiệm, đơn thuốc cá nhân, hồ sơ bệnh án chi tiết.
+   - **URL**: `/backend/api/v1/uploads/file/{id}`.
+
+### Rate Limiting & DoS Prevention
+- **File Size Limit**: Giới hạn kích thước file (default: 10MB).
+- **Chunk Size**: 1MB chunks để tránh chiếm dụng RAM quá nhiều.
+- **Concurrent Uploads**: Có thể implement rate limiting nếu cần.
+
+## Troubleshooting
+
+### File Upload Failed (400 Bad Request)
+
+**Lỗi**: `Định dạng file .xyz không được phép`
+- **Giải pháp**: Kiểm tra cài đặt `upload_allowed_extensions` trong settings.
+- **Lệnh**: `SELECT value FROM settings WHERE key = 'upload_allowed_extensions';`
+
+**Lỗi**: `File quá lớn`
+- **Giải pháp**: Kiểm tra `upload_max_size_mb` trong settings.
+- **Lưu ý**: Client-side validation chạy trước, nhưng server cũng kiểm tra.
+
+### File Not Found (404) on Display
+
+**Lỗi**: Console show 404 for images
+- **Nguyên nhân**: File cũ dùng đường dẫn `/uploads/...` nhưng mới dùng `/backend/api/v1/uploads/file/{id}`
+- **Giải pháp**: Re-upload file hoặc migrate dữ liệu cũ.
+
+### Unauthorized (401) on Display
+
+**Lỗi**: Ảnh không hiển thị, network báo 401
+- **Nguyên nhân**: Thẻ `<img>` không gửi Header Authorization.
+- **Giải pháp**: Sử dụng `uploadsApi.getFileUrl(id)` để lấy URL có đính kèm `?token=...`.
+
+## Migration Guide (Dữ liệu cũ)
+
+Nếu bạn có file cũ trong `/public/uploads/` hoặc `/static/uploads/`:
+
+```bash
+# 1. Backup cũ data
+cp -r public/uploads public/uploads.backup
+
+# 2. Di chuyển file cũ sang storage
+mkdir -p storage/uploads/old
+mv public/uploads/* storage/uploads/old/
+
+# 3. Cập nhật database (lần lượt)
+# UPDATE attachments SET file_path = REPLACE(file_path, 'public/uploads', 'storage/uploads/old');
+
+# 4. Test và xóa backup khi ok
+# rm -rf public/uploads.backup
+```
+
+## Frontend Usage Example
+
+```typescript
+import { uploadsApi } from '@/lib/api';
+import FileUpload from '@/components/ui/FileUpload';
+
+// Upload component
+<FileUpload
+  onSuccess={(attachment) => {
+    console.log('Upload thành công:', attachment.url);
+    // attachment.url = "/backend/api/v1/uploads/file/15"
+  }}
+  maxSizeMB={10}
+  allowedExtensions={['jpg', 'png', 'pdf']}
+/>
+
+// Manual upload
+const handleManualUpload = async (file: File) => {
+  const response = await uploadsApi.uploadFile(file, (progress) => {
+    console.log(`Upload: ${progress}%`);
+  });
+  const fileUrl = uploadsApi.getFileUrl(response.data.id);
+  // Sử dụng fileUrl trong <Image>, <a>, v.v.
+};
 ```
 
 **Lợi ích**:

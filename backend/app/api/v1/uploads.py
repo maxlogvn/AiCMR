@@ -1,25 +1,29 @@
 import os
 import uuid
 from datetime import datetime
+from typing import Optional
 
 import aiofiles
 import magic
-from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status, Query
+from fastapi.responses import FileResponse
 from loguru import logger
 from slugify import slugify
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
-from app.api.deps import get_current_active_user
+from app.api.deps import get_current_active_user, get_db
 from app.core.config import get_settings
-from app.core.database import get_db
-from app.core.security import validate_csrf
+from app.core.security import validate_csrf, verify_token
 from app.crud import crud_attachment, crud_settings
 from app.models.user import User
 from app.schemas.attachment import AttachmentCreate, AttachmentResponse
 
 router = APIRouter()
 settings = get_settings()
+
+# Khởi tạo magic instance toàn cục để tối ưu hiệu năng
+mime_inspector = magic.Magic(mime=True)
 
 # Chunk size for streaming (1MB)
 CHUNK_SIZE = 1024 * 1024
@@ -31,10 +35,54 @@ def sanitize_filename(filename: str) -> str:
     return f"{slugify(name)}{ext.lower()}"
 
 
+async def get_user_from_token_or_query(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    token: Optional[str] = Query(None),
+) -> User:
+    """
+    Lấy user từ Header Authorization hoặc Query Parameter 'token'.
+    Hỗ trợ cho thẻ <img> không gửi được header.
+    """
+    # 1. Thử lấy từ Header (nếu có)
+    auth_header = request.headers.get("Authorization")
+    token_str = None
+    
+    if auth_header and auth_header.startswith("Bearer "):
+        token_str = auth_header.replace("Bearer ", "")
+    elif token:
+        token_str = token
+
+    if not token_str:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Verify token và lấy user
+    try:
+        # verify_token là async function
+        token_data = await verify_token(token_str)
+        if token_data.sub is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+            
+        result = await db.execute(select(User).where(User.id == token_data.sub))
+        user = result.scalar_one_or_none()
+        
+        if user is None or not user.is_active:
+            raise HTTPException(status_code=401, detail="User not found or inactive")
+            
+        return user
+    except Exception:
+        raise HTTPException(status_code=401, detail="Could not validate credentials")
+
+
 @router.post("/", response_model=AttachmentResponse)
 async def upload_file(
     request: Request,
     file: UploadFile = File(...),
+    is_public: bool = Query(True),  # Mặc định Public để tối ưu SEO
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
     csrf_token: str = Depends(validate_csrf),
@@ -109,11 +157,7 @@ async def upload_file(
         )
 
     # 7. Kiểm tra Magic Bytes (Nội dung thực sự của file)
-    mime = magic.Magic(mime=True)
-    detected_mime = mime.from_file(file_full_path)
-    # Lưu ý: Một số file text/plain có thể là bất cứ thứ gì, 
-    # nhưng ít nhất chúng ta biết nó không phải malware binary nếu mong đợi text.
-    # Bước này có thể mở rộng tùy theo yêu cầu khắt khe về bảo mật.
+    detected_mime = mime_inspector.from_file(file_full_path)
 
     # 8. Lưu thông tin vào Database
     relative_path = os.path.join(settings.UPLOAD_DIR, date_path, unique_filename)
@@ -122,28 +166,68 @@ async def upload_file(
         file_path=relative_path,
         content_type=detected_mime or file.content_type,
         file_size=actual_size,
+        is_public=is_public,
         user_id=current_user.id,
     )
 
     db_obj = await crud_attachment.create(db, attachment_in)
+    # Refresh để đảm bảo lấy đúng dữ liệu từ DB (bao gồm is_public)
+    await db.refresh(db_obj)
 
     # 9. Trả về kết quả
     response_obj = AttachmentResponse.model_validate(db_obj)
-    # URL proxy mới để bảo mật (bao gồm prefix /backend cho Nginx)
-    response_obj.url = f"/backend/api/v1/uploads/file/{db_obj.id}"
+    
+    if db_obj.is_public:
+        # Trả về URL SEO đẹp qua prefix /media/ (sẽ cấu hình ở Nginx)
+        name_slug = slugify(os.path.splitext(db_obj.filename)[0])
+        ext = os.path.splitext(db_obj.filename)[1]
+        response_obj.url = f"/media/{db_obj.id}/{name_slug}{ext}"
+    else:
+        # File private giữ nguyên proxy URL yêu cầu token
+        response_obj.url = f"/backend/api/v1/uploads/file/{db_obj.id}"
 
     return response_obj
 
 
+@router.get("/p/{id}/{slug}")
+@router.head("/p/{id}/{slug}")
+async def get_public_file(
+    id: int,
+    slug: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Truy cập file công khai (SEO Friendly).
+    Không yêu cầu authentication.
+    """
+    db_obj = await crud_attachment.get(db, id)
+    if not db_obj:
+        raise HTTPException(status_code=404, detail="File không tồn tại")
+
+    if not db_obj.is_public:
+        raise HTTPException(status_code=403, detail="Tệp tin này không được phép truy cập công khai")
+
+    full_path = os.path.join(os.getcwd(), db_obj.file_path)
+    if not os.path.exists(full_path):
+        raise HTTPException(status_code=404, detail="Tệp tin vật lý đã bị xóa")
+
+    return FileResponse(
+        path=full_path,
+        media_type=db_obj.content_type,
+        filename=db_obj.filename
+    )
+
+
 @router.get("/file/{id}")
+@router.head("/file/{id}")
 async def get_file_content(
     id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_user_from_token_or_query),
 ):
     """
     Proxy Download: Kiểm tra quyền và stream file trả về.
-    Bảo vệ file khỏi việc truy cập trực tiếp qua URL tĩnh.
+    Hỗ trợ cả GET và HEAD.
     """
     db_obj = await crud_attachment.get(db, id)
     if not db_obj:
@@ -180,7 +264,16 @@ async def get_attachment_info(
         raise HTTPException(status_code=403, detail="Không có quyền truy cập thông tin này")
 
     response_obj = AttachmentResponse.model_validate(db_obj)
-    response_obj.url = f"/backend/api/v1/uploads/file/{db_obj.id}"
+    
+    if db_obj.is_public:
+        # Trả về URL SEO đẹp qua prefix /media/ cho file public
+        name_slug = slugify(os.path.splitext(db_obj.filename)[0])
+        ext = os.path.splitext(db_obj.filename)[1]
+        response_obj.url = f"/media/{db_obj.id}/{name_slug}{ext}"
+    else:
+        # File private giữ nguyên proxy URL yêu cầu token
+        response_obj.url = f"/backend/api/v1/uploads/file/{db_obj.id}"
+        
     return response_obj
 
 
