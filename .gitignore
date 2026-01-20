@@ -36,5 +36,4 @@ nginx/ssl/
 storage/
 
 # Agent Plans
-.opencode/
 .tmp/
