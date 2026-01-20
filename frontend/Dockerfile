@@ -4,13 +4,14 @@ FROM node:20-alpine
 # Set working directory
 WORKDIR /app
 
-# Copy package.json và package-lock.json (nếu có)
+# Copy package.json và package-lock.json trước - chỉ rebuild khi thay đổi dependencies
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+# Install dependencies với BuildKit cache mount
+RUN --mount=type=cache,target=/root/.npm \
+    npm install
 
-# Copy application code
+# Copy application code - rebuild khi thay đổi code
 COPY . .
 
 # Expose port 3000 (Next.js default port)

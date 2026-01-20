@@ -10,6 +10,9 @@ Thumbs.db
 .env
 .env.local
 
+# CLI Config (tùy chọn - giữ local để config riêng)
+scripts/.cli-config.sh
+
 # IDEs
 .vscode/
 .idea/
@@ -37,3 +40,6 @@ storage/
 
 # Agent Plans
 .tmp/
+
+# Documentation (keep local)
+docs/
