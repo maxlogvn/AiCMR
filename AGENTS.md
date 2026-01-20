@@ -1,124 +1,102 @@
-# AGENTS.md - Hướng dẫn cho AI Coding Agents
+# Nguyên Tắc Cốt Lõi cho Agents
 
-Quản trọng và best practices để AI Agents làm việc hiệu quả trong dự án AiCMR.
-
-## 🎯 Quản Trọng AI Agents
-
-1. **Truy cập Context**: Luôn đọc `.context/` trước khi code
-2. **Quy chuẩn Code**: Tuân theo Python/TypeScript standards
-3. **Docker Only**: Tất cả lệnh phải chạy qua Docker Compose
-4. **Approval Gates**: Luôn yêu cầu phê duyệt trước khi xóa/deploy
+**Core**: Agents luôn giao tiếp và viết tài liệu bằng tiếng Việt, ưu tiên code tự giải thích, chỉ comment khi cần thiết.
 
 ---
 
-## 🛠 Quick Commands Reference
+## Giao Tiếp với Người Dùng
 
-### Backend (FastAPI)
-```bash
-# Cài đặt thư viện
-docker compose exec backend pip install -r requirements.txt
+**Luôn sử dụng tiếng Việt** trong mọi tương tác.
 
-# Formatting
-docker compose exec backend black app
+### Quy Tắc
+- ✅ Giao tiếp bằng tiếng Việt, rõ ràng, dễ hiểu
+- ✅ Giải thích quyết định và hành động
+- ✅ Cung cấp thông tin đầy đủ, không giả định
 
-# Lint
-docker compose exec backend ruff check app
-
-# Tests
-docker compose exec backend pytest
-
-# Migrations
-docker compose exec backend alembic upgrade head
 ```
-
-### Frontend (Next.js)
-```bash
-# Cài đặt thư viện
-docker compose exec frontend npm install
-
-# Lint
-docker compose exec frontend npm run lint
-
-# Build (BẮT BUỘC trước khi commit)
-docker compose exec frontend npm run build
-
-# Thêm shadcn component
-docker compose exec frontend npx shadcn@latest add [component]
-```
-
-### Docker Management
-```bash
-# Status
-docker compose ps
-
-# Logs
-docker compose logs -f [backend|frontend]
-
-# Restart
-docker compose restart [backend|frontend|db|redis]
-
-# Clean rebuild
-docker compose up -d --build
+✅ Tốt: "Đã hoàn thành cài đặt dependencies. Chạy tests?"
+❌ Kém: "Dependencies installed. Run tests?"
 ```
 
 ---
 
-## 📐 Code Style Quick Ref
+## Tài Liệu
 
-**Backend (Python)**:
-- Class: `PascalCase`
-- Function/Variable: `snake_case`
-- API Endpoint: `kebab-case`
-- Type hints: BẮT BUỘC
-- Async cho I/O
+**Tất cả tài liệu viết bằng tiếng Việt**.
 
-**Frontend (TypeScript)**:
-- Component File: `PascalCase.tsx`
-- Hook/Util: `camelCase.ts`
-- Props: `NameProps`
-- Server Components mặc định
-- `"use client"` khi cần state/hooks
+### Quy Tắc
+- ✅ Documentation bằng tiếng Việt
+- ✅ Cấu trúc rõ ràng, có mục lục
+- ✅ Cung cấp ví dụ minh họa
+- ✅ Giữ tài liệu đồng bộ với code
 
 ---
 
-## 🔐 Security Rules
+## Viết Mã Nguồn
 
-1. **Secrets**: KHÔNG commit `.env` hoặc hardcode
-2. **Rank System**: Check quyền (0: Guest → 5: Admin)
-3. **CSRF**: POST/PUT/PATCH/DELETE cần `X-CSRF-Token`
-4. **Storage**: Ưu tiên `is_public=true` (SEO) - Chỉ `is_public=false` cho dữ liệu nhạy cảm
+**Ưu tiên dễ đọc hiểu, quan trọng hàng đầu**.
 
----
+### Quy Tắc
+- ✅ Code tự giải thích (self-documenting)
+- ✅ Tên biến, hàm có ý nghĩa rõ ràng (tiếng Việt hoặc Anh)
+- ✅ Cấu trúc đơn giản, tránh lồng sâu
+- ✅ Tách nhỏ functions (< 50 dòng)
+- ✅ Tuân thủ modular, functional, maintainable (xem code-quality.md)
 
-## 👤 Test Accounts (Password: `User@123456`)
+### Ví dụ
+```javascript
+// ✅ Tốt - Tên rõ ràng, đơn giản
+const danhSachNguoiDung = users.filter(u => u.isActive);
+const tinhTong = (a, b) => a + b;
 
-- Admin: `admin_test@aicmr.com` (Rank 5)
-- Mod: `mod@aicmr.com` (Rank 3)
-- Member: `member@aicmr.com` (Rank 1)
-- Guest: `guest@aicmr.com` (Rank 0)
-
----
-
-## 📚 Context Access
-
-Để hiểu sâu:
-- Docker workflow: `.context/concepts/docker-workflow.md`
-- Code style: `.context/concepts/code-style.md` & `.context/concepts/code-style-frontend.md`
-- Security: `.context/concepts/security.md` & `.context/concepts/authentication-system.md`
-- Troubleshooting: `.context/errors/common-errors.md`
-
-Full context: [/.context/](./.context/)
+// ❌ Kém - Tên mơ hồ, phức tạp
+const data = users.filter(function(user) { return user.isActive === true; });
+```
 
 ---
 
-## ⚠️ Common Issues
+## Comment
 
-- **401**: Refresh token tự động
-- **403**: Check CSRF token hoặc Rank
-- **Tests**: Đảm bảo `db` và `redis` healthy
-- **DB connection**: `docker compose restart db`
-- **Redis connection**: `docker compose restart redis`
+**Chỉ comment khi thực sự cần thiết**.
+
+### Khi Nên Comment
+- ✅ Giải thích TẠI SAO (why), không phải CÁ GÌ (what)
+- ✅ Ghi chú quyết định quan trọng, edge cases, rủi ro
+- ✅ Giải thích thuật toán phức tạp
+
+### Khi KHÔNG Nên Comment
+- ❌ Code đã tự giải thích
+- ❌ Lặp lại những gì code đang làm
+- ❌ Code xấu → thay vì comment thì refactor
+
+### Quy Tắc
+- ✅ Comment bằng **tiếng Việt**, ngắn gọn
+- ✅ Cập nhật khi code thay đổi
+
+### Ví dụ
+```javascript
+// ✅ Tốt - Giải thích tại sao
+// Sử dụng Set để loại bỏ trùng lặp nhanh hơn O(1) lookup
+const uniqueUsers = [...new Set(userIds)];
+
+// ✅ Tốt - Cảnh báo rủi ro
+// CẢNH BÁO: Hàm này không validate input
+const processUser = (user) => { /* ... */ };
+
+// ❌ Kém - Lặp lại code
+// Filter các users đang active
+const activeUsers = users.filter(u => u.isActive);
+```
 
 ---
 
-*Chi tiết: [.context/](./.context/) - 25 files chi tiết*
+## Tổng Kết
+
+1. **Giao tiếp**: Luôn dùng tiếng Việt
+2. **Tài liệu**: Bằng tiếng Việt, cấu trúc rõ ràng
+3. **Code**: Đọc hiểu là quan trọng nhất, code tự giải thích
+4. **Comment**: Chỉ khi cần thiết, giải thích tại sao
+
+**Quy tắc vàng**: Code khó hiểu → refactor trước khi comment.
+
+**Reference**: [code-quality.md](.opencode/context/core/standards/code-quality.md)
