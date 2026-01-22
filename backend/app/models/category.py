@@ -13,6 +13,11 @@ class Category(Base):
     description = Column(Text, nullable=True)
     parent_id = Column(Integer, ForeignKey("categories.id", ondelete="SET NULL"), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False, index=True)
+    icon = Column(String(50), nullable=True)  # Icon name/class
+    color = Column(String(7), nullable=True)  # Hex color (#FF0000)
+    post_count = Column(Integer, default=0, nullable=False)  # Cache post count
+    display_order = Column(Integer, default=0, nullable=False)  # Sort order
+    show_in_menu = Column(Boolean, default=True, nullable=False)  # Show in navigation menu
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     # Self-referential relationship cho hierarchical structure
@@ -24,4 +29,5 @@ class Category(Base):
     # Composite indexes
     __table_args__ = (
         Index("idx_category_parent", "parent_id", "is_active"),
+        Index("idx_category_order", "display_order"),
     )

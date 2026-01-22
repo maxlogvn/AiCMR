@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 
@@ -9,6 +9,10 @@ class CategoryBase(BaseModel):
     description: Optional[str] = None
     parent_id: Optional[int] = None
     is_active: bool = True
+    icon: Optional[str] = None
+    color: Optional[str] = Field(None, pattern=r"^#[0-9A-Fa-f]{6}$")
+    display_order: int = 0
+    show_in_menu: bool = True
 
 
 class CategoryCreate(CategoryBase):
@@ -21,10 +25,16 @@ class CategoryUpdate(BaseModel):
     description: Optional[str] = None
     parent_id: Optional[int] = None
     is_active: Optional[bool] = None
+    icon: Optional[str] = None
+    color: Optional[str] = Field(None, pattern=r"^#[0-9A-Fa-f]{6}$")
+    display_order: Optional[int] = None
+    show_in_menu: Optional[bool] = None
 
 
 class CategoryResponse(CategoryBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    post_count: int
     created_at: datetime
+    children: List['CategoryResponse'] = []

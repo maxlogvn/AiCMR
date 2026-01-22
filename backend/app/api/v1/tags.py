@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Query
 from fastapi_pagination import Page, paginate
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi_cache import FastAPICache
 from fastapi_cache.decorator import cache
@@ -24,6 +25,8 @@ from app.crud import (
     update_tag,
     delete_tag,
     get_trending_tags,
+    get_unused_tags,
+    merge_tags,
 )
 from loguru import logger
 
@@ -88,6 +91,50 @@ async def get_trending_tags_endpoint(
 
 
 # ==================== ADMIN ENDPOINTS ====================
+
+
+class MergeRequest(BaseModel):
+    """Request body for merging tags"""
+    source_id: int
+    target_id: int
+
+
+@router.post("/merge")
+async def merge_tags_endpoint(
+    request: Request,
+    merge_data: MergeRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_min_rank(ADMIN_RANK)),
+    csrf_token: str = Depends(validate_csrf),
+):
+    """Merge source tag into target tag (admin only)."""
+    if merge_data.source_id == merge_data.target_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Source and target tags cannot be the same"
+        )
+
+    success = await merge_tags(db=db, source_id=merge_data.source_id, target_id=merge_data.target_id)
+
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to merge tags"
+        )
+
+    logger.info(f"Admin {current_user.email} merged tag {merge_data.source_id} into {merge_data.target_id}")
+    return {"message": "Tags merged successfully"}
+
+
+@router.get("/unused", response_model=list[TagResponse])
+async def get_unused_tags_endpoint(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_min_rank(ADMIN_RANK)),
+):
+    """Get all unused tags (admin only)."""
+    unused_tags = await get_unused_tags(db=db)
+    return unused_tags
 
 
 @router.post("/", response_model=TagResponse)

@@ -4,13 +4,14 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useMyPosts } from '@/hooks/usePosts';
 import { useDeleteMyPost, useUpdateMyPostStatus } from '@/hooks/usePosts';
+import { useUser } from '@/hooks/useUser';
 import { PostList, PostPagination } from '@/components/post';
 import { FilterSidebar } from '@/components/post';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card-wrapped';
-import { FileText, Plus, AlertTriangle, PenSquare } from 'lucide-react';
+import { FileText, Plus, AlertTriangle, PenSquare, LayoutDashboard } from 'lucide-react';
 import type { GetPostsParams, PostFilters, Post } from '@/types/post';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useToast } from '@/hooks/useToast';
@@ -21,6 +22,7 @@ export default function MyPostsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  const { user } = useUser();
 
   const [filters, setFilters] = useState<PostFilters>({});
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);

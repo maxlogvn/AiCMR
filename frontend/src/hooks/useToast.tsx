@@ -12,11 +12,11 @@ import Toast from "@/components/ui/Toast";
 type ToastType = "success" | "error" | "info" | "warning";
 
 interface ToastContextType {
-  showToast: (type: ToastType, message: string) => void;
-  showSuccess: (message: string) => void;
-  showError: (message: string) => void;
-  showInfo: (message: string) => void;
-  showWarning: (message: string) => void;
+  showToast: (type: ToastType, message: string, duration?: number) => void;
+  showSuccess: (message: string, duration?: number) => void;
+  showError: (message: string, duration?: number) => void;
+  showInfo: (message: string, duration?: number) => void;
+  showWarning: (message: string, duration?: number) => void;
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
@@ -25,26 +25,31 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const [toast, setToast] = useState<{
     type: ToastType;
     message: string;
+    duration?: number;
   } | null>(null);
 
-  const showToast = useCallback((type: ToastType, message: string) => {
-    setToast({ type, message });
-  }, []);
+  const showToast = useCallback(
+    (type: ToastType, message: string, duration?: number) => {
+      console.log(`[useToast] Showing ${type}:`, message);
+      setToast({ type, message, duration });
+    },
+    [],
+  );
 
   const showSuccess = useCallback(
-    (message: string) => showToast("success", message),
+    (message: string, duration?: number) => showToast("success", message, duration),
     [showToast],
   );
   const showError = useCallback(
-    (message: string) => showToast("error", message),
+    (message: string, duration?: number) => showToast("error", message, duration || 8000),
     [showToast],
   );
   const showInfo = useCallback(
-    (message: string) => showToast("info", message),
+    (message: string, duration?: number) => showToast("info", message, duration),
     [showToast],
   );
   const showWarning = useCallback(
-    (message: string) => showToast("warning", message),
+    (message: string, duration?: number) => showToast("warning", message, duration),
     [showToast],
   );
 
@@ -57,6 +62,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         <Toast
           type={toast.type}
           message={toast.message}
+          duration={toast.duration}
           onClose={() => setToast(null)}
         />
       )}

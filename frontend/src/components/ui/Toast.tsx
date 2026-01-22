@@ -12,20 +12,21 @@ interface ToastProps {
 export default function Toast({
   type = "info",
   message,
-  duration = 3000,
+  duration = type === "error" ? 8000 : 5000, // Lỗi hiển thị 8 giây, khác 5 giây
   onClose,
 }: ToastProps) {
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
     if (duration > 0) {
+      console.log(`[Toast] Showing ${type} message for ${duration}ms:`, message);
       const timer = setTimeout(() => {
         setVisible(false);
         onClose?.();
       }, duration);
       return () => clearTimeout(timer);
     }
-  }, [duration, onClose]);
+  }, [duration, onClose, type, message]);
 
   if (!visible) return null;
 

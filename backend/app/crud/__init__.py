@@ -31,6 +31,8 @@ from .crud_category import (
     delete_category,
     get_with_post_count,
     get_tree_structure,
+    reorder_categories,
+    update_post_count as update_category_post_count,
 )
 from .crud_tag import (
     get_tag_by_id,
@@ -40,6 +42,9 @@ from .crud_tag import (
     update_tag,
     delete_tag,
     get_trending_tags,
+    get_unused_tags,
+    merge_tags,
+    update_post_count as update_tag_post_count,
 )
 from .crud_post_metadata import (
     get_metadata,
@@ -83,6 +88,8 @@ __all__ = [
     "delete_category",
     "get_with_post_count",
     "get_tree_structure",
+    "reorder_categories",
+    "update_category_post_count",
     # Tag CRUD
     "get_tag_by_id",
     "get_tag_by_slug",
@@ -91,6 +98,9 @@ __all__ = [
     "update_tag",
     "delete_tag",
     "get_trending_tags",
+    "get_unused_tags",
+    "merge_tags",
+    "update_tag_post_count",
     # PostMetadata CRUD
     "get_metadata",
     "get_all_metadata",

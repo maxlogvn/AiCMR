@@ -1,11 +1,12 @@
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, update
 from fastapi_cache import FastAPICache
 from fastapi_cache.decorator import cache
 
 from app.models.tag import Tag
 from app.schemas.tag import TagCreate, TagUpdate
+from loguru import logger
 
 
 @cache(expire=300, namespace="tag")
@@ -40,12 +41,12 @@ async def get_all_tags(
     # Đếm tổng số records
     count_query = select(func.count()).select_from(Tag)
     total_result = await db.execute(count_query)
-    total = total_result.scalar()
+    total = total_result.scalar() or 0
 
     # Lấy tags với pagination và sorting
-    query = select(Tag).order_by(Tag.name).offset(skip).limit(limit)
+    query = select(Tag).order_by(Tag.post_count.desc(), Tag.name.asc()).offset(skip).limit(limit)
     result = await db.execute(query)
-    tags = result.scalars().all()
+    tags = list(result.scalars().all())
 
     return tags, total
 
@@ -58,7 +59,9 @@ async def create_tag(
     db_obj = Tag(
         name=obj_in.name,
         slug=obj_in.slug,
-        color=obj_in.color
+        color=obj_in.color,
+        description=obj_in.description,
+        post_count=0
     )
 
     db.add(db_obj)
@@ -129,4 +132,64 @@ async def get_trending_tags(
         select(Tag).join(subq, Tag.id == subq.c.tag_id)
     )
 
-    return result.scalars().all()
+    return list(result.scalars().all())
+
+
+async def update_post_count(db: AsyncSession, tag_id: int, increment: bool = True):
+    """Cập nhật post_count cache cho tag"""
+    tag = await get_tag_by_id(db, tag_id)
+    if tag:
+        tag.post_count += 1 if increment else -1
+        await db.flush()
+
+
+async def get_unused_tags(db: AsyncSession) -> list[Tag]:
+    """Lấy các tag không được sử dụng (post_count = 0)"""
+    result = await db.execute(select(Tag).where(Tag.post_count == 0).order_by(Tag.name.asc()))
+    return list(result.scalars().all())
+
+
+async def merge_tags(db: AsyncSession, source_id: int, target_id: int) -> bool:
+    """Gộp source tag vào target tag
+
+    Args:
+        db: Database session
+        source_id: Tag ID to merge from
+        target_id: Tag ID to merge into
+
+    Returns:
+        bool: Success status
+    """
+    from app.models.post_tag import PostTag
+
+    try:
+        # Get post counts for update
+        source_tag = await get_tag_by_id(db, source_id)
+        if not source_tag:
+            return False
+
+        target_tag = await get_tag_by_id(db, target_id)
+        if not target_tag:
+            return False
+
+        # Move all posts from source to target
+        await db.execute(
+            update(PostTag)
+            .where(PostTag.tag_id == source_id)
+            .values(tag_id=target_id)
+        )
+
+        # Update target tag post count
+        target_tag.post_count += source_tag.post_count
+
+        # Delete source tag
+        await db.delete(source_tag)
+
+        await db.flush()
+        await FastAPICache.clear(namespace="tag")
+
+        logger.info(f"Merged tag {source_id} into {target_id}")
+        return True
+    except Exception as e:
+        logger.error(f"Error merging tags: {e}")
+        return False

@@ -8,9 +8,12 @@ export interface Category {
   slug: string;
   description: string | null;
   parent_id: number | null;
+  is_active: boolean;
   icon: string | null;
   color: string | null;
   post_count: number;
+  display_order: number;
+  show_in_menu: boolean;
   created_at: string;
   updated_at: string;
   children?: Category[];
@@ -164,6 +167,8 @@ export interface CreateCategoryRequest {
   parent_id?: number;
   icon?: string;
   color?: string;
+  display_order?: number;
+  show_in_menu?: boolean;
 }
 
 export interface UpdateCategoryRequest {
@@ -173,6 +178,8 @@ export interface UpdateCategoryRequest {
   parent_id?: number;
   icon?: string;
   color?: string;
+  display_order?: number;
+  show_in_menu?: boolean;
 }
 
 export interface CreateTagRequest {
@@ -187,6 +194,15 @@ export interface UpdateTagRequest {
   slug?: string;
   description?: string;
   color?: string;
+}
+
+export interface ReorderRequest {
+  items: Array<{id: number, order: number}>;
+}
+
+export interface MergeRequest {
+  source_id: number;
+  target_id: number;
 }
 
 // Bulk Operations

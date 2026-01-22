@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,6 +24,36 @@ export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
   const { showSuccess, showError } = useToast();
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const getErrorMessage = (error: unknown): string => {
+    const fallback = "Đăng nhập thất bại";
+    if (!error) return fallback;
+    if (typeof error === "string") return error;
+    if (typeof error === "object") {
+      const anyError = error as {
+        message?: unknown;
+        response?: { data?: { detail?: unknown } };
+      };
+      const detail = anyError.response?.data?.detail;
+      if (typeof detail === "string") return detail;
+      if (Array.isArray(detail)) {
+        const msgs = detail
+          .map((d) => (d && typeof d === "object" ? (d as { msg?: unknown }).msg : null))
+          .filter((m): m is string => typeof m === "string");
+        if (msgs.length > 0) return msgs.join("\n");
+      }
+      if (detail != null) {
+        try {
+          return JSON.stringify(detail);
+        } catch {
+          return String(detail);
+        }
+      }
+      if (typeof anyError.message === "string") return anyError.message;
+    }
+    return fallback;
+  };
 
   const {
     register,
@@ -34,30 +65,58 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginRequest) => {
     try {
+      setFormError(null);
+      console.log("[LoginPage] Submitting login form for:", data.email);
       await login(data);
+      console.log("[LoginPage] Login succeeded, showing success toast");
       showSuccess("Đăng nhập thành công!");
 
-      const response = await fetch("/backend/api/v1/users/me", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-        },
-      });
+      // Fetch user info với retry logic
+      let retries = 0;
+      const maxRetries = 3;
+      let user = null;
 
-      if (response.ok) {
-        const user = await response.json();
-        if (user.rank >= 3) {
-          router.push("/dashboard/stats");
-        } else {
-          router.push("/");
+      while (retries < maxRetries && !user) {
+        try {
+          const response = await fetch("/backend/api/v1/users/me", {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+            },
+          });
+
+          if (response.ok) {
+            user = await response.json();
+            break;
+          } else if (response.status === 401) {
+            console.warn("[LoginPage] User fetch 401, retrying...");
+            retries++;
+            await new Promise(resolve => setTimeout(resolve, 500));
+          } else {
+            console.error("[LoginPage] User fetch failed with status:", response.status);
+            break;
+          }
+        } catch (fetchError) {
+          console.error("[LoginPage] User fetch error:", fetchError);
+          retries++;
+          if (retries < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
         }
+      }
+
+      if (user && user.rank >= 3) {
+        console.log("[LoginPage] User has admin rank, redirecting to dashboard");
+        router.push("/dashboard/stats");
       } else {
+        console.log("[LoginPage] User is regular user, redirecting to home");
         router.push("/");
       }
     } catch (error) {
-      showError(
-        (error as { response?: { data?: { detail?: string } } })?.response?.data
-          ?.detail || "Đăng nhập thất bại",
-      );
+      console.error("[LoginPage] Login error:", error);
+      const message = getErrorMessage(error);
+      setFormError(message);
+      console.log("[LoginPage] Showing error toast with message:", message);
+      showError(message, 8000); // Lỗi hiển thị 8 giây
     }
   };
 
@@ -88,6 +147,11 @@ export default function LoginPage() {
         <Button type="submit" isLoading={isSubmitting} fullWidth>
           Đăng nhập
         </Button>
+        {formError && (
+          <div className="text-sm text-red-600 dark:text-red-400 whitespace-pre-line">
+            {formError}
+          </div>
+        )}
 
         <div className="flex flex-col items-center space-y-2 text-sm">
           <div className="text-zinc-600 dark:text-zinc-400">

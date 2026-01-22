@@ -7,6 +7,7 @@ from fastapi_cache.decorator import cache
 
 from app.models.category import Category
 from app.schemas.category import CategoryCreate, CategoryUpdate
+from loguru import logger
 
 
 @cache(expire=300, namespace="category")
@@ -56,13 +57,13 @@ async def get_all_categories(
     # Đếm tổng số records
     count_query = select(func.count()).select_from(query.subquery())
     total_result = await db.execute(count_query)
-    total = total_result.scalar()
+    total = total_result.scalar() or 0
 
     # Thêm pagination và sorting
-    query = query.order_by(Category.name).offset(skip).limit(limit)
+    query = query.order_by(Category.display_order.asc(), Category.name.asc()).offset(skip).limit(limit)
 
     result = await db.execute(query)
-    categories = result.scalars().all()
+    categories = list(result.scalars().all())
 
     return categories, total
 
@@ -77,7 +78,12 @@ async def create_category(
         slug=obj_in.slug,
         description=obj_in.description,
         parent_id=obj_in.parent_id,
-        is_active=obj_in.is_active
+        is_active=obj_in.is_active,
+        icon=obj_in.icon,
+        color=obj_in.color,
+        display_order=obj_in.display_order,
+        show_in_menu=obj_in.show_in_menu,
+        post_count=0
     )
 
     db.add(db_obj)
@@ -127,14 +133,14 @@ async def get_with_post_count(db: AsyncSession, category_id: int) -> Optional[Ca
     if not category:
         return None
 
-    # Đếm số bài viết trong chuyên mục (bao gồm các chuyên mục con)
+    # Đếm số bài viết trực tiếp trong category
     result = await db.execute(
         select(func.count()).select_from(Post).where(Post.category_id == category_id)
     )
-    post_count = result.scalar()
+    direct_count = result.scalar() or 0
 
-    # Lưu post_count vào một attribute
-    category.post_count = post_count
+    # Update post_count
+    category.post_count = direct_count
 
     return category
 
@@ -142,7 +148,7 @@ async def get_with_post_count(db: AsyncSession, category_id: int) -> Optional[Ca
 async def get_tree_structure(db: AsyncSession) -> list[Category]:
     """Lấy cấu trúc cây của chuyên mục"""
     # Lấy tất cả chuyên mục
-    result = await db.execute(select(Category).order_by(Category.name))
+    result = await db.execute(select(Category).order_by(Category.display_order.asc(), Category.name.asc()))
     all_categories = result.scalars().all()
 
     # Build tree structure
@@ -160,3 +166,40 @@ async def get_tree_structure(db: AsyncSession) -> list[Category]:
             root_categories.append(category)
 
     return root_categories
+
+
+async def update_post_count(db: AsyncSession, category_id: int, increment: bool = True):
+    """Cập nhật post_count cache cho category"""
+    category = await get_category_by_id(db, category_id)
+    if category:
+        category.post_count += 1 if increment else -1
+        await db.flush()
+
+
+async def reorder_categories(db: AsyncSession, items: list[dict]) -> bool:
+    """Reorder categories based on display_order
+
+    Args:
+        db: Database session
+        items: List of {id: int, order: int}
+
+    Returns:
+        bool: Success status
+    """
+    try:
+        for item in items:
+            category_id = item.get('id')
+            display_order = item.get('order')
+
+            category = await get_category_by_id(db, category_id)
+            if category:
+                category.display_order = display_order
+
+        await db.flush()
+        await FastAPICache.clear(namespace="category")
+
+        logger.info(f"Reordered {len(items)} categories")
+        return True
+    except Exception as e:
+        logger.error(f"Error reordering categories: {e}")
+        return False

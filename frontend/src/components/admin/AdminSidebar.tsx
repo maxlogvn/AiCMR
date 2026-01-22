@@ -8,6 +8,8 @@ import {
   BarChart3,
   User,
   FileText,
+  FolderTree,
+  Tag,
 } from "lucide-react";
 import Link from "next/link";
 import { useUser } from "@/hooks/useUser";
@@ -44,6 +46,18 @@ export default function AdminSidebar() {
       icon: <FileText className="h-5 w-5" />,
       href: "/dashboard/posts",
       minRank: 1, // Changed from 3 to 1 - available for all users
+    },
+    {
+      label: "Chuyên mục",
+      icon: <FolderTree className="h-5 w-5" />,
+      href: "/dashboard/categories",
+      minRank: 3,
+    },
+    {
+      label: "Thẻ",
+      icon: <Tag className="h-5 w-5" />,
+      href: "/dashboard/tags",
+      minRank: 3,
     },
     {
       label: "Cấu hình hệ thống",

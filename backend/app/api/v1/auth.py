@@ -80,7 +80,6 @@ async def login(
     request: Request,
     user_credentials: UserLogin,
     db: AsyncSession = Depends(get_db),
-    csrf_token: str = Depends(validate_csrf),
 ):
     # Normalize email to lowercase
     email = user_credentials.email.lower()

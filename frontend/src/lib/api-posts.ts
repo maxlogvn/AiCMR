@@ -16,6 +16,8 @@ import type {
   BulkArchiveRequest,
   BulkDeleteRequest,
   PostStatus,
+  ReorderRequest,
+  MergeRequest,
 } from '@/types/post';
 
 // ==================== Public Posts ====================
@@ -89,6 +91,12 @@ export const postsApi = {
     api.post('/posts/bulk/delete', { post_ids: ids } as BulkDeleteRequest),
 
   // ==================== Admin/Moderator Categories ====================
+  getCategoryWithStats: (id: number) =>
+    api.get<Category>(`/categories/${id}`),
+
+  reorderCategories: (items: ReorderRequest) =>
+    api.post('/categories/reorder', items),
+
   createCategory: (data: CreateCategoryRequest) =>
     api.post<Category>('/categories/', data),
 
@@ -99,6 +107,12 @@ export const postsApi = {
     api.delete(`/categories/${id}`),
 
   // ==================== Admin/Moderator Tags ====================
+  mergeTags: (sourceId: number, targetId: number) =>
+    api.post('/tags/merge', { source_id: sourceId, target_id: targetId } as MergeRequest),
+
+  getUnusedTags: () =>
+    api.get<Tag[]>('/tags/unused'),
+
   createTag: (data: CreateTagRequest) =>
     api.post<Tag>('/tags/', data),
 

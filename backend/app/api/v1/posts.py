@@ -98,66 +98,6 @@ async def list_posts(
     }
 
 
-@router.get("/{slug}", response_model=PostResponse)
-async def get_post_by_slug_endpoint(
-    slug: str,
-    db: AsyncSession = Depends(get_db),
-):
-    """
-    Get post detail by slug.
-
-    Increments view count.
-    Not cached to ensure view count is accurate.
-    """
-    # Get post
-    post = await get_post_by_slug(db, slug)
-
-    if not post:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Post not found"
-        )
-
-    # Increment view count
-    try:
-        await increment_post_view_count(db, post.id)
-    except Exception as e:
-        logger.warning(f"Failed to increment view count for post {post.id}: {e}")
-
-    return post
-
-
-@router.get("/{slug}/raw")
-async def get_post_raw_content(
-    slug: str,
-    db: AsyncSession = Depends(get_db),
-):
-    """
-    Get raw markdown content of a post.
-
-    Returns markdown file content as plain text.
-    Useful for preview or download.
-    """
-    # Get post
-    post = await get_post_by_slug(db, slug)
-
-    if not post:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Post not found"
-        )
-
-    # Read markdown content
-    content = post.content
-
-    if not content:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Post content not found"
-        )
-
-    return {"content": content, "post_id": post.id, "slug": post.slug}
-
 
 # ==================== AUTHENTICATED USER ENDPOINTS ====================
 
@@ -940,6 +880,66 @@ async def export_posts_for_rag(
             }
         )
 
+
+@router.get("/{slug}", response_model=PostResponse)
+async def get_post_by_slug_endpoint(
+    slug: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Get post detail by slug.
+
+    Increments view count.
+    Not cached to ensure view count is accurate.
+    """
+    # Get post
+    post = await get_post_by_slug(db, slug)
+
+    if not post:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Post not found"
+        )
+
+    # Increment view count
+    try:
+        await increment_post_view_count(db, post.id)
+    except Exception as e:
+        logger.warning(f"Failed to increment view count for post {post.id}: {e}")
+
+    return post
+
+
+@router.get("/{slug}/raw")
+async def get_post_raw_content(
+    slug: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Get raw markdown content of a post.
+
+    Returns markdown file content as plain text.
+    Useful for preview or download.
+    """
+    # Get post
+    post = await get_post_by_slug(db, slug)
+
+    if not post:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Post not found"
+        )
+
+    # Read markdown content
+    content = post.content
+
+    if not content:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Post content not found"
+        )
+
+    return {"content": content, "post_id": post.id, "slug": post.slug}
 
 @router.get("/{slug}/rag-ready")
 @cache(expire=CACHE_POST_DETAIL_SECONDS, namespace="posts")

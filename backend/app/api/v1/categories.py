@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Query
 from fastapi_pagination import Page, paginate
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi_cache import FastAPICache
 from fastapi_cache.decorator import cache
@@ -26,6 +27,7 @@ from app.crud import (
     delete_category,
     get_with_post_count,
     get_tree_structure,
+    reorder_categories as reorder_categories_crud,
 )
 from loguru import logger
 
@@ -89,6 +91,32 @@ async def get_category_tree(
 
 
 # ==================== ADMIN ENDPOINTS ====================
+
+
+class ReorderRequest(BaseModel):
+    """Request body for reordering categories"""
+    items: list[dict]  # [{id: 1, order: 0}, {id: 2, order: 1}, ...]
+
+
+@router.post("/reorder")
+async def reorder_categories_endpoint(
+    request: Request,
+    reorder_data: ReorderRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_min_rank(ADMIN_RANK)),
+    csrf_token: str = Depends(validate_csrf),
+):
+    """Reorder categories by display_order (admin only)."""
+    success = await reorder_categories_crud(db=db, items=reorder_data.items)
+
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to reorder categories"
+        )
+
+    logger.info(f"Admin {current_user.email} reordered {len(reorder_data.items)} categories")
+    return {"message": "Categories reordered successfully"}
 
 
 @router.post("/", response_model=CategoryResponse)

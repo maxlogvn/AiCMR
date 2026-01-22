@@ -14,6 +14,8 @@ import type {
   CreateTagRequest,
   UpdateTagRequest,
   PostStatus,
+  ReorderRequest,
+  MergeRequest,
 } from '@/types/post';
 
 // ==================== Public Posts Hooks ====================
@@ -294,6 +296,41 @@ export function useDeleteTag(id: number) {
     mutationFn: () => postsApi.deleteTag(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tags'] });
+    },
+  });
+}
+
+// ==================== Admin Category Hooks ====================
+export function useReorderCategories() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: postsApi.reorderCategories,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ['categories', 'tree'] });
+    },
+  });
+}
+
+// ==================== Admin Tag Hooks ====================
+export function useGetUnusedTags(enabled: boolean = true) {
+  return useQuery({
+    queryKey: ['tags', 'unused'],
+    queryFn: () => postsApi.getUnusedTags().then(r => r.data),
+    enabled,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+export function useMergeTags() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ sourceId, targetId }: MergeRequest) => 
+      postsApi.mergeTags(sourceId, targetId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tags'] });
+      queryClient.invalidateQueries({ queryKey: ['tags', 'trending'] });
+      queryClient.invalidateQueries({ queryKey: ['tags', 'unused'] });
     },
   });
 }
