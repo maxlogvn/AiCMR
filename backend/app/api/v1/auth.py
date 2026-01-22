@@ -271,6 +271,10 @@ async def logout(
 
     if token_record:
         token_record.revoked = True
-        logger.info(f"User {current_user.email} logged out")
+        await db.commit()  # ✅ FIX: Commit the changes to database
+        logger.info(f"User {current_user.email} logged out successfully")
+    else:
+        logger.warning(f"User {current_user.email} attempted logout with invalid refresh token")
+        await db.commit()  # Commit even if token not found
 
     return {"message": "Logged out successfully"}

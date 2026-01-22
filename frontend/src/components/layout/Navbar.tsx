@@ -6,13 +6,16 @@ import Link from "next/link";
 import { useUser } from "@/hooks/useUser";
 import { useState, useEffect } from "react";
 import { authService } from "@/lib/auth";
+import { useToast } from "@/hooks/useToast";
 
 export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
   const { user } = useUser();
+  const { showSuccess, showError } = useToast();
   const [token, setToken] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // Detect token on mount and listen to storage changes
   useEffect(() => {
@@ -28,14 +31,41 @@ export default function Navbar() {
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
-  const handleLogout = () => {
-    console.log("[Navbar] Logout initiated");
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    setToken(null);
-    setMobileMenuOpen(false);
-    // Use router.push for consistent client-side navigation
-    router.push("/login");
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+    
+    try {
+      console.log("[Navbar] Logout initiated");
+      setIsLoggingOut(true);
+      
+      // Call authService.logout which handles both frontend and backend cleanup
+      const result = await authService.logout();
+      
+      setToken(null);
+      setMobileMenuOpen(false);
+      
+      if (result.success) {
+        console.log("[Navbar] Logout successful");
+        showSuccess("Đăng xuất thành công");
+        // Small delay to show success message before redirect
+        setTimeout(() => router.push("/login"), 500);
+      } else {
+        console.warn("[Navbar] Logout had issues:", result.error);
+        showError("Đã gặp lỗi khi đăng xuất, nhưng sẽ chuyển hướng");
+        // Still redirect after 1 second even if backend fails
+        setTimeout(() => router.push("/login"), 1000);
+      }
+    } catch (error) {
+      console.error("[Navbar] Logout error:", error);
+      showError("Lỗi đăng xuất, vui lòng thử lại");
+      // Force cleanup and redirect anyway
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      setToken(null);
+      setTimeout(() => router.push("/login"), 1000);
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   // Public pages (no auth required)
@@ -131,13 +161,14 @@ export default function Navbar() {
           {/* Right Side Actions */}
           <div className="flex items-center gap-4">
             {token ? (
-              <button
-                onClick={handleLogout}
-                className="hidden sm:flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
-              >
-                <LogOut className="h-4 w-4" />
-                Đăng xuất
-              </button>
+             <button
+                 onClick={handleLogout}
+                 disabled={isLoggingOut}
+                 className="hidden sm:flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+               >
+                 <LogOut className={`h-4 w-4 ${isLoggingOut ? 'animate-spin' : ''}`} />
+                 {isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}
+               </button>
             ) : (
               <>
                 <Link
@@ -229,12 +260,13 @@ export default function Navbar() {
                 >
                   Trang chủ
                 </Link>
-                <button
-                  onClick={handleLogout}
-                  className="w-full text-left px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
-                >
-                  Đăng xuất
-                </button>
+                 <button
+                   onClick={handleLogout}
+                   disabled={isLoggingOut}
+                   className="w-full text-left px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                 >
+                   {isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}
+                 </button>
               </>
             )}
           </div>
