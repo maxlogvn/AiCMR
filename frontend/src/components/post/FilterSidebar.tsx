@@ -1,14 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, X, Calendar, Tag, FolderOpen } from 'lucide-react';
+import { Search, X, Calendar, Tag as TagIcon, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useCategories, useTags } from '@/hooks/usePosts';
-import type { PostFilters, Category, Tag } from '@/types/post';
-import { formatDate, parseDate } from '@/lib/utils';
+import type { PostFilters } from '@/types/post';
 
 interface FilterSidebarProps {
   filters: PostFilters;
@@ -174,7 +173,7 @@ export function FilterSidebar({
       {/* Tags Filter */}
       <div className="mb-6">
         <label className="text-sm font-medium mb-2 flex items-center gap-2">
-          <Tag className="w-4 h-4" />
+          <TagIcon className="w-4 h-4" />
           Tags
         </label>
         <div className="flex flex-wrap gap-2">

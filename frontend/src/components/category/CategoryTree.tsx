@@ -9,15 +9,13 @@ import { useDeleteCategory } from '@/hooks/usePosts';
 import type { Category } from '@/types/post';
 import { CategoryForm } from './CategoryForm';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 
 interface CategoryTreeProps {
@@ -88,27 +86,29 @@ function CategoryNode({ category, level = 0, onEdit }: CategoryNodeProps) {
           <Edit2 className="w-4 h-4" />
         </Button>
 
-        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-          <AlertDialogTrigger asChild>
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogTrigger asChild>
             <Button variant="ghost" size="sm">
               <Trash2 className="w-4 h-4 text-red-500" />
             </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete Category</AlertDialogTitle>
-              <AlertDialogDescription>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Category</DialogTitle>
+              <DialogDescription>
                 Are you sure you want to delete "{category.name}"? This will remove the category from all posts.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDelete} disabled={deleteCategory.isPending}>
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleDelete} disabled={deleteCategory.isPending}>
                 Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Children */}
@@ -133,8 +133,11 @@ export function CategoryTree({ onCreateCategory, onEditCategory }: CategoryTreeP
 
   // Build tree structure
   const buildTree = (flatCategories: Category[]): Category[] => {
-    const categoryMap = new Map(flatCategories.map((c) => [c.id, { ...c, children: [] }]));
-    const roots: Category[] = [];
+    type CategoryNode = Category & { children: Category[] };
+    const categoryMap = new Map<number, CategoryNode>(
+      flatCategories.map((c) => [c.id, { ...c, children: [] }]),
+    );
+    const roots: CategoryNode[] = [];
 
     flatCategories.forEach((category) => {
       const node = categoryMap.get(category.id)!;

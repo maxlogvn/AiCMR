@@ -140,10 +140,10 @@ export function useUpdateMyPost(id: number) {
   });
 }
 
-export function useDeleteMyPost(id: number) {
+export function useDeleteMyPost() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: () => postsApi.deleteMyPost(id),
+    mutationFn: (id: number) => postsApi.deleteMyPost(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       queryClient.invalidateQueries({ queryKey: ['my-posts'] });
@@ -151,14 +151,19 @@ export function useDeleteMyPost(id: number) {
   });
 }
 
-export function useUpdateMyPostStatus(id: number) {
+export function useUpdateMyPostStatus() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (status: PostStatus) => postsApi.updateMyPostStatus(id, status),
+    mutationFn: ({ id, status }: { id: number; status: PostStatus }) =>
+      postsApi.updateMyPostStatus(id, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['posts'] });
       queryClient.invalidateQueries({ queryKey: ['my-posts'] });
-      queryClient.invalidateQueries({ queryKey: ['my-post', id] });
+    },
+    onSettled: (_data, _error, variables) => {
+      if (variables?.id) {
+        queryClient.invalidateQueries({ queryKey: ['my-post', variables.id] });
+      }
     },
   });
 }

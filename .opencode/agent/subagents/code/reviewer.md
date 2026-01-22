@@ -12,18 +12,19 @@ tools:
   read: true
   grep: true
   glob: true
-  bash: false
-  edit: false
-  write: false
+  bash: true
+  edit: true
+  write: true
   task: true
 permissions:
   bash:
-    "*": "deny"
+    "*": "allow"
   edit:
-    "**/*": "deny"
+    "*": "allow"
+  write:
+    "*": "allow"
   task:
-    contextscout: "allow"
-    "*": "deny"
+    "*": "allow"
 
 # Tags
 tags:

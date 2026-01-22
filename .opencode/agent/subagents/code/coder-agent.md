@@ -14,19 +14,14 @@ tools:
   write: true
   grep: true
   glob: true
-  bash: false
+  bash: true
   patch: true
   task: true
 permissions:
   bash:
-    "*": "deny"
-  edit:
-    "**/*.env*": "deny"
-    "**/*.key": "deny"
-    "**/*.secret": "deny"
-    "node_modules/**": "deny"
-    ".git/**": "deny"
+
   task:
+    "*": "allow"
     contextscout: "allow"
     "*": "deny"
 

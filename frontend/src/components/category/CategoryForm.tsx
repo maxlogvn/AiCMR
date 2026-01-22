@@ -66,20 +66,34 @@ export function CategoryForm({ open, onClose, category }: CategoryFormProps) {
   });
 
   const onSubmit = async (data: CategoryFormData) => {
-    const payload: CreateCategoryRequest | UpdateCategoryRequest = {
-      name: data.name,
-      slug: data.slug || data.name.toLowerCase().replace(/\s+/g, '-'),
-      description: data.description || undefined,
-      parent_id: data.parent_id,
-      icon: data.icon || undefined,
-      color: data.color || undefined,
-      display_order: data.display_order,
-      show_in_menu: data.show_in_menu,
-    };
+    const slug = data.slug || data.name.toLowerCase().replace(/\s+/g, '-');
+    const description = data.description || undefined;
+    const icon = data.icon || undefined;
+    const color = data.color || undefined;
 
     if (category) {
+      const payload: UpdateCategoryRequest = {
+        name: data.name,
+        slug,
+        description,
+        parent_id: data.parent_id,
+        icon,
+        color,
+        display_order: data.display_order,
+        show_in_menu: data.show_in_menu,
+      };
       await updateCategory.mutateAsync(payload);
     } else {
+      const payload: CreateCategoryRequest = {
+        name: data.name,
+        slug,
+        description,
+        parent_id: data.parent_id,
+        icon,
+        color,
+        display_order: data.display_order,
+        show_in_menu: data.show_in_menu,
+      };
       await createCategory.mutateAsync(payload);
     }
     onClose();

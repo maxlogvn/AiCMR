@@ -18,7 +18,7 @@ import { useToast } from '@/hooks/useToast';
 export default function EditPostPage() {
   const router = useRouter();
   const params = useParams();
-  const { toast } = useToast();
+  const toast = useToast();
 
   const postId = Number(params.id);
   const { data: post, isLoading: postLoading } = useMyPost(postId);
@@ -205,7 +205,7 @@ export default function EditPostPage() {
           )}
           <div
             className="prose prose-gray dark:prose-invert max-w-none"
-            dangerouslySetInnerHTML={{ __html: formData.content }}
+            dangerouslySetInnerHTML={{ __html: formData.content || "" }}
           />
           {selectedTags.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-4">

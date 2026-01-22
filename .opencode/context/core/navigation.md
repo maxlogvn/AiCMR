@@ -13,10 +13,12 @@ core/
 ├── essential-patterns.md
 │
 ├── concepts/                  # Core concepts and principles
-│   └── agent-guidelines.md    # Nguyên tắc cốt lõi cho agents
+│   ├── agent-guidelines.md    # Nguyên tắc cốt lõi cho agents
+│   └── context-harvesting.md  # Automated knowledge extraction workflow
 │
 ├── guides/                    # How-to guides
-│   └── self-documenting-code.md  # Quy tắc viết code tự giải thích
+│   ├── self-documenting-code.md  # Quy tắc viết code tự giải thích
+│   └── mvi-extraction.md      # Minimal viable information extraction principles
 │
 ├── standards/
 │   ├── navigation.md
@@ -70,6 +72,8 @@ core/
 | **Manage tasks** | `task-management/navigation.md` |
 | **Task CLI commands** | `task-management/lookup/task-commands.md` |
 | **Context system** | `context-system.md` |
+| **Harvest summaries** | `concepts/context-harvesting.md` |
+| **Extract content** | `guides/mvi-extraction.md` |
 
 ---
 

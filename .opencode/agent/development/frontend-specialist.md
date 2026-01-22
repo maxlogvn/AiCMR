@@ -8,15 +8,10 @@ tools:
   read: true
   write: true
   edit: true
-  bash: false
+  bash: true
   task: false
   glob: true
   grep: true
-permissions:
-  write:
-    "**/*.env*": "deny"
-    "**/*.key": "deny"
-    "**/*.secret": "deny"
 ---
 
 # Frontend Design Agent

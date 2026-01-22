@@ -312,7 +312,7 @@ export default function DashboardPostsPage() {
               <Button
                 size="sm"
                 onClick={handlePublish}
-                isLoading={publishMutation.isPending}
+                disabled={publishMutation.isPending}
               >
                 <CheckCircle2 className="h-4 w-4 mr-1" />
                 Đăng bài
@@ -321,7 +321,7 @@ export default function DashboardPostsPage() {
                 size="sm"
                 variant="secondary"
                 onClick={handleArchive}
-                isLoading={archiveMutation.isPending}
+                disabled={archiveMutation.isPending}
               >
                 <Archive className="h-4 w-4 mr-1" />
                 Lưu trữ
@@ -330,7 +330,7 @@ export default function DashboardPostsPage() {
                 size="sm"
                 variant="destructive"
                 onClick={handleDelete}
-                isLoading={deleteMutation.isPending}
+                disabled={deleteMutation.isPending}
               >
                 <Trash2 className="h-4 w-4 mr-1" />
                 Xóa

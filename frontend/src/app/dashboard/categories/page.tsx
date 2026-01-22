@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { List, Tree } from 'lucide-react';
+import { List, Trees } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CategoryTree, CategoryForm } from '@/components/category';
 import type { Category } from '@/types/post';
@@ -46,7 +46,7 @@ export default function CategoriesPage() {
           size="sm"
           onClick={() => setViewMode('tree')}
         >
-          <Tree className="w-4 h-4 mr-2" />
+          <Trees className="w-4 h-4 mr-2" />
           Tree View
         </Button>
         <Button

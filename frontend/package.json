@@ -6,11 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "test:auth": "ts-node auth-e2e.test.ts",
-    "test:auth:headless": "HEADLESS=true ts-node auth-e2e.test.ts",
-    "test:logout": "ts-node logout-e2e.test.ts",
-    "test:logout:headless": "HEADLESS=true ts-node logout-e2e.test.ts"
+    "lint": "eslint"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

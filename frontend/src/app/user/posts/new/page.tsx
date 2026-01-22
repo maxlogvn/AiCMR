@@ -20,7 +20,7 @@ import { useUser } from '@/hooks/useUser';
 
 export default function CreatePostPage() {
   const router = useRouter();
-  const { toast } = useToast();
+  const toast = useToast();
   const { user } = useUser();
 
   const [formData, setFormData] = useState<CreatePostRequest>({

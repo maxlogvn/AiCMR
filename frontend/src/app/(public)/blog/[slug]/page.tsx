@@ -147,7 +147,7 @@ export default function PostDetailPage() {
       </div>
 
       {/* SEO Metadata (for debugging) */}
-      {import.meta.env.DEV && post.seo_title && (
+      {process.env.NODE_ENV === 'development' && post.seo_title && (
         <Card className="p-4 mb-8 bg-gray-50 dark:bg-gray-800">
           <h3 className="font-semibold mb-2">SEO Metadata</h3>
           <div className="space-y-1 text-sm">

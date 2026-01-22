@@ -5,13 +5,6 @@ import { Search, Edit2, Trash2, ArrowUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useTags, useGetUnusedTags } from '@/hooks/usePosts';
 import { useDeleteTag, useMergeTags } from '@/hooks/usePosts';
 import type { Tag } from '@/types/post';
@@ -31,7 +24,7 @@ export function TagList({ onCreateTag, onEditTag, onMergeTags }: TagListProps) {
 
   const { data: tagsData } = useTags({ pageSize: 100 });
   const tags = tagsData?.items || [];
-  const { data: unusedTags = [] } = useGetUnusedTagsHook(filter === 'unused');
+  const { data: unusedTags = [] } = useGetUnusedTags(filter === 'unused');
 
   // Filter and sort
   const filteredTags = tags.filter((tag) =>
@@ -58,15 +51,14 @@ export function TagList({ onCreateTag, onEditTag, onMergeTags }: TagListProps) {
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Tags ({displayedTags.length})</h3>
         <div className="flex gap-2">
-          <Select value={filter} onValueChange={(v: any) => setFilter(v)}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Tags</SelectItem>
-              <SelectItem value="unused">Unused ({unusedTags.length})</SelectItem>
-            </SelectContent>
-          </Select>
+          <select
+            className="dark:bg-input/30 border-input h-9 w-32 min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value as any)}
+          >
+            <option value="all">All Tags</option>
+            <option value="unused">Unused ({unusedTags.length})</option>
+          </select>
 
           {onMergeTags && (
             <Button variant="outline" size="sm" onClick={onMergeTags}>
@@ -92,24 +84,25 @@ export function TagList({ onCreateTag, onEditTag, onMergeTags }: TagListProps) {
           />
         </div>
 
-        <Select value={`${sortBy}-${sortOrder}`} onValueChange={(v) => {
-          const [s, o] = v.split('-');
-          setSortBy(s as any);
-          setSortOrder(o as any);
-        }}>
-          <SelectTrigger className="w-40">
-            <ArrowUpDown className="w-4 h-4 mr-2" />
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="name-asc">Name (A-Z)</SelectItem>
-            <SelectItem value="name-desc">Name (Z-A)</SelectItem>
-            <SelectItem value="post_count-desc">Most Used</SelectItem>
-            <SelectItem value="post_count-asc">Least Used</SelectItem>
-            <SelectItem value="created_at-desc">Newest</SelectItem>
-            <SelectItem value="created_at-asc">Oldest</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="relative w-40">
+          <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          <select
+            className="dark:bg-input/30 border-input h-9 w-full min-w-0 rounded-md border bg-transparent pl-10 pr-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none md:text-sm focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+            value={`${sortBy}-${sortOrder}`}
+            onChange={(e) => {
+              const [s, o] = e.target.value.split('-');
+              setSortBy(s as any);
+              setSortOrder(o as any);
+            }}
+          >
+            <option value="name-asc">Name (A-Z)</option>
+            <option value="name-desc">Name (Z-A)</option>
+            <option value="post_count-desc">Most Used</option>
+            <option value="post_count-asc">Least Used</option>
+            <option value="created_at-desc">Newest</option>
+            <option value="created_at-asc">Oldest</option>
+          </select>
+        </div>
       </div>
 
       {/* Tags Grid */}

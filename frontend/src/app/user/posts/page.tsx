@@ -21,7 +21,7 @@ import QuickNavigation from '@/components/layout/QuickNavigation';
 export default function MyPostsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { toast } = useToast();
+  const toast = useToast();
   const { user } = useUser();
 
   const [filters, setFilters] = useState<PostFilters>({});
@@ -69,8 +69,8 @@ export default function MyPostsPage() {
   const { data, isLoading, error } = useMyPosts(queryParams);
 
   // Mutations
-  const deletePostMutation = useDeleteMyPost(0);
-  const updateStatusMutation = useUpdateMyPostStatus(0);
+  const deletePostMutation = useDeleteMyPost();
+  const updateStatusMutation = useUpdateMyPostStatus();
 
   // Handle delete
   const handleDeleteClick = (post: Post) => {
@@ -94,7 +94,7 @@ export default function MyPostsPage() {
   // Handle publish
   const handlePublish = async (post: Post) => {
     try {
-      await updateStatusMutation.mutateAsync(post.id, 'published');
+      await updateStatusMutation.mutateAsync({ id: post.id, status: 'published' });
       toast.showSuccess('Post published successfully');
     } catch (error) {
       toast.showError('Failed to publish post');
@@ -104,7 +104,7 @@ export default function MyPostsPage() {
   // Handle archive
   const handleArchive = async (post: Post) => {
     try {
-      await updateStatusMutation.mutateAsync(post.id, 'archived');
+      await updateStatusMutation.mutateAsync({ id: post.id, status: 'archived' });
       toast.showSuccess('Post archived successfully');
     } catch (error) {
       toast.showError('Failed to archive post');

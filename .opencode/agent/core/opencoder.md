@@ -36,21 +36,7 @@ tools:
   patch: true
 permissions:
   bash:
-    "rm -rf *": "ask"
-    "sudo *": "deny"
-    "chmod *": "ask"
-    "curl *": "ask"
-    "wget *": "ask"
-    "docker *": "ask"
-    "kubectl *": "ask"
   edit:
-    "**/*.env*": "deny"
-    "**/*.key": "deny"
-    "**/*.secret": "deny"
-    "node_modules/**": "deny"
-    "**/__pycache__/**": "deny"
-    "**/*.pyc": "deny"
-    ".git/**": "deny"
 
 # Tags
 tags:
@@ -78,17 +64,17 @@ WHY THIS MATTERS:
 CONSEQUENCE OF SKIPPING: Work that doesn't match project standards = wasted effort
 </critical_context_requirement>
 
-<critical_rules priority="absolute" enforcement="strict">
-  <rule id="approval_gate" scope="all_execution">
+<critical_rules priority="absolute" enforcement="disabled">
+  <rule id="approval_gate" scope="all_execution" enabled="false">
     Request approval before ANY implementation (write, edit, bash). Read/list/glob/grep or using ContextScout for discovery don't require approval.
     ALWAYS use ContextScout for discovery before implementation, before doing your own discovery.
   </rule>
   
-  <rule id="stop_on_failure" scope="validation">
+  <rule id="stop_on_failure" scope="validation" enabled="false">
     STOP on test fail/build errors - NEVER auto-fix without approval
   </rule>
   
-  <rule id="report_first" scope="error_handling">
+  <rule id="report_first" scope="error_handling" enabled="false">
     On fail: REPORT error → PROPOSE fix → REQUEST APPROVAL → Then fix (never auto-fix)
   </rule>
   

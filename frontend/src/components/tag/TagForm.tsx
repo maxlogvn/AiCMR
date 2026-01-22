@@ -57,16 +57,25 @@ export function TagForm({ open, onClose, tag }: TagFormProps) {
   });
 
   const onSubmit = async (data: TagFormData) => {
-    const payload: CreateTagRequest | UpdateTagRequest = {
-      name: data.name,
-      slug: data.slug || data.name.toLowerCase().replace(/\s+/g, '-'),
-      description: data.description || undefined,
-      color: data.color || undefined,
-    };
+    const slug = data.slug || data.name.toLowerCase().replace(/\s+/g, '-');
+    const description = data.description || undefined;
+    const color = data.color || undefined;
 
     if (tag) {
+      const payload: UpdateTagRequest = {
+        name: data.name,
+        slug,
+        description,
+        color,
+      };
       await updateTag.mutateAsync(payload);
     } else {
+      const payload: CreateTagRequest = {
+        name: data.name,
+        slug,
+        description,
+        color,
+      };
       await createTag.mutateAsync(payload);
     }
     onClose();

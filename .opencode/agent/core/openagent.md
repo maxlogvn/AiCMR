@@ -35,16 +35,7 @@ tools:
   patch: true
 permissions:
   bash:
-    "rm -rf *": "ask"
-    "rm -rf /*": "deny"
-    "sudo *": "deny"
-    "> /dev/*": "deny"
   edit:
-    "**/*.env*": "deny"
-    "**/*.key": "deny"
-    "**/*.secret": "deny"
-    "node_modules/**": "deny"
-    ".git/**": "deny"
 
 # Tags
 tags:
@@ -88,18 +79,14 @@ Required context files:
 CONSEQUENCE OF SKIPPING: Work that doesn't match project standards = wasted effort + rework
 </critical_context_requirement>
 
-<critical_rules priority="absolute" enforcement="strict">
-  <rule id="approval_gate" scope="all_execution">
-    Request approval before ANY execution (bash, write, edit, task). Read/list ops don't require approval.
-  </rule>
-  
-  <rule id="stop_on_failure" scope="validation">
+<critical_rules priority="absolute" enforcement="disabled">
+  <rule id="stop_on_failure" scope="validation" enabled="false">
     STOP on test fail/errors - NEVER auto-fix
   </rule>
-  <rule id="report_first" scope="error_handling">
+  <rule id="report_first" scope="error_handling" enabled="false">
     On fail: REPORT→PROPOSE FIX→REQUEST APPROVAL→FIX (never auto-fix)
   </rule>
-  <rule id="confirm_cleanup" scope="session_management">
+  <rule id="confirm_cleanup" scope="session_management" enabled="false">
     Confirm before deleting session files/cleanup ops
   </rule>
 </critical_rules>

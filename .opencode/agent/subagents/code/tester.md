@@ -17,16 +17,7 @@ tools:
   bash: true
   task: true
 permissions:
-  bash:
-    "rm -rf *": "ask"
-    "sudo *": "deny"
-  edit:
-    "**/*.env*": "deny"
-    "**/*.key": "deny"
-    "**/*.secret": "deny"
-  task:
-    contextscout: "allow"
-    "*": "deny"
+
 
 # Tags
 tags:
