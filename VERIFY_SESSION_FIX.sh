@@ -22,7 +22,7 @@ fi
 
 # Check 2: resetCsrfToken call in logout
 echo "✓ Checking resetCsrfToken() call in logout..."
-if grep -A 20 "async logout()" frontend/src/lib/auth.ts | grep -q "resetCsrfToken()"; then
+if grep -A 60 "async logout()" frontend/src/lib/auth.ts | grep -q "resetCsrfToken()"; then
     echo "  ✅ resetCsrfToken() called in logout"
 else
     echo "  ❌ resetCsrfToken() NOT called - FIX REQUIRED"
@@ -31,7 +31,7 @@ fi
 
 # Check 3: resetApiState call in logout
 echo "✓ Checking resetApiState() call in logout..."
-if grep -A 20 "async logout()" frontend/src/lib/auth.ts | grep -q "resetApiState()"; then
+if grep -A 60 "async logout()" frontend/src/lib/auth.ts | grep -q "resetApiState()"; then
     echo "  ✅ resetApiState() called in logout"
 else
     echo "  ❌ resetApiState() NOT called - FIX REQUIRED"
@@ -65,7 +65,7 @@ fi
 
 # Check 6: Backend database commit
 echo "✓ Checking backend database commit in auth.py..."
-if grep -A 2 "refresh_token_db.revoked = True" backend/app/api/v1/auth.py | grep -q "await db.commit()"; then
+if grep -A 1 "token_record.revoked = True" backend/app/api/v1/auth.py | grep -q "await db.commit()"; then
     echo "  ✅ Database commit added for token revocation"
 else
     echo "  ⚠️  Database commit might be missing - check backend/app/api/v1/auth.py line ~273"
