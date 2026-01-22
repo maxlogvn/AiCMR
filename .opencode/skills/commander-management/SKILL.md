@@ -35,6 +35,8 @@ description: |
 
 **Skill này giúp AI agents hiểu và sử dụng các lệnh commander để quản lý hệ thống AiCMR.**
 
+⚠️ **Important Note**: File `commander.bat` và `commander.ps1` đã bị xóa. Chỉ còn file `./commander` (bash script) để sử dụng.
+
 ---
 
 ## 🚨 PRIORITY USAGE GUIDE
@@ -157,7 +159,7 @@ Giúp AI agents thực hiện các tác vụ sau:
 
 ### Mapping Lệnh Tự nhiên → Lệnh Commander
 
-| Người dùng nói | Lệnh commander chạy |
+| Người dùng nói | Lệnh commander chạy (dùng ./commander) |
 |----------------|---------------------|
 | "khởi động hệ thống", "bật server", "start" | `./commander serve-up` |
 | "dừng hệ thống", "tắt server", "stop" | `./commander serve-down` |

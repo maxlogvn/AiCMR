@@ -69,12 +69,25 @@ class Settings(BaseSettings):
         return secrets.token_urlsafe(32)
 
     # Cấu hình CORS - Danh sách các origin được phép truy cập
-    ALLOWED_ORIGINS: list = [
+    # Có thể cấu hình qua environment variable: ALLOWED_ORIGINS=http://localhost:3000,http://aicmr.local
+    # Mặc định bao gồm các common development URLs
+    ALLOWED_ORIGINS: list[str] = [
         "http://localhost:3000",
         "http://aicmr.local",
         "https://aicmr.local",
         "http://127.0.0.1:3000",
     ]
+
+    @field_validator("ALLOWED_ORIGINS", mode="before")
+    @classmethod
+    def parse_allowed_origins(cls, v: str | list) -> list:
+        """
+        Parse ALLOWED_ORIGINS từ string (comma-separated) hoặc list.
+        Cho phép cấu hình qua environment variable dễ dàng hơn.
+        """
+        if isinstance(v, str):
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
+        return v
 
     # Cấu hình Redis (cho Caching)
     REDIS_URL: str = "redis://localhost:6379/0"

@@ -1,0 +1,85 @@
+# ============================================
+# Windows Development Overrides
+# ============================================
+# File này chỉ override khác biệt so với docker-compose.yml
+# Base config: docker-compose.yml
+#
+# Chạy: docker-compose -f docker-compose.yml -f docker-compose.windows.yml up -d
+# Hoặc: scripts/windows/start.bat
+# ============================================
+
+services:
+  # MySQL Database - Windows Overrides
+  mysql:
+    container_name: aicmr-mysql-windows
+    volumes:
+      - mysql-data-windows:/var/lib/mysql
+      - ./storage/mysql:/docker-entrypoint-initdb.d
+
+  # FastAPI Backend - Windows Overrides
+  backend:
+    container_name: aicmr-backend-windows
+    volumes:
+      - ./backend:/app
+      - /app/__pycache__
+      - ./storage/uploads:/app/storage/uploads
+      - ./storage/logs:/app/logs
+    environment:
+      - DATABASE_URL=mysql+aiomysql://${DB_USER}:${DB_PASSWORD}@host.docker.internal:3306/${DB_NAME}
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY}
+      - INSTALL_SECRET=${INSTALL_SECRET}
+      - DEBUG=true
+      - LOG_LEVEL=${LOG_LEVEL:-DEBUG}
+    ports:
+      - "8000:8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Next.js Frontend - Windows Overrides
+  frontend:
+    container_name: aicmr-frontend-windows
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+      - CHOKIDAR_USEPOLLING=true
+    ports:
+      - "3000:3000"
+
+  # phpMyAdmin - Windows Overrides
+  phpmyadmin:
+    container_name: aicmr-phpmyadmin-windows
+    environment:
+      - PMA_HOST=host.docker.internal
+      - PMA_PORT=3306
+      - UPLOAD_LIMIT=64M
+    ports:
+      - "8080:80"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Redis Cache - Windows Overrides
+  redis:
+    container_name: aicmr-redis-windows
+    ports:
+      - "6379:6379"
+
+  # Nginx Reverse Proxy - Windows Overrides
+  nginx:
+    container_name: aicmr-nginx-windows
+    volumes:
+      - ./nginx/conf.d/default-windows.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - frontend
+      - backend
+      - phpmyadmin
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  mysql-data-windows:
+
+networks:
+  default:
+    name: aicmr-windows-network
