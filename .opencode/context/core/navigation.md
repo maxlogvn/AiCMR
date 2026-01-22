@@ -12,6 +12,12 @@ core/
 ├── context-system.md
 ├── essential-patterns.md
 │
+├── concepts/                  # Core concepts and principles
+│   └── agent-guidelines.md    # Nguyên tắc cốt lõi cho agents
+│
+├── guides/                    # How-to guides
+│   └── self-documenting-code.md  # Quy tắc viết code tự giải thích
+│
 ├── standards/
 │   ├── navigation.md
 │   ├── code-quality.md

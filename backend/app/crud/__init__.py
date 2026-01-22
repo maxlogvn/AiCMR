@@ -10,8 +10,49 @@ from .crud_user import (
     count_users,
     delete,
 )
+from .crud_post import (
+    get_post_by_id,
+    get_post_by_slug,
+    get_all_posts,
+    create_post,
+    update_post,
+    delete_post,
+    increment_post_view_count,
+    get_user_posts,
+    get_published_posts,
+    get_post_stats,
+)
+from .crud_category import (
+    get_category_by_id,
+    get_category_by_slug,
+    get_all_categories,
+    create_category,
+    update_category,
+    delete_category,
+    get_with_post_count,
+    get_tree_structure,
+)
+from .crud_tag import (
+    get_tag_by_id,
+    get_tag_by_slug,
+    get_all_tags,
+    create_tag,
+    update_tag,
+    delete_tag,
+    get_trending_tags,
+)
+from .crud_post_metadata import (
+    get_metadata,
+    get_all_metadata,
+    set_metadata,
+    update_metadata,
+    delete_metadata,
+    bulk_set_metadata,
+    delete_all_metadata,
+)
 
 __all__ = [
+    # User CRUD
     "get_by_email",
     "get_by_username",
     "get_by_id",
@@ -22,4 +63,41 @@ __all__ = [
     "get_all_users",
     "count_users",
     "delete",
+    # Post CRUD
+    "get_post_by_id",
+    "get_post_by_slug",
+    "get_all_posts",
+    "create_post",
+    "update_post",
+    "delete_post",
+    "increment_post_view_count",
+    "get_user_posts",
+    "get_published_posts",
+    "get_post_stats",
+    # Category CRUD
+    "get_category_by_id",
+    "get_category_by_slug",
+    "get_all_categories",
+    "create_category",
+    "update_category",
+    "delete_category",
+    "get_with_post_count",
+    "get_tree_structure",
+    # Tag CRUD
+    "get_tag_by_id",
+    "get_tag_by_slug",
+    "get_all_tags",
+    "create_tag",
+    "update_tag",
+    "delete_tag",
+    "get_trending_tags",
+    # PostMetadata CRUD
+    "get_metadata",
+    "get_all_metadata",
+    "set_metadata",
+    "update_metadata",
+    "delete_metadata",
+    "bulk_set_metadata",
+    "delete_all_metadata",
 ]
+

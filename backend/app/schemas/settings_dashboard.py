@@ -6,7 +6,7 @@ from app.schemas.user import UserResponse
 class SettingsResponse(BaseModel):
     model_config = {"from_attributes": True}
 
-    site_name: str
+    site_name: str = "AiCMR"
     logo_url: Optional[str] = None
     favicon_url: Optional[str] = None
     seo_title: Optional[str] = None
@@ -57,7 +57,7 @@ class PublicSettingsResponse(BaseModel):
     """Schema cho public settings (SEO metadata) - Không yêu cầu authentication."""
     model_config = {"from_attributes": True}
 
-    site_name: str
+    site_name: str = "AiCMR"
     logo_url: Optional[str] = None
     favicon_url: Optional[str] = None
     seo_title: Optional[str] = None

@@ -77,9 +77,18 @@ function ImageField({
     setValue(fieldName, "");
   };
 
-  // Kiểm tra xem URL có phải là file public không để hiển thị đúng
-  const isPublicFile = urlValue?.includes("/api/v1/uploads/p/");
-  const displayUrl = urlValue ? uploadsApi.getFileUrl(urlValue, isPublicFile) : null;
+  // Kiểm tra xem URL có phải là file public không dựa vào pattern backend trả về
+  const isPublicFile = urlValue?.startsWith("/media/");
+  const displayUrl = urlValue ? uploadsApi.getFileUrl(urlValue) : null;
+  
+  // Debug logging
+  console.log("ImageField Debug:", {
+    label,
+    fieldName,
+    urlValue,
+    isPublicFile,
+    displayUrl
+  });
 
   return (
     <div className="space-y-3">

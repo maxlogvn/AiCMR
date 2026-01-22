@@ -2,9 +2,11 @@
 
 import dynamic from "next/dynamic";
 import { useQuery } from "@tanstack/react-query";
-import { Users, UserPlus, Activity, TrendingUp, Shield } from "lucide-react";
+import { Users, UserPlus, Activity, TrendingUp, Shield, Settings, BarChart3 } from "lucide-react";
 import { useUser } from "@/hooks/useUser";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import Breadcrumb from "@/components/layout/Breadcrumb";
+import QuickNavigation from "@/components/layout/QuickNavigation";
 import type { StatsOverview } from "@/types";
 
 const Card = dynamic(() =>
@@ -12,7 +14,7 @@ const Card = dynamic(() =>
 );
 
 export default function DashboardStatsPage() {
-  const { isLoading } = useUser();
+  const { isLoading, user } = useUser();
 
   const {
     data: stats,
@@ -55,8 +57,36 @@ export default function DashboardStatsPage() {
     return colors[rank] || "bg-gray-100 text-gray-800";
   };
 
+  // Quick navigation links for dashboard
+  const quickLinks = [
+    {
+      label: "Quản Lý Người Dùng",
+      href: "/dashboard/users-manager",
+      icon: <Users className="h-5 w-5" />,
+      description: "Quản lý tất cả người dùng trong hệ thống",
+    },
+    {
+      label: "Quản Lý Bài Đăng",
+      href: "/dashboard/posts",
+      icon: <BarChart3 className="h-5 w-5" />,
+      description: "Xem và quản lý các bài đăng",
+    },
+    ...(user && user.rank === 5
+      ? [
+          {
+            label: "Cài Đặt Hệ Thống",
+            href: "/dashboard/settings",
+            icon: <Settings className="h-5 w-5" />,
+            description: "Cấu hình cài đặt hệ thống",
+          },
+        ]
+      : []),
+  ];
+
   return (
-    <div className="max-w-7xl mx-auto px-4">
+    <div className="max-w-7xl mx-auto">
+      <Breadcrumb />
+
       <div className="mb-6">
         <div className="flex items-center space-x-2">
           <Shield className="h-6 w-6 text-zinc-900 dark:text-white" />
@@ -126,6 +156,9 @@ export default function DashboardStatsPage() {
           </div>
         </Card>
       </div>
+
+      {/* Quick Navigation */}
+      <QuickNavigation links={quickLinks} title="Hành Động Nhanh" />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card title="Phân bố theo Rank">

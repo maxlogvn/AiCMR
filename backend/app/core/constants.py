@@ -1,3 +1,6 @@
+from enum import Enum as PyEnum
+
+
 GUEST_RANK = 0
 MEMBER_RANK = 1
 MODERATOR_RANK = 3
@@ -26,3 +29,14 @@ ERROR_USERNAME_TAKEN = "Username already taken"
 ERROR_INVALID_CREDENTIALS = "Invalid email or password"
 ERROR_INACTIVE_USER = "Inactive user"
 ERROR_NOT_ENOUGH_PERMISSIONS = "Not enough permissions"
+
+
+# Post Module Constants
+class PostStatus(str, PyEnum):
+    DRAFT = "draft"
+    PUBLISHED = "published"
+    ARCHIVED = "archived"
+
+
+CACHE_POST_LIST_SECONDS = 300
+CACHE_POST_DETAIL_SECONDS = 600

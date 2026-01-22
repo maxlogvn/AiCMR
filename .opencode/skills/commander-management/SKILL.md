@@ -61,14 +61,13 @@ Khi người dùng yêu cầu:
 
 User nói → Action
 ──────────────────────────────────────────────────────
-"dừng hệ thống" → `./commander serve-down` 
-"khởi động" → `./commander serve-up`
-"restart" → `./commander serve-restart`
-"health" → `./commander server-health`
-"status" → `./commander server-status`
+"dừng hệ thống" → `./commander down`
+"khởi động" → `./commander up`
+"restart" → `./commander restart`
+"health" → `./commander health`
+"status" → `./commander status`
 "logs" → `./commander logs [service]`
 "shell" → `./commander shell <service>`
-"migrate" → `./commander db-migrate`
 
 🚨 Luôn LOAD skill trước khi thực hiện bất kỳ lệnh nào!
 
@@ -97,8 +96,8 @@ Agent (BAD):
 
 Agent (GOOD):
 → skill(name="commander-management")  ✅
-→ Read: "dừng hệ thống" → `./commander serve-down`
-→ Execute: ./commander serve-down
+→ Read: "dừng hệ thống" → `./commander down`
+→ Execute: ./commander down
 → Report: ✅ Containers stopped
 ```
 
@@ -107,9 +106,9 @@ Agent (GOOD):
 ## ❌ ĐỪNG LÀM GÌ - COMMON MISTAKES
 
 ### DON'T:
-- ❌ `docker compose up` → Dùng `./commander serve-up`
-- ❌ `docker compose down` → Dùng `./commander serve-down`
-- ❌ `docker ps` → Dùng `./commander server-status`
+- ❌ `docker compose up` → Dùng `./commander up`
+- ❌ `docker compose down` → Dùng `./commander down`
+- ❌ `docker ps` → Dùng `./commander status`
 - ❌ `docker logs` → Dùng `./commander logs`
 - ❌ `docker exec -it` → Dùng `./commander shell`
 
@@ -161,28 +160,29 @@ Giúp AI agents thực hiện các tác vụ sau:
 
 | Người dùng nói | Lệnh commander chạy (dùng ./commander) |
 |----------------|---------------------|
-| "khởi động hệ thống", "bật server", "start" | `./commander serve-up` |
-| "dừng hệ thống", "tắt server", "stop" | `./commander serve-down` |
-| "kiểm tra health", "health check", "trạng thái" | `./commander server-health` |
-| "xem container status", "container status", "status" | `./commander server-status` |
+| "khởi động hệ thống", "bật server", "start" | `./commander up` |
+| "dừng hệ thống", "tắt server", "stop" | `./commander down` |
+| "kiểm tra health", "health check", "trạng thái" | `./commander health` |
+| "xem container status", "container status", "status" | `./commander status` |
 | "chẩn đoán", "diagnose", "kiểm tra lỗi" | `./commander diagnose` |
 | "xem logs", "logs", "log" | `./commander logs` |
 | "xem logs backend", "logs backend" | `./commander logs backend` |
 | "vào shell backend", "shell backend" | `./commander shell backend` |
+| "vào shell mysql", "shell mysql" | `./commander shell mysql` |
 | "xem tất cả lệnh", "help", "tìm hiểu lệnh" | `./commander help` |
 
 ## 📋 Chi tiết các lệnh
 
 ### 1. Khởi động hệ thống
 
-**Lệnh**: `./commander serve-up`
+**Lệnh**: `./commander up`
 
 **Mô tả**:
 - Build và start tất cả containers
 - Auto-check health
 - Auto-migration
 
-**Aliases**: `start`, `up`, `serve-up`
+**Aliases**: `start`, `up`
 
 **Khi dùng**:
 - Người dùng nói: "khởi động hệ thống", "bật server", "start", "bật lên"
@@ -190,7 +190,7 @@ Giúp AI agents thực hiện các tác vụ sau:
 **Ví dụ**:
 ```bash
 # Người dùng nói: "Khởi động hệ thống"
-./commander serve-up
+./commander up
 
 # Output:
 # ✅ Building containers...
@@ -202,12 +202,12 @@ Giúp AI agents thực hiện các tác vụ sau:
 
 ### 2. Dừng hệ thống
 
-**Lệnh**: `./commander serve-down`
+**Lệnh**: `./commander down`
 
 **Mô tả**:
 - Stop và remove tất cả containers
 
-**Aliases**: `stop`, `down`, `serve-down`
+**Aliases**: `stop`, `down`
 
 **Khi dùng**:
 - Người dùng nói: "dừng hệ thống", "tắt server", "stop", "tắt"
@@ -215,7 +215,7 @@ Giúp AI agents thực hiện các tác vụ sau:
 **Ví dụ**:
 ```bash
 # Người dùng nói: "Dừng hệ thống"
-./commander serve-down
+./commander down
 
 # Output:
 # 🛑 Stopping containers...
@@ -224,13 +224,13 @@ Giúp AI agents thực hiện các tác vụ sau:
 
 ### 3. Health check nhanh
 
-**Lệnh**: `./commander server-health`
+**Lệnh**: `./commander health`
 
 **Mô tả**:
 - Kiểm tra nhanh trạng thái hệ thống (5s hoặc 10s)
 - Check các services có hoạt động không
 
-**Aliases**: `health`, `server-health`, `check-health`
+**Aliases**: `health`, `check-health`
 
 **Khi dùng**:
 - Người dùng nói: "kiểm tra health", "health check", "trạng thái nhanh", "check health"
@@ -238,7 +238,7 @@ Giúp AI agents thực hiện các tác vụ sau:
 **Ví dụ**:
 ```bash
 # Người dùng nói: "Kiểm tra health"
-./commander server-health
+./commander health
 
 # Output:
 # 🏥 System Health Check
@@ -252,13 +252,13 @@ Giúp AI agents thực hiện các tác vụ sau:
 
 ### 4. Container status
 
-**Lệnh**: `./commander server-status`
+**Lệnh**: `./commander status`
 
 **Mô tả**:
 - Chi tiết status của từng container
 - CPU, memory usage, uptime
 
-**Aliases**: `status`, `ps`, `server-status`
+**Aliases**: `status`, `ps`
 
 **Khi dùng**:
 - Người dùng nói: "xem container status", "container status", "status", "xem trạng thái"
@@ -266,7 +266,7 @@ Giúp AI agents thực hiện các tác vụ sau:
 **Ví dụ**:
 ```bash
 # Người dùng nói: "Xem container status"
-./commander server-status
+./commander status
 
 # Output:
 # 📊 Container Status
@@ -320,6 +320,13 @@ Giúp AI agents thực hiện các tác vụ sau:
 **Khi dùng**:
 - Người dùng nói: "xem logs", "logs", "log", "kiểm tra log", "lỗi thì xem log"
 
+**Services có thể xem logs**:
+- `backend` - Backend API logs
+- `frontend` - Frontend logs
+- `mysql` - Database logs
+- `redis` - Redis logs
+- `nginx` - Nginx proxy logs
+
 **Ví dụ**:
 ```bash
 # Người dùng nói: "Xem logs"
@@ -347,12 +354,14 @@ Giúp AI agents thực hiện các tác vụ sau:
 
 **Khi dùng**:
 - Người dùng nói: "vào shell backend", "shell backend", "vào backend shell", "truy cập shell"
+- Người dùng nói: "vào shell mysql", "shell mysql", "vào database shell"
 
 **Services có thể truy cập**:
 - `backend` - FastAPI backend container
 - `frontend` - Next.js frontend container
-- `db` - MySQL database container
+- `mysql` - MySQL database container
 - `redis` - Redis cache container
+- `nginx` - Nginx proxy container
 
 **Ví dụ**:
 ```bash
@@ -363,16 +372,21 @@ Giúp AI agents thực hiện các tác vụ sau:
 # 🐚 Entering backend shell...
 #
 # root@aicmr-backend:/app#
+
+# Người dùng nói: "Vào shell mysql"
+./commander shell mysql
+
+# Output:
+# 🐚 Entering mysql shell...
+#
+# root@aicmr-mysql:/app#
 ```
 
 ### 8. Database migrations
 
-**Lệnh**: `./commander db-migrate`
+Lệnh database migrations hiện chưa có trong commander CLI. Nếu cần chạy migrations, hãy vào shell của backend hoặc database service.
 
-**Mô tả**:
-- Chạy database migrations
-
-**Aliases**: `migrate`, `migration`, `db-migrate`
+**Aliases**: `migrate`, `migration`
 
 **Khi dùng**:
 - Người dùng nói: "chạy migration", "migrate", "chạy db migrate"
@@ -380,39 +394,23 @@ Giúp AI agents thực hiện các tác vụ sau:
 **Ví dụ**:
 ```bash
 # Người dùng nói: "Chạy migration"
-./commander db-migrate
-
-# Output:
-# 🗄️ Running migrations...
-#
-# ✅ Applied: 20250121000001_init.sql
-# ✅ Applied: 20250121000002_users.sql
-# ✅ Applied: 20250121000003_messages.sql
-#
-# All migrations applied successfully!
+./commander shell backend
+# Trong shell: alembic upgrade head hoặc python manage.py migrate
 ```
 
 ### 9. Tạo migration mới
 
-**Lệnh**: `./commander db-create "<tên migration>"`
-
-**Mô tả**:
-- Tạo migration mới với tên cụ thể
-
-**Aliases**: `db-create`
+Lệnh tạo migration hiện chưa có trong commander CLI. Nếu cần tạo migration mới, hãy vào shell của backend service.
 
 **Khi dùng**:
-- Người dùng nói: "tạo migration mới", "tạo migrate", "db-create"
+- Người dùng nói: "tạo migration mới", "tạo migrate"
 
 **Ví dụ**:
 ```bash
 # Người dùng nói: "Tạo migration cho messages"
-./commander db-create "messages"
-
-# Output:
-# 📝 Creating migration: messages
-#
-# ✅ Created: migrations/20250121000004_messages.sql
+./commander shell backend
+# Trong shell: alembic revision --autogenerate -m "messages"
+# Hoặc: python manage.py makemigrations messages
 ```
 
 ### 10. Help
@@ -439,14 +437,14 @@ Giúp AI agents thực hiện các tác vụ sau:
 # Usage: ./commander [command]
 #
 # Serve Commands:
-#   serve-up         Khởi động + build
-#   serve-down       Dừng tất cả
-#   serve-restart    Restart containers
-#   serve-rebuild    Rebuild + restart
+#   up               Khởi động + build
+#   down             Dừng tất cả
+#   restart          Restart containers
+#   rebuild          Rebuild + restart
 #
 # Server Commands:
-#   server-health    Health check nhanh
-#   server-status    Container status
+#   health           Health check nhanh
+#   status           Container status
 #   diagnose         Chẩn đoán vấn đề
 #
 # Logs Commands:
@@ -457,8 +455,7 @@ Giúp AI agents thực hiện các tác vụ sau:
 #   shell <service>  Truy cập shell
 #
 # Database Commands:
-#   db-migrate       Chạy migrations
-#   db-create        Tạo migration mới
+#   (Hiện chưa có trong CLI - dùng shell)
 #
 # Other Commands:
 #   help             Xem tất cả lệnh
@@ -475,8 +472,8 @@ Phân tích câu của người dùng và map đến lệnh commander phù hợp
 **Ví dụ**:
 ```
 Người dùng: "Khởi động hệ thống"
-→ Nhận ra: serve-up
-→ Chạy: ./commander serve-up
+→ Nhận ra: up
+→ Chạy: ./commander up
 
 Người dùng: "Có lỗi gì không?"
 → Nhận ra: diagnose
@@ -487,10 +484,10 @@ Người dùng: "Có lỗi gì không?"
 
 ```bash
 # Ví dụ: Khởi động hệ thống
-./commander serve-up
+./commander up
 
 # Ví dụ: Health check
-./commander server-health
+./commander health
 
 # Ví dụ: Xem logs backend
 ./commander logs backend
@@ -559,7 +556,7 @@ chmod +x commander
 ./commander logs <service>
 
 # Rebuild
-./commander serve-rebuild
+./commander rebuild
 ```
 
 ### Lỗi: Health check thất bại
@@ -567,7 +564,7 @@ chmod +x commander
 **Giải pháp**:
 ```bash
 # Check status
-./commander server-status
+./commander status
 
 # Diagnose
 ./commander diagnose
@@ -581,14 +578,14 @@ chmod +x commander
 **Giải pháp**:
 ```bash
 # Xem logs database
-./commander logs db
+./commander logs mysql
 
-# Vào shell database
-./commander shell db
+# Vào shell backend
+./commander shell backend
 
 # Kiểm tra migrations
-# Thử migrate lại
-./commander db-migrate
+# Thử migrate lại trong shell
+# alembic upgrade head
 ```
 
 ## 📝 Best Practices
@@ -616,29 +613,29 @@ chmod +x commander
    - Không output quá dài
 
 5. **Sử dụng đúng alias**
-   - Nếu người dùng nói "stop", dùng `./commander serve-down`
-   - Nếu người dùng nói "status", dùng `./commander server-status`
-   - Lưu ý các alias của từng lệnh
+    - Nếu người dùng nói "stop", dùng `./commander down`
+    - Nếu người dùng nói "status", dùng `./commander status`
+    - Lưu ý các alias của từng lệnh
 
 ### Dành cho Developers
 
 1. **Backup trước khi rebuild**
-   ```bash
-   # Backup database
-   ./commander shell db
-   # Trong shell: mysqldump...
+    ```bash
+    # Backup database
+    ./commander shell mysql
+    # Trong shell: mysqldump...
 
-   # Rebuild
-   ./commander serve-rebuild
-   ```
+    # Rebuild
+    ./commander rebuild
+    ```
 
 2. **Kiểm tra health sau khi change**
-   ```bash
-   # Sau khi change config
-   ./commander serve-rebuild
-   ./commander server-health
-   ./commander server-status
-   ```
+    ```bash
+    # Sau khi change config
+    ./commander rebuild
+    ./commander health
+    ./commander status
+    ```
 
 3. **Logs chỉ khi lỗi**
    ```bash
@@ -662,8 +659,8 @@ chmod +x commander
 Người dùng: "Khởi động hệ thống"
 
 AI Agent:
-→ Phân tích: serve-up
-→ Chạy: ./commander serve-up
+→ Phân tích: up
+→ Chạy: ./commander up
 → Output: ✅ System ready!
 → Báo cáo: "✅ Hệ thống đã khởi động thành công!"
 ```
@@ -686,8 +683,8 @@ AI Agent:
 Người dùng: "Backend không hoạt động"
 
 AI Agent:
-→ Phân tích: server-status để check
-→ Chạy: ./commander server-status
+→ Phân tích: status để check
+→ Chạy: ./commander status
 → Output: aicmr-backend Down
 → Báo cáo: "❌ Backend đang Down. Để tôi kiểm tra logs..."
 → Chạy: ./commander logs backend

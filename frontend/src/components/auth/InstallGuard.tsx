@@ -12,47 +12,44 @@ interface InstallGuardProps {
 export default function InstallGuard({ children }: InstallGuardProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [mounted] = useState(true);
+  const [mounted, setMounted] = useState(false);
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    if (mounted) {
-      const checkInstallStatus = async () => {
-        try {
-          setChecking(true);
-          const response = await api.get<{ installed: boolean }>(
-            "install/status",
-          );
-          const { installed } = response.data;
+    setMounted(true);
+    const checkInstallStatus = async () => {
+      try {
+        console.log("InstallGuard: Checking install status...", { pathname });
+        const response = await api.get<{ installed: boolean }>("install/status");
+        const { installed } = response.data;
+        console.log("InstallGuard: Install status received", { installed, pathname });
 
-          setChecking(false);
-
-          if (!installed) {
-            // Nếu chưa cài đặt, chỉ cho phép ở trang /install
-            if (pathname !== "/install") {
-              router.replace("/install");
-            }
-          } else {
-            // Nếu đã cài đặt, chặn truy cập trang /install
-            if (pathname === "/install") {
-              router.replace("/login");
-            }
-          }
-        } catch (error) {
-          console.error("Lỗi kiểm tra trạng thái cài đặt:", error);
-          // Nếu lỗi (vd backend chưa sẵn sàng), mặc định cho cài đặt
-          setChecking(false);
-          if (pathname !== "/install") {
-            router.replace("/install");
-          }
+        if (!installed && pathname !== "/install") {
+          console.log("InstallGuard: Redirecting to install page");
+          router.replace("/install");
+        } else if (installed && pathname === "/install") {
+          console.log("InstallGuard: Already installed, redirecting to login");
+          router.replace("/login");
         }
-      };
 
-      checkInstallStatus();
-    }
-  }, [mounted, pathname, router]);
+        setChecking(false);
+      } catch (error) {
+        console.error("InstallGuard: Error checking install status", error);
+        setChecking(false);
+        // Nếu đang ở trang install, cho phép hiển thị
+        if (pathname === "/install") {
+          console.log("InstallGuard: Error but on install page, allowing access");
+          return;
+        }
+        // Nếu không thể kiểm tra và không ở trang install, redirect đến install
+        console.log("InstallGuard: Error and not on install page, redirecting to install");
+        router.replace("/install");
+      }
+    };
 
-  // Ngăn hydration mismatch
+    checkInstallStatus();
+  }, [pathname, router]);
+
   if (!mounted || checking) {
     return (
       <div className="min-h-screen flex items-center justify-center">

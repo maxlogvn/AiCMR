@@ -28,6 +28,8 @@ class User(Base):
     refresh_tokens = relationship(
         "RefreshToken", back_populates="user", cascade="all, delete-orphan"
     )
+    posts = relationship("Post", back_populates="author", cascade="all, delete-orphan")
+
 
     # Composite indexes
     __table_args__ = (

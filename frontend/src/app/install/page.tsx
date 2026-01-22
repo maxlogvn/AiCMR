@@ -15,7 +15,11 @@ const installSchema = z.object({
   install_secret: z.string().min(1, "Vui lòng nhập mã cài đặt"),
   email: z.string().email("Email không hợp lệ"),
   username: z.string().min(3, "Tên đăng nhập phải có ít nhất 3 ký tự"),
-  password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
+  password: z
+    .string()
+    .min(6, "Mật khẩu phải có ít nhất 6 ký tự")
+    .regex(/[A-Z]/, "Mật khẩu phải chứa ít nhất 1 chữ hoa")
+    .regex(/[!@#$%^&*(),.?":{}|<>]/, "Mật khẩu phải chứa ít nhất 1 ký tự đặc biệt"),
   site_name: z.string().min(1, "Vui lòng nhập tên ứng dụng"),
   logo_url: z
     .string()
@@ -114,6 +118,7 @@ export default function InstallPage() {
                 type="password"
                 error={errors.password?.message}
                 {...register("password")}
+                helperText="Tối thiểu 6 ký tự, có chữ hoa và ký tự đặc biệt (!@#$%^&*)"
               />
             </div>
 

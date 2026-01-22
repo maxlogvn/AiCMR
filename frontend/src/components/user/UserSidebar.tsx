@@ -1,6 +1,6 @@
 "use client";
 
-import { User, Lock, Home, LogOut, LayoutDashboard } from "lucide-react";
+import { User, Lock, Home, LogOut, LayoutDashboard, FileText, PenSquare } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useUser } from "@/hooks/useUser";
@@ -20,6 +20,11 @@ export default function UserSidebar() {
       label: "Hồ sơ cá nhân",
       icon: <User className="h-5 w-5" />,
       href: "/user/profile",
+    },
+    {
+      label: "Bài đăng của tôi",
+      icon: <FileText className="h-5 w-5" />,
+      href: "/user/posts",
     },
     {
       label: "Đổi mật khẩu",

@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { User, Edit2 } from "lucide-react";
+import { User, Edit2, Lock, Home, BookOpen } from "lucide-react";
 import { useUser } from "@/hooks/useUser";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { Card } from "@/components/ui/card-wrapped";
+import Breadcrumb from "@/components/layout/Breadcrumb";
+import QuickNavigation from "@/components/layout/QuickNavigation";
 
 export default function ProfilePage() {
   const { user, isLoading, error } = useUser();
@@ -42,8 +44,36 @@ export default function ProfilePage() {
     return "bg-zinc-200 text-zinc-900 dark:bg-zinc-700 dark:text-zinc-300";
   };
 
+  // Quick navigation links
+  const quickLinks = [
+    {
+      label: "Đổi Mật Khẩu",
+      href: "/user/change-password",
+      icon: <Lock className="h-5 w-5" />,
+      description: "Cập nhật mật khẩu của bạn",
+    },
+    ...(user.rank >= 3
+      ? [
+          {
+            label: "Quản Trị Viên",
+            href: "/dashboard",
+            icon: <User className="h-5 w-5" />,
+            description: "Truy cập bảng điều khiển quản trị",
+          },
+        ]
+      : []),
+    {
+      label: "Về Trang Chủ",
+      href: "/",
+      icon: <Home className="h-5 w-5" />,
+      description: "Quay lại trang chủ",
+    },
+  ];
+
   return (
-    <div className="max-w-2xl mx-auto px-4">
+    <div className="max-w-2xl mx-auto">
+      <Breadcrumb />
+
       <Card title="Hồ sơ của bạn">
         <div className="text-center mb-6">
           <div className="mx-auto h-16 w-16 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mb-4">
@@ -129,6 +159,11 @@ export default function ProfilePage() {
           </Link>
         </div>
       </Card>
+
+      {/* Quick Navigation */}
+      <div className="mt-8">
+        <QuickNavigation links={quickLinks} title="Thao Tác Nhanh" />
+      </div>
     </div>
   );
 }

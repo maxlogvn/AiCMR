@@ -7,5 +7,11 @@ from .user import User
 from .settings import Setting
 from .refresh_token import RefreshToken
 from .attachment import Attachment
+from .post import Post
+from .category import Category
+from .tag import Tag
+from .post_tag import PostTag
+from .post_metadata import PostMetadata
 
-__all__ = ["Base", "User", "Setting", "RefreshToken", "Attachment"]
+__all__ = ["Base", "User", "Setting", "RefreshToken", "Attachment", "Post", "Category", "Tag", "PostTag", "PostMetadata"]
+

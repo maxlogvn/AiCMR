@@ -43,7 +43,8 @@ http_request_duration_seconds = get_metric(
 )
 
 # Import API routers
-from .api.v1 import auth, users, install, settings_dashboard, stats, uploads
+from .api.v1 import auth, users, install, settings_dashboard, stats, uploads, posts, categories, tags
+
 
 # Import settings và database functions
 from .core.config import get_settings
@@ -188,6 +189,11 @@ app.include_router(
     settings_dashboard.router, prefix="/api/v1/settings", tags=["Settings"]
 )
 app.include_router(stats.router, prefix="/api/v1/stats", tags=["Stats"])
+app.include_router(uploads.router, prefix="/api/v1/uploads", tags=["Uploads"])
+app.include_router(posts.router, prefix="/api/v1/posts", tags=["Posts"])
+app.include_router(categories.router, prefix="/api/v1/categories", tags=["Categories"])
+app.include_router(tags.router, prefix="/api/v1/tags", tags=["Tags"])
+
 app.include_router(uploads.router, prefix="/api/v1/uploads", tags=["Uploads"])
 
 

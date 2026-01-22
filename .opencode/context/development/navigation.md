@@ -29,6 +29,17 @@ Reusable development patterns and solutions
 
 ---
 
+## Examples
+
+Working examples and code snippets
+
+| File | Description | Lines |
+|------|-------------|--------|
+| [windows-docker-config.md](examples/windows-docker-config.md) | Windows-specific Docker configuration | 152 |
+| [windows-dev-tips.md](examples/windows-dev-tips.md) | Windows development best practices | 95 |
+
+---
+
 ## Guides
 
 Step-by-step development workflows
@@ -36,7 +47,7 @@ Step-by-step development workflows
 | File | Description | Lines |
 |------|-------------|--------|
 | [docker-service-add.md](guides/docker-service-add.md) | Adding services with Docker overrides | 81 |
-| [windows-setup.md](guides/windows-setup.md) | Windows environment setup guide | 106 |
+| [windows-setup.md](guides/windows-setup.md) | Windows environment setup guide | 160 |
 
 ---
 
@@ -48,6 +59,7 @@ Quick reference checklists and tables
 |------|-------------|--------|
 | [windows-docker-overrides.md](lookup/windows-docker-overrides.md) | Windows Docker overrides checklist | 69 |
 | [windows-env-vars.md](lookup/windows-env-vars.md) | Windows environment variables checklist | 90 |
+| [windows-commands.md](lookup/windows-commands.md) | Windows commands quick reference | 122 |
 
 ---
 
@@ -59,6 +71,7 @@ Common errors and solutions
 |------|-------------|--------|
 | [windows-db-connection.md](errors/windows-db-connection.md) | Windows database connection issues | 79 |
 | [windows-cors.md](errors/windows-cors.md) | Windows CORS configuration errors | 94 |
+| [windows-dev-errors.md](errors/windows-dev-errors.md) | Common Windows development errors | 191 |
 
 ---
 
@@ -71,10 +84,14 @@ Common errors and solutions
 
 ### Windows Development
 - [windows-setup.md](guides/windows-setup.md) - Environment setup
+- [windows-docker-config.md](examples/windows-docker-config.md) - Docker configuration
+- [windows-dev-tips.md](examples/windows-dev-tips.md) - Best practices
+- [windows-commands.md](lookup/windows-commands.md) - Commands reference
 - [windows-env-vars.md](lookup/windows-env-vars.md) - Variable checklist
 - [windows-docker-overrides.md](lookup/windows-docker-overrides.md) - Override checklist
 
 ### Common Issues
+- [windows-dev-errors.md](errors/windows-dev-errors.md) - Common errors
 - [windows-db-connection.md](errors/windows-db-connection.md) - Database errors
 - [windows-cors.md](errors/windows-cors.md) - CORS errors
 - [health-check.md](patterns/health-check.md) - Health check pattern

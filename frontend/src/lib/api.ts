@@ -170,7 +170,7 @@ export const uploadsApi = {
   },
   getAttachment: (id: number) => api.get<Attachment>(`/uploads/${id}/`),
   deleteAttachment: (id: number) => api.delete(`/uploads/${id}/`),
-  getFileUrl: (idOrUrl: number | string | null | undefined, isPublic: boolean = false, filename?: string) => {
+  getFileUrl: (idOrUrl: number | string | null | undefined, isPublic?: boolean, filename?: string) => {
     if (!idOrUrl) return "";
 
     // Nếu là URL đầy đủ (http...) thì trả về luôn
@@ -178,9 +178,26 @@ export const uploadsApi = {
       return idOrUrl;
     }
 
-    // Trích xuất ID nếu là proxy URL
-    let id = idOrUrl;
+    // Nếu backend đã trả về URL hoàn chỉnh, sử dụng trực tiếp
     if (typeof idOrUrl === "string") {
+      // URL public từ backend có dạng /media/{id}/{slug}
+      if (idOrUrl.startsWith("/media/")) {
+        return idOrUrl;
+      }
+      
+      // URL private từ backend có dạng /backend/api/v1/uploads/file/{id}
+      if (idOrUrl.startsWith("/backend/api/v1/uploads/file/")) {
+        if (typeof window !== "undefined") {
+          const token = localStorage.getItem("access_token");
+          if (token && !idOrUrl.includes("?token=")) {
+            return `${idOrUrl}?token=${token}`;
+          }
+        }
+        return idOrUrl;
+      }
+
+      // Trích xuất ID nếu là các URL pattern khác
+      let id = idOrUrl;
       if (idOrUrl.includes("/api/v1/uploads/file/")) {
         id = idOrUrl.split("/").pop() || idOrUrl;
       } else if (idOrUrl.includes("/api/v1/uploads/p/")) {
@@ -188,15 +205,30 @@ export const uploadsApi = {
         const parts = idOrUrl.split("/");
         id = parts[parts.length - 2] || idOrUrl;
       }
+
+      // Generate URL cho các pattern khác
+      if (isPublic) {
+        const slug = filename ? filename.toLowerCase().replace(/[^a-z0-9]+/g, "-") : "file";
+        return `/media/${id}/${slug}`;
+      }
+
+      const baseUrl = `/backend/api/v1/uploads/file/${id}`;
+      if (typeof window !== "undefined") {
+        const token = localStorage.getItem("access_token");
+        if (token) {
+          return `${baseUrl}?token=${token}`;
+        }
+      }
+      return baseUrl;
     }
 
-    // Nếu là file public, trả về URL SEO đẹp qua Nginx proxy
+    // Nếu chỉ có ID number
     if (isPublic) {
       const slug = filename ? filename.toLowerCase().replace(/[^a-z0-9]+/g, "-") : "file";
-      return `/media/${id}/${slug}`;
+      return `/media/${idOrUrl}/${slug}`;
     }
 
-    const baseUrl = `/backend/api/v1/uploads/file/${id}`;
+    const baseUrl = `/backend/api/v1/uploads/file/${idOrUrl}`;
     if (typeof window !== "undefined") {
       const token = localStorage.getItem("access_token");
       if (token) {

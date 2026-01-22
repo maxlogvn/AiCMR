@@ -7,6 +7,7 @@ import {
   Settings,
   BarChart3,
   User,
+  FileText,
 } from "lucide-react";
 import Link from "next/link";
 import { useUser } from "@/hooks/useUser";
@@ -37,6 +38,12 @@ export default function AdminSidebar() {
       icon: <Users className="h-5 w-5" />,
       href: "/dashboard/users-manager",
       minRank: 3,
+    },
+    {
+      label: "Quản lý bài đăng",
+      icon: <FileText className="h-5 w-5" />,
+      href: "/dashboard/posts",
+      minRank: 1, // Changed from 3 to 1 - available for all users
     },
     {
       label: "Cấu hình hệ thống",
@@ -80,6 +87,13 @@ export default function AdminSidebar() {
           </button>
         </div>
       </div>
+
+      {/* Show message if user has no permission for any items */}
+      {user && menuItems.every(item => user.rank < item.minRank) && (
+        <div className="p-4 text-center text-sm text-zinc-600 dark:text-zinc-400">
+          {!collapsed && "Bạn không có quyền truy cập các tính năng này."}
+        </div>
+      )}
 
       <nav className="flex-1 p-2 space-y-1">
         {menuItems.map((item) => {

@@ -39,6 +39,11 @@ services:
   # Next.js Frontend - Windows Overrides
   frontend:
     container_name: aicmr-frontend-windows
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+      - ./public:/app/public
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:8000
       - NEXT_PUBLIC_APP_URL=http://localhost:3000
