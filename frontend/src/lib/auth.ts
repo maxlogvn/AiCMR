@@ -35,22 +35,37 @@ export const authService = {
     }
   },
 
-  async logout(): Promise<void> {
+  async logout(): Promise<{ success: boolean; error?: string }> {
     console.log("[Auth] Logging out");
-    const refreshToken = this.getRefreshToken();
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("refresh_token");
+    
+    try {
+      const refreshToken = this.getRefreshToken();
+      
+      if (typeof window !== "undefined") {
+        // Clear tokens immediately from localStorage
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
 
-      try {
+        // Try to notify backend (non-blocking, best effort)
         if (refreshToken) {
-          await api.post("/auth/logout", { refresh_token: refreshToken });
+          try {
+            console.log("[Auth] Notifying backend of logout");
+            await api.post("/auth/logout", { refresh_token: refreshToken });
+            console.log("[Auth] Backend logout notification successful");
+          } catch (error) {
+            console.warn("[Auth] Backend logout notification failed (non-critical):", error);
+            // Don't fail logout if API call fails - tokens are already cleared
+          }
         }
-      } catch (error) {
-        console.warn("[Auth] Logout API call failed (non-critical):", error);
-      }
 
-      window.location.href = "/login";
+        return { success: true };
+      }
+      
+      return { success: false, error: "Window context not available" };
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : "Unknown error";
+      console.error("[Auth] Logout failed:", errorMsg);
+      return { success: false, error: errorMsg };
     }
   },
 

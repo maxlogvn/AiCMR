@@ -28,10 +28,13 @@ export default function Navbar() {
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
+    console.log("[Navbar] Logout initiated");
     localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
     setToken(null);
     setMobileMenuOpen(false);
+    // Use router.push for consistent client-side navigation
     router.push("/login");
   };
 

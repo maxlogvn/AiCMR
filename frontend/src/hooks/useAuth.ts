@@ -31,12 +31,13 @@ export function useAuth() {
     return response;
   };
 
-  const logout = async () => {
-    await authService.logout();
+  const logout = async (): Promise<{ success: boolean; error?: string }> => {
+    const result = await authService.logout();
     setState({
       isAuthenticated: false,
       user: null,
     });
+    return result;
   };
 
   const checkAuth = () => {

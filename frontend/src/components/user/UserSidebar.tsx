@@ -10,8 +10,10 @@ export default function UserSidebar() {
   const router = useRouter();
   const { user } = useUser();
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
+    console.log("[UserSidebar] Logout initiated");
     localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
     router.push("/login");
   };
 
