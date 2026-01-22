@@ -1,4 +1,4 @@
-import api from "./api";
+import api, { resetCsrfToken, resetApiState } from "./api";
 import type {
   LoginRequest,
   RegisterRequest,
@@ -42,11 +42,17 @@ export const authService = {
       const refreshToken = this.getRefreshToken();
       
       if (typeof window !== "undefined") {
-        // Clear tokens immediately from localStorage
+        // ✅ STEP 1: Reset API state and CSRF cache BEFORE clearing tokens
+        // This ensures the next login session gets fresh CSRF token and clean interceptor state
+        resetCsrfToken();
+        resetApiState();
+        console.log("[Auth] API state reset complete");
+
+        // ✅ STEP 2: Clear tokens immediately from localStorage
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
 
-        // Try to notify backend (non-blocking, best effort)
+        // ✅ STEP 3: Try to notify backend (non-blocking, best effort)
         if (refreshToken) {
           try {
             console.log("[Auth] Notifying backend of logout");

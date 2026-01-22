@@ -14,6 +14,12 @@ const api = axios.create({
 
 let csrfTokenPromise: Promise<string | null> | null = null;
 
+// ✅ NEW: Reset CSRF token cache when user logs out
+export function resetCsrfToken() {
+  csrfTokenPromise = null;
+  console.log("[CSRF] Token cache reset for new session");
+}
+
 export async function getCsrfToken(): Promise<string | null> {
   if (typeof window === "undefined") return null;
 
@@ -44,6 +50,14 @@ export async function initCsrfToken() {
 
 let isRefreshing = false;
 
+// ✅ NEW: Reset API state when user logs out
+export function resetApiState() {
+  isRefreshing = false;
+  // Clear authorization header
+  delete api.defaults.headers.common['Authorization'];
+  console.log("[API] Interceptor state reset for new session");
+}
+
 api.interceptors.request.use(async (config) => {
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("access_token");
@@ -62,6 +76,11 @@ api.interceptors.request.use(async (config) => {
         config.withCredentials = true;
       }
     }
+    
+    // ✅ NEW: Prevent browser caching of authenticated requests
+    config.headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+    config.headers["Pragma"] = "no-cache";
+    config.headers["Expires"] = "0";
   }
   return config;
 });
