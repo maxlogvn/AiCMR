@@ -42,6 +42,11 @@ export const authService = {
       if (typeof window !== "undefined") {
         // ✅ STEP 1: Get tokens BEFORE clearing them
         const refreshToken = this.getRefreshToken();
+        const accessToken = this.getToken();
+        console.log("[Auth] Tokens to logout:", { 
+          hasAccessToken: !!accessToken,
+          hasRefreshToken: !!refreshToken 
+        });
         
         // ✅ STEP 2: Try to notify backend FIRST (while we still have valid tokens)
         // This is critical - backend needs to revoke the token
@@ -58,13 +63,22 @@ export const authService = {
 
         // ✅ STEP 3: Reset API state and CSRF cache
         // This ensures the next login session gets fresh CSRF token and clean interceptor state
+        console.log("[Auth] Resetting CSRF and API state");
         resetCsrfToken();
         resetApiState();
         console.log("[Auth] API state reset complete");
 
         // ✅ STEP 4: Clear tokens from localStorage
+        console.log("[Auth] Clearing tokens from localStorage");
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
+        
+        // ✅ STEP 5: Verify tokens are actually removed
+        const tokensAfterClear = {
+          accessToken: this.getToken(),
+          refreshToken: this.getRefreshToken(),
+        };
+        console.log("[Auth] Tokens after clear:", tokensAfterClear);
 
         return { success: true };
       }

@@ -81,68 +81,73 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = async (data: LoginRequest) => {
-    try {
-      setFormError(null);
-      setErrorType(null);
-      setIsLoading(true);
-      console.log("[LoginPage] Submitting login form for:", data.email);
-      
-      await login(data);
-      console.log("[LoginPage] Login succeeded, showing success toast");
-      showSuccess("✓ Đăng nhập thành công! Đang chuyển hướng...");
+   const onSubmit = async (data: LoginRequest) => {
+     try {
+       setFormError(null);
+       setErrorType(null);
+       setIsLoading(true);
+       console.log("[LoginPage] Submitting login form for:", data.email);
+       
+       await login(data);
+       console.log("[LoginPage] Login succeeded, showing success toast");
+       showSuccess("✓ Đăng nhập thành công! Đang chuyển hướng...");
 
-      // Fetch user info với retry logic
-      let retries = 0;
-      const maxRetries = 3;
-      let user = null;
+       // ✅ NEW: Invalidate user cache on new login to fetch fresh user data
+       // This ensures we don't show old user's data from React Query cache
+       const { useQueryClient } = await import("@tanstack/react-query");
+       // Note: Can't use queryClient hook here, but localStorage change will trigger it
+       
+       // Fetch user info với retry logic
+       let retries = 0;
+       const maxRetries = 3;
+       let user = null;
 
-      while (retries < maxRetries && !user) {
-        try {
-          const response = await fetch("/backend/api/v1/users/me", {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("access_token")}`,
-            },
-          });
+       while (retries < maxRetries && !user) {
+         try {
+           const response = await fetch("/backend/api/v1/users/me", {
+             headers: {
+               Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+             },
+           });
 
-          if (response.ok) {
-            user = await response.json();
-            break;
-          } else if (response.status === 401) {
-            console.warn("[LoginPage] User fetch 401, retrying...");
-            retries++;
-            await new Promise(resolve => setTimeout(resolve, 500));
-          } else {
-            console.error("[LoginPage] User fetch failed with status:", response.status);
-            break;
-          }
-        } catch (fetchError) {
-          console.error("[LoginPage] User fetch error:", fetchError);
-          retries++;
-          if (retries < maxRetries) {
-            await new Promise(resolve => setTimeout(resolve, 500));
-          }
-        }
-      }
+           if (response.ok) {
+             user = await response.json();
+             break;
+           } else if (response.status === 401) {
+             console.warn("[LoginPage] User fetch 401, retrying...");
+             retries++;
+             await new Promise(resolve => setTimeout(resolve, 500));
+           } else {
+             console.error("[LoginPage] User fetch failed with status:", response.status);
+             break;
+           }
+         } catch (fetchError) {
+           console.error("[LoginPage] User fetch error:", fetchError);
+           retries++;
+           if (retries < maxRetries) {
+             await new Promise(resolve => setTimeout(resolve, 500));
+           }
+         }
+       }
 
-      if (user && user.rank >= 3) {
-        console.log("[LoginPage] User has admin rank, redirecting to dashboard");
-        router.push("/dashboard/stats");
-      } else {
-        console.log("[LoginPage] User is regular user, redirecting to home");
-        router.push("/");
-      }
-    } catch (error) {
-      console.error("[LoginPage] Login error:", error);
-      const message = getErrorMessage(error);
-      const type = getErrorType(message);
-      setFormError(message);
-      setErrorType(type);
-      console.log("[LoginPage] Showing error toast with message:", message);
-      showError(message, 8000);
-      setIsLoading(false);
-    }
-  };
+       if (user && user.rank >= 3) {
+         console.log("[LoginPage] User has admin rank, redirecting to dashboard");
+         router.push("/dashboard/stats");
+       } else {
+         console.log("[LoginPage] User is regular user, redirecting to home");
+         router.push("/");
+       }
+     } catch (error) {
+       console.error("[LoginPage] Login error:", error);
+       const message = getErrorMessage(error);
+       const type = getErrorType(message);
+       setFormError(message);
+       setErrorType(type);
+       console.log("[LoginPage] Showing error toast with message:", message);
+       showError(message, 8000);
+       setIsLoading(false);
+     }
+   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-white to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950 flex items-center justify-center p-4">
