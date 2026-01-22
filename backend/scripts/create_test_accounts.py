@@ -1,96 +1,137 @@
-import sys
-import os
+"""
+Script to create test accounts for AiCMR
+
+Usage:
+    python -m scripts.create_test_accounts
+
+Test accounts will be created with the following credentials:
+    - Admin: admin@aicmr.local / Admin@123456
+    - Moderator: moderator@aicmr.local / Moderator@123456
+    - Member: member@aicmr.local / Member@123456
+    - Guest: testuser@example.com / Test@123456
+"""
+
 import asyncio
-from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi_cache import FastAPICache
-from fastapi_cache.backends.redis import RedisBackend
-from redis import asyncio as aioredis
+import sys
+from pathlib import Path
 
-# Add parent directory to path to import app modules
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add backend to path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from app.core.database import AsyncSessionLocal
-from app.crud.crud_user import create, get_by_email
+from app.core.database import get_db, init_db
+from app.crud import create, get_by_email
 from app.schemas.user import UserCreate
-from app.core.config import get_settings
+from app.core.constants import ADMIN_RANK, MODERATOR_RANK, MEMBER_RANK, GUEST_RANK
+from sqlalchemy.ext.asyncio import AsyncSession
+from loguru import logger
 
-settings = get_settings()
+# Define test accounts
+TEST_ACCOUNTS = [
+    {
+        "email": "admin@aicmr.local",
+        "username": "admin",
+        "password": "Admin@123456",
+        "rank": 5,  # ADMIN
+        "description": "System Administrator",
+    },
+    {
+        "email": "moderator@aicmr.local",
+        "username": "moderator",
+        "password": "Moderator@123456",
+        "rank": 3,  # MODERATOR
+        "description": "Content Moderator",
+    },
+    {
+        "email": "member@aicmr.local",
+        "username": "member",
+        "password": "Member@123456",
+        "rank": 1,  # MEMBER
+        "description": "Regular Member",
+    },
+    {
+        "email": "testuser@example.com",
+        "username": "testuser",
+        "password": "Test@123456",
+        "rank": 0,  # GUEST
+        "description": "Test User",
+    },
+]
 
-async def init_cache():
+
+async def create_test_accounts():
+    """Create test accounts in the database."""
     try:
-        redis = aioredis.from_url(settings.REDIS_URL, encoding="utf8", decode_responses=True)
-        FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
-        print("Initialized Redis cache")
-    except Exception as e:
-        print(f"Failed to initialize Redis cache: {e}")
+        # Initialize database
+        await init_db()
+        logger.info("Database initialized")
 
-async def create_users():
-    await init_cache()
+        # Get async session
+        async_generator = get_db()
+        db = await async_generator.__anext__()
 
-    # Define test accounts
-    users_to_create = [
-        {
-            "email": "guest@aicmr.com", 
-            "username": "guest_test", 
-            "password": "User@123456", 
-            "rank": 0, 
-            "role": "Guest"
-        },
-        {
-            "email": "member@aicmr.com", 
-            "username": "member_test", 
-            "password": "User@123456", 
-            "rank": 1, 
-            "role": "Member"
-        },
-        {
-            "email": "mod@aicmr.com", 
-            "username": "mod_test", 
-            "password": "User@123456", 
-            "rank": 3, 
-            "role": "Moderator"
-        },
-        {
-            "email": "admin_test@aicmr.com", 
-            "username": "admin_test", 
-            "password": "User@123456", 
-            "rank": 5, 
-            "role": "Admin"
-        }
-    ]
+        created_count = 0
+        skipped_count = 0
 
-    async with AsyncSessionLocal() as db:
-        print("Starting test account creation...")
-        
-        for user_data in users_to_create:
+        for account in TEST_ACCOUNTS:
             try:
-                # Check if user exists
-                existing_user = await get_by_email(db, email=user_data["email"])
-                if existing_user:
-                    print(f"[-] User {user_data['email']} already exists. Skipping.")
+                # Check if user already exists
+                existing = await get_by_email(db, account["email"])
+                if existing:
+                    logger.warning(
+                        f"Account already exists: {account['email']} (ID: {existing.id})"
+                    )
+                    skipped_count += 1
                     continue
-                
-                # Create user
-                print(f"[*] Creating {user_data['role']} ({user_data['email']})...")
-                new_user = UserCreate(
-                    email=user_data["email"],
-                    username=user_data["username"],
-                    password=user_data["password"],
-                    rank=user_data["rank"],
-                    is_active=True
-                )
-                
-                created_user = await create(db, new_user)
-                print(f"[+] Created {user_data['role']}: {created_user.email} (Rank {created_user.rank})")
-                
-            except Exception as e:
-                print(f"[!] Error creating {user_data['email']}: {e}")
-                # Rollback current transaction if error occurs to avoid blocking others
-                await db.rollback()
 
-        # Commit all changes
-        await db.commit()
-        print("Done.")
+                # Create new user
+                user_data = UserCreate(
+                    email=account["email"],
+                    username=account["username"],
+                    password=account["password"],
+                )
+                user = await create(db, user_data)
+
+                # Update rank
+                user.rank = account["rank"]
+                await db.commit()
+
+                logger.info(
+                    f"✅ Created test account: {account['email']} (Rank: {account['rank']} - {account['description']})"
+                )
+                created_count += 1
+
+            except Exception as e:
+                logger.error(f"❌ Failed to create account {account['email']}: {str(e)}")
+                await db.rollback()
+                continue
+
+        # Summary
+        logger.info(f"\n{'='*60}")
+        logger.info(f"Test Account Creation Summary")
+        logger.info(f"{'='*60}")
+        logger.info(f"Created: {created_count}")
+        logger.info(f"Skipped (already exist): {skipped_count}")
+        logger.info(f"Total: {created_count + skipped_count}")
+        logger.info(f"{'='*60}\n")
+
+        # Print credentials
+        logger.info("Test Account Credentials:")
+        logger.info("-" * 60)
+        for account in TEST_ACCOUNTS:
+            rank_names = {0: "GUEST", 1: "MEMBER", 3: "MODERATOR", 5: "ADMIN"}
+            rank_name = rank_names.get(account["rank"], f"RANK_{account['rank']}")
+            logger.info(f"\nRole: {rank_name}")
+            logger.info(f"  Email: {account['email']}")
+            logger.info(f"  Password: {account['password']}")
+            logger.info(f"  Rank: {account['rank']}")
+        logger.info(f"\n{'='*60}\n")
+
+        await db.close()
+
+    except Exception as e:
+        logger.error(f"Fatal error: {str(e)}", exc_info=True)
+        sys.exit(1)
+
 
 if __name__ == "__main__":
-    asyncio.run(create_users())
+    asyncio.run(create_test_accounts())
