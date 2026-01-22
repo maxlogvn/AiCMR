@@ -1,291 +1,193 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
-import { LogOut, User as UserIcon, Home, LayoutDashboard, BookOpen } from "lucide-react";
+import { LogOut, User as UserIcon, Home, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
-import { useUser } from "@/hooks/useUser";
-import { useState, useEffect } from "react";
-import { authService } from "@/lib/auth";
-import { useToast } from "@/hooks/useToast";
+import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
-  const { user } = useUser();
-  const { showSuccess, showError } = useToast();
-  const [token, setToken] = useState<string | null>(null);
+  const { isAuthenticated, logout, isLoading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-
-  // Detect token on mount and listen to storage changes
-  useEffect(() => {
-    const token = authService.getToken();
-    setToken(token);
-
-    const handleStorageChange = () => {
-      const newToken = authService.getToken();
-      setToken(newToken);
-    };
-
-    // ✅ NEW: Also listen to custom logout event (needed for same-tab logout)
-    const handleLogoutEvent = () => {
-      console.log("[Navbar] Received logout event, resetting state");
-      setToken(null);
-      setMobileMenuOpen(false);
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-    window.addEventListener("auth:logout", handleLogoutEvent);
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-      window.removeEventListener("auth:logout", handleLogoutEvent);
-    };
-  }, []);
 
   const handleLogout = async () => {
-    if (isLoggingOut) return;
+    if (isLoading) return;
     
     try {
-      console.log("[Navbar] Logout initiated");
-      setIsLoggingOut(true);
-      
-      // Call authService.logout which handles both frontend and backend cleanup
-      const result = await authService.logout();
-      
-      setToken(null);
-      setMobileMenuOpen(false);
-      
-      if (result.success) {
-        console.log("[Navbar] Logout successful");
-        showSuccess("Đăng xuất thành công");
-        // Small delay to show success message before redirect
-        setTimeout(() => router.push("/login"), 500);
-      } else {
-        console.warn("[Navbar] Logout had issues:", result.error);
-        showError("Đã gặp lỗi khi đăng xuất, nhưng sẽ chuyển hướng");
-        // Still redirect after 1 second even if backend fails
-        setTimeout(() => router.push("/login"), 1000);
-      }
+      await logout();
+      router.push("/login");
     } catch (error) {
-      console.error("[Navbar] Logout error:", error);
-      showError("Lỗi đăng xuất, vui lòng thử lại");
-      // Force cleanup and redirect anyway
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("refresh_token");
-      setToken(null);
-      setTimeout(() => router.push("/login"), 1000);
-    } finally {
-      setIsLoggingOut(false);
+      console.error("Logout error:", error);
     }
   };
 
-  // Public pages (no auth required)
-  const publicPages = ["/", "/login", "/register", "/install", "/(public)/blog"];
-
-  // Check if current page is public
-  const isPublicPage = publicPages.some(page => pathname?.startsWith(page));
+  // Don't show navbar on auth pages
+  if (pathname === "/login" || pathname === "/register") {
+    return null;
+  }
 
   return (
-    <nav className="bg-white dark:bg-zinc-900 shadow-sm border-b border-zinc-200 dark:border-zinc-800 sticky top-0 z-50">
+    <nav className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo/Brand */}
+          {/* Logo */}
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <div className="h-8 w-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded flex items-center justify-center">
               <UserIcon className="h-5 w-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-zinc-900 dark:text-white hidden sm:inline">
+            <span className="text-xl font-bold text-gray-900 dark:text-white hidden sm:inline">
               AiCMR
             </span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
-            {/* Unauthenticated user */}
-            {!token ? (
+          {/* Navigation Links */}
+          <div className="hidden md:flex items-center gap-6">
+            {!isAuthenticated ? (
+              /* Not logged in */
               <>
                 <Link
                   href="/"
                   className={`flex items-center gap-2 text-sm font-medium transition-colors ${
                     pathname === "/" 
                       ? "text-blue-600 dark:text-blue-400" 
-                      : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                   }`}
                 >
                   <Home className="h-4 w-4" />
                   Trang chủ
                 </Link>
-                <Link
-                  href="/(public)/blog"
-                  className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                    pathname?.startsWith("/(public)/blog") 
-                      ? "text-blue-600 dark:text-blue-400" 
-                      : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
-                  }`}
-                >
-                  <BookOpen className="h-4 w-4" />
-                  Blog
-                </Link>
-              </>
-            ) : (
-              /* Authenticated user */
-              <>
-                <Link
-                  href="/user/profile"
-                  className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                    pathname === "/user/profile" 
-                      ? "text-blue-600 dark:text-blue-400" 
-                      : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
-                  }`}
-                >
-                  <User className="h-4 w-4" />
-                  Hồ sơ
-                </Link>
-                {user && user.rank >= 3 && (
-                  <Link
-                    href="/dashboard"
-                    className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                      pathname?.startsWith("/dashboard") 
-                        ? "text-blue-600 dark:text-blue-400" 
-                        : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
-                    }`}
-                  >
-                    <LayoutDashboard className="h-4 w-4" />
-                    Quản trị
-                  </Link>
-                )}
-                <Link
-                  href="/"
-                  className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                    pathname === "/" 
-                      ? "text-blue-600 dark:text-blue-400" 
-                      : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
-                  }`}
-                >
-                  <Home className="h-4 w-4" />
-                  Trang chủ
-                </Link>
-              </>
-            )}
-          </div>
-
-          {/* Right Side Actions */}
-          <div className="flex items-center gap-4">
-            {token ? (
-             <button
-                 onClick={handleLogout}
-                 disabled={isLoggingOut}
-                 className="hidden sm:flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-               >
-                 <LogOut className={`h-4 w-4 ${isLoggingOut ? 'animate-spin' : ''}`} />
-                 {isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}
-               </button>
-            ) : (
-              <>
                 <Link
                   href="/login"
-                  className="hidden sm:inline px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                  className="px-3 py-2 text-sm font-medium text-blue-600 hover:text-blue-500 transition-colors"
                 >
                   Đăng nhập
                 </Link>
                 <Link
                   href="/register"
-                  className="hidden sm:inline px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                  className="px-3 py-2 text-sm font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                 >
                   Đăng ký
                 </Link>
               </>
+            ) : (
+              /* Logged in */
+              <>
+                <Link
+                  href="/"
+                  className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                    pathname === "/" 
+                      ? "text-blue-600 dark:text-blue-400" 
+                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                  }`}
+                >
+                  <Home className="h-4 w-4" />
+                  Trang chủ
+                </Link>
+                <Link
+                  href="/dashboard"
+                  className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                    pathname?.startsWith("/dashboard") 
+                      ? "text-blue-600 dark:text-blue-400" 
+                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                  }`}
+                >
+                  <LayoutDashboard className="h-4 w-4" />
+                  Dashboard
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  disabled={isLoading}
+                  className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                    isLoading 
+                      ? "text-gray-400 cursor-not-allowed" 
+                      : "text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400"
+                  }`}
+                >
+                  <LogOut className="h-4 w-4" />
+                  {isLoading ? "Đang xuất..." : "Đăng xuất"}
+                </button>
+              </>
             )}
+          </div>
 
-            {/* Mobile menu button */}
+          {/* Mobile menu button */}
+          <div className="md:hidden">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg"
+              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
             >
-              <svg
-                className={`h-6 w-6 transition-transform ${mobileMenuOpen ? "rotate-90" : ""}`}
-                fill="none"
+              <span className="sr-only">Open main menu</span>
+              <svg 
+                className="h-6 w-6" 
+                fill="none" 
+                viewBox="0 0 24 24" 
                 stroke="currentColor"
-                viewBox="0 0 24 24"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 6h16M4 12h16M4 18h16"
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M4 6h16M4 12h16M4 18h16" 
                 />
               </svg>
             </button>
           </div>
         </div>
 
-        {/* Mobile Navigation */}
+        {/* Mobile menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden pb-4 space-y-2 border-t border-zinc-200 dark:border-zinc-800 pt-4">
-            {!token ? (
-              <>
-                <Link
-                  href="/"
-                  className="block px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Trang chủ
-                </Link>
-                <Link
-                  href="/(public)/blog"
-                  className="block px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Blog
-                </Link>
-                <Link
-                  href="/login"
-                  className="block px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Đăng nhập
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/user/profile"
-                  className="block px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Hồ sơ cá nhân
-                </Link>
-                {user && user.rank >= 3 && (
+          <div className="md:hidden">
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+              {!isAuthenticated ? (
+                <>
+                  <Link
+                    href="/"
+                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                  >
+                    Trang chủ
+                  </Link>
+                  <Link
+                    href="/login"
+                    className="block px-3 py-2 rounded-md text-base font-medium text-blue-600 hover:text-blue-700"
+                  >
+                    Đăng nhập
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="block px-3 py-2 rounded-md text-base font-medium bg-blue-600 text-white hover:bg-blue-700"
+                  >
+                    Đăng ký
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/"
+                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                  >
+                    Trang chủ
+                  </Link>
                   <Link
                     href="/dashboard"
-                    className="block px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg"
-                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
                   >
-                    Quản trị
+                    Dashboard
                   </Link>
-                )}
-                <Link
-                  href="/"
-                  className="block px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Trang chủ
-                </Link>
-                 <button
-                   onClick={handleLogout}
-                   disabled={isLoggingOut}
-                   className="w-full text-left px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                 >
-                   {isLoggingOut ? 'Đang đăng xuất...' : 'Đăng xuất'}
-                 </button>
-              </>
-            )}
+                  <button
+                    onClick={handleLogout}
+                    disabled={isLoading}
+                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-red-600 hover:text-red-700 hover:bg-gray-50"
+                  >
+                    {isLoading ? "Đang xuất..." : "Đăng xuất"}
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         )}
       </div>
     </nav>
   );
 }
-
-// Import User icon properly
-import { User } from "lucide-react";
