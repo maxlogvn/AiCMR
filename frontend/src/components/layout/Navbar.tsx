@@ -27,8 +27,19 @@ export default function Navbar() {
       setToken(newToken);
     };
 
+    // ✅ NEW: Also listen to custom logout event (needed for same-tab logout)
+    const handleLogoutEvent = () => {
+      console.log("[Navbar] Received logout event, resetting state");
+      setToken(null);
+      setMobileMenuOpen(false);
+    };
+
     window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
+    window.addEventListener("auth:logout", handleLogoutEvent);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("auth:logout", handleLogoutEvent);
+    };
   }, []);
 
   const handleLogout = async () => {
