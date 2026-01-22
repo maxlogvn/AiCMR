@@ -23,8 +23,19 @@ export function useUser() {
       }
     };
 
+    // ✅ NEW: Also listen to custom logout event (needed for same-tab logout)
+    const handleLogoutEvent = () => {
+      console.log("[useUser] Received logout event, clearing user cache");
+      queryClient.setQueryData(["user", "me"], null);
+      queryClient.removeQueries({ queryKey: ["user", "me"] });
+    };
+
     window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
+    window.addEventListener("auth:logout", handleLogoutEvent);
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("auth:logout", handleLogoutEvent);
+    };
   }, [queryClient]);
 
   const {

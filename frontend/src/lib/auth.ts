@@ -73,14 +73,19 @@ export const authService = {
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
         
-        // ✅ STEP 5: Verify tokens are actually removed
-        const tokensAfterClear = {
-          accessToken: this.getToken(),
-          refreshToken: this.getRefreshToken(),
-        };
-        console.log("[Auth] Tokens after clear:", tokensAfterClear);
+         // ✅ STEP 5: Verify tokens are actually removed
+         const tokensAfterClear = {
+           accessToken: this.getToken(),
+           refreshToken: this.getRefreshToken(),
+         };
+         console.log("[Auth] Tokens after clear:", tokensAfterClear);
 
-        return { success: true };
+         // ✅ STEP 6: Dispatch custom event to notify other components
+         // This is needed because storage event doesn't trigger within same window/tab
+         console.log("[Auth] Dispatching logout event");
+         window.dispatchEvent(new CustomEvent("auth:logout", { detail: { timestamp: Date.now() } }));
+
+         return { success: true };
       }
       
       return { success: false, error: "Window context not available" };
