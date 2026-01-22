@@ -39,20 +39,12 @@ export const authService = {
     console.log("[Auth] Logging out");
     
     try {
-      const refreshToken = this.getRefreshToken();
-      
       if (typeof window !== "undefined") {
-        // ✅ STEP 1: Reset API state and CSRF cache BEFORE clearing tokens
-        // This ensures the next login session gets fresh CSRF token and clean interceptor state
-        resetCsrfToken();
-        resetApiState();
-        console.log("[Auth] API state reset complete");
-
-        // ✅ STEP 2: Clear tokens immediately from localStorage
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-
-        // ✅ STEP 3: Try to notify backend (non-blocking, best effort)
+        // ✅ STEP 1: Get tokens BEFORE clearing them
+        const refreshToken = this.getRefreshToken();
+        
+        // ✅ STEP 2: Try to notify backend FIRST (while we still have valid tokens)
+        // This is critical - backend needs to revoke the token
         if (refreshToken) {
           try {
             console.log("[Auth] Notifying backend of logout");
@@ -60,9 +52,19 @@ export const authService = {
             console.log("[Auth] Backend logout notification successful");
           } catch (error) {
             console.warn("[Auth] Backend logout notification failed (non-critical):", error);
-            // Don't fail logout if API call fails - tokens are already cleared
+            // Continue with logout even if backend fails
           }
         }
+
+        // ✅ STEP 3: Reset API state and CSRF cache
+        // This ensures the next login session gets fresh CSRF token and clean interceptor state
+        resetCsrfToken();
+        resetApiState();
+        console.log("[Auth] API state reset complete");
+
+        // ✅ STEP 4: Clear tokens from localStorage
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
 
         return { success: true };
       }
@@ -71,6 +73,11 @@ export const authService = {
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : "Unknown error";
       console.error("[Auth] Logout failed:", errorMsg);
+      // Still clear tokens even if error occurs
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+      }
       return { success: false, error: errorMsg };
     }
   },
