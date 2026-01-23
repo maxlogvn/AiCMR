@@ -1,0 +1,164 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+AiCMR is an AI-powered medical record management system built as a full-stack monorepo. The application uses Next.js for the frontend and FastAPI for the backend, with MySQL for data persistence and Redis for caching.
+
+## Development Commands
+
+### Starting the Development Environment
+
+```bash
+# Using the commander CLI (recommended)
+./commander up              # Start all services
+./commander down            # Stop all services
+./commander health          # Check health of all services
+./commander logs            # View logs for all services
+./commander logs backend    # View logs for specific service (backend, frontend, mysql, redis, nginx)
+./commander status          # Show container status
+
+# Alternative: Direct Docker commands
+docker-compose up -d                         # Linux/Mac
+docker-compose -f docker-compose.yml -f docker-compose.windows.yml up -d  # Windows
+```
+
+### Frontend Commands
+
+```bash
+cd frontend
+npm run dev      # Development server (port 3000)
+npm run build    # Production build
+npm run start    # Production server
+npm run lint     # ESLint
+```
+
+### Backend Commands
+
+```bash
+cd backend
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000    # Development server
+pytest                        # Run all tests
+pytest tests/test_post_api.py  # Run specific test file
+pytest -v                     # Verbose output
+pytest -x                     # Stop on first failure
+alembic upgrade head          # Apply database migrations
+alembic revision --autogenerate -m "description"  # Create migration
+```
+
+### Service URLs (Development)
+
+- Frontend: http://localhost:3000 or http://aicmr.local
+- Backend API: http://localhost:8000 or http://aicmr.local/backend
+- API Docs: http://localhost:8000/docs
+- phpMyAdmin: http://localhost:8080 or http://aicmr.local/phpmyadmin
+
+## Architecture
+
+### Monorepo Structure
+
+```
+AiCMR/
+├── frontend/          # Next.js 16 application
+├── backend/           # FastAPI application
+├── nginx/             # Reverse proxy configuration
+├── scripts/           # CLI management scripts
+├── storage/           # File storage (uploads)
+└── docker-compose.yml # Container orchestration
+```
+
+### Backend Architecture (FastAPI)
+
+The backend follows a layered architecture with clear separation of concerns:
+
+- **`app/main.py`** - Application entry point, middleware setup, router registration
+- **`app/api/v1/`** - API route handlers (auth, users, posts, categories, tags, uploads, etc.)
+- **`app/core/`** - Core functionality (config, database, security, exceptions, rate limiting)
+- **`app/models/`** - SQLAlchemy ORM models (User, Post, Category, Tag, Attachment, etc.)
+- **`app/schemas/`** - Pydantic schemas for request/response validation
+- **`app/crud/`** - Database operations (Create, Read, Update, Delete)
+- **`app/services/`** - Business logic services
+
+Key patterns:
+- All API endpoints are under `/api/v1/`
+- JWT authentication with refresh tokens
+- CSRF protection via session middleware
+- Rate limiting with SlowAPI
+- Redis caching with fastapi-cache2
+- Prometheus metrics at `/metrics`
+
+### Frontend Architecture (Next.js 16)
+
+The frontend uses Next.js App Router with:
+
+- **`app/`** - App Router pages and layouts
+- **`components/`** - Reusable UI components
+- **`hooks/`** - Custom React hooks
+
+Key patterns:
+- Route groups: `(public)` for public routes, `dashboard/` for admin, `user/` for user dashboard
+- Guard components for auth: `AuthGuard`, `AdminGuard`, `ModeratorGuard`, `PublicOnlyGuard`, `InstallGuard`
+- TanStack Query for data fetching
+- Zustand for state management
+- Radix UI primitives for accessible components
+
+### Request Flow
+
+1. Nginx (port 80/443) receives requests
+2. Routes `/backend/*` to FastAPI backend (port 8000)
+3. Routes `/phpmyadmin/*` to phpMyAdmin (port 80)
+4. Routes `/media/{id}/{slug}` to backend uploads handler
+5. All other routes to Next.js frontend (port 3000)
+
+### Authentication Flow
+
+- JWT access tokens (30min expiry) + refresh tokens (7 days)
+- Access tokens stored in memory (Zustand)
+- CSRF tokens in session cookies
+- Rank-based authorization: Member(1), Moderator(5), Admin(10)
+
+## Testing
+
+Backend tests use pytest with async support and in-memory SQLite:
+
+```bash
+cd backend
+pytest                    # Run all tests
+pytest -v                 # Verbose
+pytest -k "test_post"     # Run tests matching pattern
+```
+
+Test fixtures in `tests/conftest.py` provide:
+- `db_session` - Test database session
+- `client` - Test HTTP client
+- `test_user` / `admin_user` / `moderator_auth_headers` - Auth fixtures
+
+## Platform-Specific Notes
+
+### Windows Development
+
+- Uses `docker-compose.windows.yml` override
+- File watching requires `CHOKIDAR_USEPOLLING=true`
+- Database: `host.docker.internal` for MySQL connection
+- Container names have `-windows` suffix
+
+### Linux/Mac Development
+
+- Uses standard `docker-compose.yml`
+- Database: `mysql` (container name) for MySQL connection
+- Standard file watching
+
+## Environment Configuration
+
+Copy `.env.example` to `.env` and configure:
+
+Required variables:
+- `SECRET_KEY` - JWT signing (min 32 chars, generate with secrets module)
+- `INSTALL_SECRET` - Installation security
+- Database credentials: `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `MYSQL_ROOT_PASSWORD`
+
+Generate secure secrets:
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+```

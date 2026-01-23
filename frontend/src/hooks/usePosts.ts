@@ -330,8 +330,8 @@ export function useGetUnusedTags(enabled: boolean = true) {
 export function useMergeTags() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ sourceId, targetId }: MergeRequest) => 
-      postsApi.mergeTags(sourceId, targetId),
+    mutationFn: ({ source_id, target_id }: MergeRequest) =>
+      postsApi.mergeTags(source_id, target_id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tags'] });
       queryClient.invalidateQueries({ queryKey: ['tags', 'trending'] });

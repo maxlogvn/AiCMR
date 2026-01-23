@@ -70,13 +70,15 @@ export function CategoryForm({ open, onClose, category }: CategoryFormProps) {
     const description = data.description || undefined;
     const icon = data.icon || undefined;
     const color = data.color || undefined;
+    // Convert NaN (from empty select value) to undefined for root category
+    const parent_id = data.parent_id && !isNaN(data.parent_id) ? data.parent_id : undefined;
 
     if (category) {
       const payload: UpdateCategoryRequest = {
         name: data.name,
         slug,
         description,
-        parent_id: data.parent_id,
+        parent_id: parent_id,
         icon,
         color,
         display_order: data.display_order,
@@ -88,7 +90,7 @@ export function CategoryForm({ open, onClose, category }: CategoryFormProps) {
         name: data.name,
         slug,
         description,
-        parent_id: data.parent_id,
+        parent_id: parent_id,
         icon,
         color,
         display_order: data.display_order,
