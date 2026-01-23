@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -108,6 +109,9 @@ export function CategoryForm({ open, onClose, category }: CategoryFormProps) {
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{category ? 'Edit Category' : 'Create Category'}</DialogTitle>
+          <DialogDescription>
+            {category ? 'Make changes to your category here.' : 'Add a new category to your blog.'}
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -160,7 +164,8 @@ export function CategoryForm({ open, onClose, category }: CategoryFormProps) {
               <div className="flex gap-2">
                 <Input
                   type="color"
-                  {...form.register('color')}
+                  value={/^#[0-9A-Fa-f]{6}$/i.test(form.watch('color') || '') ? form.watch('color') : '#000000'}
+                  onChange={(e) => form.setValue('color', e.target.value, { shouldValidate: true })}
                   className="w-16 h-10 p-1"
                 />
                 <Input {...form.register('color')} placeholder="#FF0000" />
