@@ -1,0 +1,195 @@
+{
+  "name": "ui-ux-pro-max",
+  "displayName": "UI/UX Pro Max",
+  "version": "2.0.0",
+  "description": "Trí tuệ thiết kế UI/UX toàn diện với 50+ phong cách, 21 bảng màu, 50+ cặp font, 20 loại biểu đồ. Hỗ trợ 9 stack (React, Next.js, Vue, Svelte, SwiftUI, React Native, Flutter, Tailwind, shadcn/ui). Tích hợp search engine thông minh và best practices theo từng framework.",
+  "author": "UI/UX Pro Max Team",
+  "created": "2025-01-23",
+  "updated": "2025-01-23",
+  "category": "frontend-design",
+  "homepage": "https://github.com/your-org/AiCMR",
+  "icon": "🎨",
+  "tags": [
+    "ui",
+    "ux",
+    "design",
+    "frontend",
+    "tailwind",
+    "components",
+    "accessibility",
+    "responsive",
+    "design-system",
+    "color-palette",
+    "typography"
+  ],
+  "keywords": [
+    "ui design",
+    "ux design",
+    "landing page",
+    "dashboard",
+    "responsive",
+    "accessibility",
+    "color palette",
+    "font pairing",
+    "design system",
+    "tailwind css",
+    "react components",
+    "next.js pages",
+    "vue components",
+    "svelte components",
+    "glassmorphism",
+    "minimalism",
+    "dark mode"
+  ],
+  "triggers": [
+    "thiết kế ui",
+    "tạo ui",
+    "design ui",
+    "build ui",
+    "landing page",
+    "dashboard design",
+    "fix ui",
+    "review ui",
+    "color palette",
+    "font pairing",
+    "responsive design",
+    "accessibility",
+    "component design",
+    "design system",
+    "button",
+    "card",
+    "form",
+    "modal",
+    "navbar"
+  ],
+  "relatedSkills": [
+    "frontend-design",
+    "backend-api-builder",
+    "backend-api-tester"
+  ],
+  "files": [
+    {
+      "name": "SKILL.md",
+      "description": "Tài liệu chính với 14 phần: giới thiệu, tính năng, kiến trúc, hướng dẫn cài đặt, cách sử dụng, tham chiếu tìm kiếm, quy trình thiết kế, quy tắc UI, best practices, checklist, ví dụ, hướng dẫn mở rộng, troubleshooting, FAQ"
+    },
+    {
+      "name": "skill.json",
+      "description": "Skill metadata và configuration"
+    },
+    {
+      "name": "README.md",
+      "description": "Quick reference và usage guide ngắn gọn"
+    },
+    {
+      "name": "index.md",
+      "description": "Skill index và navigation"
+    },
+    {
+      "name": "examples.html",
+      "description": "Working examples demonstrating various UI patterns"
+    }
+  ],
+  "capabilities": {
+    "designDatabase": true,
+    "searchEngine": true,
+    "multiStackSupport": true,
+    "designSystemGeneration": true,
+    "codeGeneration": true,
+    "accessibilityCheck": true,
+    "responsiveDesign": true,
+    "colorPaletteGenerator": true,
+    "typographyPairing": true,
+    "componentLibrary": true,
+    "bestPracticesGuide": true,
+    "qualityChecklist": true
+  },
+  "supportedStacks": [
+    "html-tailwind",
+    "react",
+    "nextjs",
+    "vue",
+    "svelte",
+    "swiftui",
+    "react-native",
+    "flutter",
+    "shadcn"
+  ],
+  "supportedDomains": [
+    "product",
+    "style",
+    "color",
+    "typography",
+    "landing",
+    "chart",
+    "ux",
+    "prompt"
+  ],
+  "compatibility": {
+    "os": ["Windows", "Linux", "macOS"],
+    "requiresPython": "3.7+",
+    "aiAgents": ["Claude Code", "Claude Agent SDK"],
+    "integrations": [
+      "shadcn/ui MCP",
+      "Claude Code (native)"
+    ]
+  },
+  "data": {
+    "styles": "50+ UI styles (minimalism, glassmorphism, brutalism, etc.)",
+    "colors": "21 industry-specific color palettes",
+    "typography": "50+ font pairings with Google Fonts",
+    "charts": "20+ chart types với library recommendations",
+    "products": "Product type recommendations (SaaS, e-commerce, etc.)",
+    "landing": "Landing page structures và strategies",
+    "ux": "UX best practices và anti-patterns"
+  },
+  "features": [
+    "Multi-domain search engine",
+    "Stack-specific code generation",
+    "Design system template",
+    "Pre-delivery checklist",
+    "Accessibility guidelines (WCAG AA)",
+    "Performance optimization tips",
+    "Responsive design patterns",
+    "Component templates"
+  ],
+  "changelog": {
+    "2.0.0": {
+      "date": "2025-01-23",
+      "changes": [
+        "Complete restructure với 14 phần",
+        "Vietnamese translation",
+        "Enhanced documentation",
+        "Added workflow diagrams",
+        "Added 3 detailed examples",
+        "Added troubleshooting section",
+        "Added FAQ section",
+        "Added contributing guidelines"
+      ]
+    },
+    "1.0.0": {
+      "date": "2025-01-20",
+      "changes": [
+        "Initial release",
+        "Basic design database",
+        "Search engine",
+        "Stack support"
+      ]
+    }
+  },
+  "priority": "high",
+  "scope": "project",
+  "dependencies": [
+    "Python 3.7+",
+    ".shared/scripts/search.py"
+  ],
+  "examples": [
+    "tạo landing page cho SaaS B2B",
+    "design dashboard analytics",
+    "build e-commerce product page",
+    "fix UI cho chuyên nghiệp hơn",
+    "review component này có vấn đề gì",
+    "cho tôi 3 phong cách cho app healthcare",
+    "convert Figma thành code",
+    "cải thiện accessibility"
+  ]
+}
