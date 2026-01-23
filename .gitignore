@@ -3,7 +3,7 @@
 Thumbs.db
 
 # Local-only dot directories (keep out of git)
-.claude/
+.agents/
 .opencode/
 .trae/
 
