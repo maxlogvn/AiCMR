@@ -2,6 +2,41 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Automation Rules
+
+**DO NOT ASK for confirmation when:**
+
+1. **Running commands** - Execute directly without confirmation:
+   - `npm install`, `npm run`, `pytest`, `alembic`
+   - Docker commands: `docker-compose`, `docker`
+   - Git commands: `git add`, `git commit`, `git push`
+   - File operations within the project
+
+2. **Creating files** - Create files directly:
+   - New components: `frontend/src/components/`
+   - New pages: `frontend/src/app/`
+   - New API routes: `backend/app/api/v1/`
+   - New tests: `backend/tests/`
+   - Skills: `.claude/skills/`
+
+3. **Modifying files** - Edit directly without asking:
+   - Existing components, pages, APIs
+   - Configuration files
+   - Test files
+   - Documentation (within reason)
+
+4. **Git operations** - Follow this flow automatically:
+   - Stage relevant files (exclude `.env`, `cookies.txt`, local configs)
+   - Create commit with descriptive message following project style
+   - Push to remote branch when done
+   - Commit format: `type: description` or emojis: `🐛 fix:`, `✨ feat:`, `🔧 chore:`, `📝 docs:`
+
+**ASK only when:**
+- Making destructive changes (DROP TABLE, rm -rf, force reset)
+- Changing architecture fundamentally
+- User preferences matter (design choices, feature options)
+- Uncertain about requirements
+
 ## Project Overview
 
 AiCMR is an AI-powered medical record management system built as a full-stack monorepo. The application uses Next.js for the frontend and FastAPI for the backend, with MySQL for data persistence and Redis for caching.
@@ -161,4 +196,53 @@ Required variables:
 Generate secure secrets:
 ```bash
 python -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
+## File Placement Conventions
+
+### Frontend (Next.js)
+| Type | Location |
+|------|----------|
+| Components | `frontend/src/components/` |
+| Pages | `frontend/src/app/` |
+| Hooks | `frontend/src/hooks/` |
+| Lib/Utils | `frontend/src/lib/` |
+| Styles | `frontend/src/app/globals.css` |
+| Types | `frontend/src/types/` |
+
+### Backend (FastAPI)
+| Type | Location |
+|------|----------|
+| API Routes | `backend/app/api/v1/` |
+| Models | `backend/app/models/` |
+| Schemas | `backend/app/schemas/` |
+| CRUD | `backend/app/crud/` |
+| Services | `backend/app/services/` |
+| Core | `backend/app/core/` |
+| Tests | `backend/tests/` |
+
+### Skills (Claude)
+| Type | Location |
+|------|----------|
+| Skill files | `.claude/skills/{skill-name}/` |
+| Required files | `skill.json`, `SKILL.md`, `index.md`, `README.md` |
+
+## Commit Message Conventions
+
+```
+type: description
+
+or with emoji:
+🐛 fix: description
+✨ feat: description
+🔧 chore: description
+📝 docs: description
+♻️ refactor: description
+✅ test: description
+⚡ perf: description
+```
+
+Always append:
+```
+Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>
 ```
