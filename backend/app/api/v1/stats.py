@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Request, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
+from sqlalchemy.orm import selectinload
 from fastapi_cache.decorator import cache
 
 from app.core.database import get_db
@@ -8,6 +9,7 @@ from app.api.deps import require_min_rank
 from app.core.constants import MODERATOR_RANK, CACHE_SETTINGS_SECONDS
 from app.schemas.settings_dashboard import StatsOverview
 from app.models.user import User
+from app.models.post import Post
 from app.crud.crud_user import get_by_id
 
 router = APIRouter()
@@ -38,19 +40,19 @@ async def get_stats_overview(
     rank_counts = result.all()
     by_rank = {rank: count for rank, count in rank_counts}
 
-    result = await db.execute(select(User).order_by(User.created_at.desc()).limit(5))
+    # Eager load posts relationship to avoid MissingGreenlet error
+    result = await db.execute(
+        select(User)
+        .options(selectinload(User.posts))
+        .order_by(User.created_at.desc())
+        .limit(5)
+    )
     recent_users = result.scalars().all()
-
-    recent_users_response = []
-    for user in recent_users:
-        user_full = await get_by_id(db, user.id)
-        if user_full:
-            recent_users_response.append(user_full)
 
     return StatsOverview(
         total_users=total_users,
         active_users=active_users,
         inactive_users=inactive_users,
         by_rank=by_rank,
-        recent_users=recent_users_response,
+        recent_users=list(recent_users),
     )

@@ -1,0 +1,30 @@
+{
+  "include": [
+    "app"
+  ],
+  "exclude": [
+    "**/__pycache__",
+    "**/.venv",
+    "**/venv",
+    "**/node_modules",
+    "**/.*",
+    "**/*_backup.py",
+    "**/migrations/"
+  ],
+  "ignore": [
+    "**/test_*.py",
+    "**/conftest.py"
+  ],
+  "typeCheckingMode": "standard",
+  "reportMissingTypeStubs": false,
+  "reportUnknownMemberType": "warning",
+  "reportUnknownArgumentType": "warning",
+  "reportUnknownVariableType": "warning",
+  "reportUnknownParameterType": "warning",
+  "reportOptionalCall": "warning",
+  "reportOptionalIterable": "warning",
+  "reportOptionalOperand": "warning",
+  "reportOptionalContextManager": "warning",
+  "reportOptionalMemberAccess": "warning",
+  "reportGeneralTypeIssues": "warning"
+}

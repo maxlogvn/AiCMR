@@ -1,0 +1,93 @@
+{
+  "name": "git-commit-push",
+  "displayName": "Git Push",
+  "version": "2.0",
+  "description": "Hướng dẫn AI agents push code lên remote repository một cách an toàn và xử lý các vấn đề thường gặp như merge conflicts, rejected pushes, và remote troubleshooting cho AiCMR project.",
+  "author": "Claude Code AI",
+  "tags": ["git", "push", "remote", "version-control", "merge-conflict"],
+  "category": "development",
+  "homepage": "https://github.com/your-org/AiCMR",
+  "icon": "📤",
+  "keywords": [
+    "git",
+    "push",
+    "remote",
+    "version control",
+    "merge conflict",
+    "force push",
+    "git pull",
+    "remote troubleshooting"
+  ],
+  "triggers": [
+    "push",
+    "đẩy code",
+    "push code",
+    "git push",
+    "lên github",
+    "đẩy lên remote",
+    "push len",
+    "đẩy code len"
+  ],
+  "relatedSkills": [
+    "git-commit",
+    "commander-management",
+    "backend-api-builder",
+    "backend-api-tester"
+  ],
+  "files": [
+    {
+      "name": "SKILL.md",
+      "description": "Main skill documentation with push workflows, conflict resolution, and troubleshooting"
+    },
+    {
+      "name": "skill.json",
+      "description": "Skill metadata and configuration"
+    },
+    {
+      "name": "examples.py",
+      "description": "Working examples demonstrating git push workflows"
+    },
+    {
+      "name": "README.md",
+      "description": "Quick reference and usage guide"
+    },
+    {
+      "name": "index.md",
+      "description": "Skill index and navigation"
+    }
+  ],
+  "capabilities": {
+    "pushWorkflow": true,
+    "mergeConflictResolution": true,
+    "remoteTroubleshooting": true,
+    "forcePushGuidelines": true,
+    "branchManagement": true,
+    "pullPushWorkflow": true
+  },
+  "compatibility": {
+    "os": ["Windows", "Linux", "macOS"],
+    "requiresGit": true,
+    "requiresRemote": true,
+    "aiAgents": ["Claude Code", "Claude Agent SDK"]
+  },
+  "changelog": {
+    "2.0": {
+      "date": "2026-01-23",
+      "changes": [
+        "Focused skill on PUSH operations only",
+        "Added comprehensive merge conflict resolution",
+        "Added remote troubleshooting guide",
+        "Added force push guidelines",
+        "Improved workflows and examples"
+      ]
+    },
+    "1.0": {
+      "date": "2026-01-21",
+      "changes": [
+        "Initial version",
+        "Combined commit + push workflow",
+        "Basic remote operations"
+      ]
+    }
+  }
+}

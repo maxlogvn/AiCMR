@@ -66,7 +66,7 @@ async def update(
 
 
 async def update_password(db: AsyncSession, user: User, new_password: str) -> User:
-    user.hashed_password = get_password_hash(new_password)
+    user.hashed_password = get_password_hash(new_password) 
     await db.flush()
     await db.refresh(user)
     await FastAPICache.clear(namespace="user")
@@ -77,7 +77,7 @@ async def authenticate(db: AsyncSession, email: str, password: str) -> Optional[
     user = await get_by_email(db, email)
     if not user:
         return None
-    if not verify_password(password, user.hashed_password):
+    if not verify_password(password, user.hashed_password):  # type: ignore[arg-type]
         return None
     return user
 
@@ -86,14 +86,15 @@ async def get_all_users(
     db: AsyncSession, skip: int = 0, limit: int = 100
 ) -> list[User]:
     result = await db.execute(select(User).offset(skip).limit(limit))
-    return result.scalars().all()
+    return list(result.scalars().all())
 
 
 async def count_users(db: AsyncSession) -> int:
     from sqlalchemy import func
 
     result = await db.execute(select(func.count()).select_from(User))
-    return result.scalar()
+    count = result.scalar()
+    return count if count is not None else 0
 
 
 async def delete(db: AsyncSession, user_id: int) -> bool:

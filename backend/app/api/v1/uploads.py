@@ -14,6 +14,7 @@ from sqlalchemy import select
 
 from app.api.deps import get_current_active_user, get_db
 from app.core.config import get_settings
+from app.core.constants import MODERATOR_RANK, ADMIN_RANK
 from app.core.security import validate_csrf, verify_token
 from app.crud import crud_attachment, crud_settings
 from app.models.user import User
@@ -27,6 +28,33 @@ mime_inspector = magic.Magic(mime=True)
 
 # Chunk size for streaming (1MB)
 CHUNK_SIZE = 1024 * 1024
+
+
+def safe_resolve_path(base_path: str, user_path: str) -> str:
+    """
+    Safely resolve a file path relative to base directory.
+    Prevents path traversal attacks.
+
+    Args:
+        base_path: Base directory (absolute path)
+        user_path: User-provided or database path
+
+    Returns:
+        Absolute path that is guaranteed to be under base path
+
+    Raises:
+        HTTPException: If path tries to escape base directory
+    """
+    base = os.path.abspath(base_path)
+    full = os.path.abspath(os.path.join(base, user_path))
+
+    if not full.startswith(base):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid file path"
+        )
+
+    return full
 
 
 def sanitize_filename(filename: str) -> str:
@@ -102,6 +130,11 @@ async def upload_file(
     max_size_bytes = max_size_mb * 1024 * 1024
 
     # 2. Kiểm tra định dạng file (extension) sơ bộ
+    if not file.filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Filename is required",
+        )
     file_ext = os.path.splitext(file.filename)[1].replace(".", "").lower()
     allowed_extensions = [ext.strip().lower() for ext in allowed_ext_str.split(",")]
     if file_ext not in allowed_extensions:
@@ -162,12 +195,12 @@ async def upload_file(
     # 8. Lưu thông tin vào Database
     relative_path = os.path.join(settings.UPLOAD_DIR, date_path, unique_filename)
     attachment_in = AttachmentCreate(
-        filename=file.filename,
+        filename=file.filename,  # type: ignore[arg-type]
         file_path=relative_path,
-        content_type=detected_mime or file.content_type,
+        content_type=detected_mime or file.content_type,  # type: ignore[arg-type]
         file_size=actual_size,
         is_public=is_public,
-        user_id=current_user.id,
+        user_id=int(current_user.id),  # type: ignore[arg-type]
     )
 
     db_obj = await crud_attachment.create(db, attachment_in)
@@ -179,8 +212,9 @@ async def upload_file(
     
     if db_obj.is_public:
         # Trả về URL SEO đẹp qua prefix /media/ (sẽ cấu hình ở Nginx)
-        name_slug = slugify(os.path.splitext(db_obj.filename)[0])
-        ext = os.path.splitext(db_obj.filename)[1]
+        filename = str(db_obj.filename)
+        name_slug = slugify(os.path.splitext(filename)[0])
+        ext = os.path.splitext(filename)[1]
         response_obj.url = f"/media/{db_obj.id}/{name_slug}{ext}"
     else:
         # File private giữ nguyên proxy URL yêu cầu token
@@ -207,14 +241,14 @@ async def get_public_file(
     if not db_obj.is_public:
         raise HTTPException(status_code=403, detail="Tệp tin này không được phép truy cập công khai")
 
-    full_path = os.path.join(os.getcwd(), db_obj.file_path)
+    full_path = safe_resolve_path(os.getcwd(), str(db_obj.file_path))  # type: ignore[arg-type]
     if not os.path.exists(full_path):
         raise HTTPException(status_code=404, detail="Tệp tin vật lý đã bị xóa")
 
     return FileResponse(
         path=full_path,
-        media_type=db_obj.content_type,
-        filename=db_obj.filename
+        media_type=str(db_obj.content_type),  # type: ignore[arg-type]
+        filename=str(db_obj.filename)  # type: ignore[arg-type]
     )
 
 
@@ -233,19 +267,19 @@ async def get_file_content(
     if not db_obj:
         raise HTTPException(status_code=404, detail="File không tồn tại")
 
-    # Phân quyền: Chủ sở hữu hoặc Rank >= 3 mới được xem
-    if db_obj.user_id != current_user.id and current_user.rank < 3:
+    # Phân quyền: Chủ sở hữu hoặc Rank >= MODERATOR_RANK mới được xem
+    if int(db_obj.user_id) != int(current_user.id) and int(current_user.rank) < MODERATOR_RANK:  # type: ignore[arg-type]
         raise HTTPException(status_code=403, detail="Không có quyền truy cập file này")
 
-    full_path = os.path.join(os.getcwd(), db_obj.file_path)
+    full_path = safe_resolve_path(os.getcwd(), str(db_obj.file_path))  # type: ignore[arg-type]
     if not os.path.exists(full_path):
         raise HTTPException(status_code=404, detail="Tệp tin vật lý đã bị xóa")
 
     # Sử dụng FileResponse để FastAPI tự động handle streaming và headers (Etag, v.v.)
     return FileResponse(
         path=full_path,
-        media_type=db_obj.content_type,
-        filename=db_obj.filename
+        media_type=str(db_obj.content_type),  # type: ignore[arg-type]
+        filename=str(db_obj.filename)  # type: ignore[arg-type]
     )
 
 
@@ -260,15 +294,16 @@ async def get_attachment_info(
     if not db_obj:
         raise HTTPException(status_code=404, detail="File không tồn tại")
 
-    if db_obj.user_id != current_user.id and current_user.rank < 3:
+    if int(db_obj.user_id) != int(current_user.id) and int(current_user.rank) < MODERATOR_RANK:  # type: ignore[arg-type]
         raise HTTPException(status_code=403, detail="Không có quyền truy cập thông tin này")
 
     response_obj = AttachmentResponse.model_validate(db_obj)
-    
+
     if db_obj.is_public:
         # Trả về URL SEO đẹp qua prefix /media/ cho file public
-        name_slug = slugify(os.path.splitext(db_obj.filename)[0])
-        ext = os.path.splitext(db_obj.filename)[1]
+        filename = str(db_obj.filename)
+        name_slug = slugify(os.path.splitext(filename)[0])
+        ext = os.path.splitext(filename)[1]
         response_obj.url = f"/media/{db_obj.id}/{name_slug}{ext}"
     else:
         # File private giữ nguyên proxy URL yêu cầu token
@@ -289,11 +324,11 @@ async def delete_attachment(
     if not db_obj:
         raise HTTPException(status_code=404, detail="File không tồn tại")
 
-    if db_obj.user_id != current_user.id and current_user.rank < 5:
+    if int(db_obj.user_id) != int(current_user.id) and int(current_user.rank) < ADMIN_RANK:  # type: ignore[arg-type]
         raise HTTPException(status_code=403, detail="Không có quyền xóa file này")
 
     # Xóa file vật lý
-    full_path_to_delete = os.path.join(os.getcwd(), db_obj.file_path)
+    full_path_to_delete = safe_resolve_path(os.getcwd(), str(db_obj.file_path))  # type: ignore[arg-type]
     if os.path.exists(full_path_to_delete):
         try:
             os.remove(full_path_to_delete)

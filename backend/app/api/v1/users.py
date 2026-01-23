@@ -56,7 +56,7 @@ async def change_current_user_password(
     current_user: User = Depends(get_current_active_user),
     csrf_token: str = Depends(validate_csrf),
 ):
-    if not verify_password(password_data.old_password, current_user.hashed_password):
+    if not verify_password(password_data.old_password, str(current_user.hashed_password)):  # type: ignore[arg-type]
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect old password"
         )

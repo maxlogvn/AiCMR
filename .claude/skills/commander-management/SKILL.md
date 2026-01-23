@@ -1,741 +1,1044 @@
----
-name: commander-management
-description: |
-  QUẢN LÝ HỆ THỐNG AICMR - PREFER THIS SKILL CHO TẤT CẢ TÁC VỤ HỆ THỐNG
-  
-  ✅ LUÔN SỬ DỤNG SKILL NÀY KHI:
-  - Khởi động/dừng/restart hệ thống
-  - Health check, status, diagnostics
-  - Xem logs, truy cập shell
-  - Database migrations
-  
-  ❌ KHÔNG TỰ CHỮNG MINH THỰC HIỆN - USE COMMANDER CLI
-  
-  Keywords: system, server, container, docker, health, status, logs, migrate, shell, database
-  
-  triggers:
-    - "dừng hệ thống"
-    - "khởi động hệ thống"
-    - "restart server"
-    - "health check"
-    - "container status"
-    - "xem logs"
-    - "vào shell"
-    - "database migrate"
-  
-  priority: HIGH
-  category: system-management
-  required_for:
-    - docker operations
-    - system monitoring
-    - database operations
----
+# Commander Management Skill - AiCMR
 
-# 🎯 Commander Management Skill
-
-**Skill này giúp AI agents hiểu và sử dụng các lệnh commander để quản lý hệ thống AiCMR.**
-
-⚠️ **Important Note**: File `commander.bat` và `commander.ps1` đã bị xóa. Chỉ còn file `./commander` (bash script) để sử dụng.
+**Version:** 2.0 (Optimized)
+**Purpose:** Hướng dẫn AI agents quản lý hệ thống AiCMR thông qua commander CLI một cách hiệu quả và tối ưu.
 
 ---
 
-## 🚨 PRIORITY USAGE GUIDE
+## 🎯 Mission Statement
 
-**PRIORITY: HIGH - ALWAYS USE THIS SKILL FOR SYSTEM TASKS**
+**Skill này là GATEKEEPER cho mọi tác vụ hệ thống.**
 
-Khi người dùng yêu cầu:
-- ✅ "dừng hệ thống", "khởi động", "restart" → LOAD THIS SKILL FIRST
-- ✅ "kiểm tra", "health", "status" → LOAD THIS SKILL FIRST  
-- ✅ "xem logs", "vào shell" → LOAD THIS SKILL FIRST
-- ✅ "migrate", "database" → LOAD THIS SKILL FIRST
-
-**Workflow bắt buộc:**
-1. LOAD SKILL: `skill(name="commander-management")`
-2. READ SKILL instructions
-3. EXECUTE commander command
-4. DON'T auto-use docker-compose directly
+⚠️ **RULE THỨ NHẤT:** KHI NGƯỜI DÙNG YÊU CẦU BẤT CỨ TÁC VỤ HỆ THỐNG → LOAD SKILL NÀY TRƯỚC → EXECUTE COMMANDER → KHÔNG TỰ SỬA DỤNG DOCKER COMPOSE TRỰC TIẾP
 
 ---
 
-## ⚡ QUICK DECISION TREE
+## 🚨 Why This Skill Exists
 
-User nói → Action
-──────────────────────────────────────────────────────
-"dừng hệ thống" → `./commander down`
-"khởi động" → `./commander up`
-"restart" → `./commander restart`
-"health" → `./commander health`
-"status" → `./commander status`
-"logs" → `./commander logs [service]`
-"shell" → `./commander shell <service>`
+### Problem
+AI agents thường:
+- ❌ Sử dụng `docker compose` trực tiếp → KHÔNG ĐÚNG
+- ❌ Ghi nhớ các lệnh docker phức tạp → KHÓ MAINTAIN
+- ❌ Không biết commander có lệnh gì → INEFFICIENT
+- ❌ Không biết troubleshooting workflow → GÂY LỖI NẶNG NỀ
 
-🚨 Luôn LOAD skill trước khi thực hiện bất kỳ lệnh nào!
+### Solution
+Skill này cung cấp:
+- ✅ **Standardized workflow** cho mọi system tasks
+- ✅ **Command reference** đầy đủ với examples
+- ✅ **Decision trees** rõ ràng
+- ✅ **Troubleshooting guides** chi tiết
+- ✅ **Best practices** đã proven
 
 ---
 
-## 🤖 AGENT INSTRUCTIONS - MANDATORY
+## 📋 Table of Contents
 
-### Before ANY action:
-1. ✅ CHECK: Có liên quan đến system/server/container?
-2. ✅ IF YES: `skill(name="commander-management")`
-3. ✅ READ: Xem mapping lệnh → commander command
-4. ✅ EXECUTE: Chạy lệnh commander
-5. ✅ REPORT: Báo cáo kết quả
+1. [Quick Decision Tree](#quick-decision-tree)
+2. [Command Reference](#command-reference)
+3. [Standard Workflow](#standard-workflow)
+4. [Advanced Scenarios](#advanced-scenarios)
+5. [Troubleshooting Guide](#troubleshooting-guide)
+6. [Emergency Procedures](#emergency-procedures)
+7. [Best Practices](#best-practices)
+8. [Checklist](#checklist)
 
-### NEVER:
-- ❌ DON'T use `docker compose` directly
-- ❌ DON'T use `docker ps/logs/exec` directly
-- ❌ DON'T auto-infer without loading skill
+---
 
-### Example Conversation:
+## 🌳 Quick Decision Tree
+
 ```
-User: "Dừng hệ thống"
-
-Agent (BAD):
-→ docker compose down  ❌
-
-Agent (GOOD):
-→ skill(name="commander-management")  ✅
-→ Read: "dừng hệ thống" → `./commander down`
-→ Execute: ./commander down
-→ Report: ✅ Containers stopped
+User Request
+    │
+    ├─ Is it about containers/system?
+    │   ├─ YES → Load this skill
+    │   │        ↓
+    │   │   What does user want?
+    │   │   │
+    │   │   ├─ Start/launch system?
+    │   │   │   └─ → ./commander up
+    │   │   │
+    │   │   ├─ Stop system?
+    │   │   │   └─ → ./commander down
+    │   │   │
+    │   │   ├─ Restart system?
+    │   │   │   └─ → ./commander rebuild
+    │   │   │
+    │   │   ├─ Check health?
+    │   │   │   ├─ Quick check? → ./commander health
+    │   │   │   └─ Detailed? → ./commander status
+    │   │   │
+    │   │   ├─ Diagnose problems?
+    │   │   │   └─ → ./commander diagnose
+    │   │   │
+    │   │   ├─ View logs?
+    │   │   │   ├─ All services? → ./commander logs
+    │   │   │   └─ Specific? → ./commander logs [service]
+    │   │   │
+    │   │   ├─ Access shell?
+    │   │   │   └─ → ./commander shell [service]
+    │   │   │
+    │   │   ├─ Database operations?
+    │   │   │   └─ → ./commander shell backend
+    │   │   │       → alembic upgrade head
+    │   │   │
+    │   │   └─ Not sure?
+    │   │       └─ → ./commander help
+    │   │
+    │   └─ NO → Use other appropriate skill
+    │
+    └─ Execute commander
+        ↓
+    Analyze output
+        ↓
+    Report results
+        ↓
+    Suggest next action (if needed)
 ```
 
 ---
 
-## ❌ ĐỪNG LÀM GÌ - COMMON MISTAKES
+## 📚 Command Reference
 
-### DON'T:
-- ❌ `docker compose up` → Dùng `./commander up`
-- ❌ `docker compose down` → Dùng `./commander down`
-- ❌ `docker ps` → Dùng `./commander status`
-- ❌ `docker logs` → Dùng `./commander logs`
-- ❌ `docker exec -it` → Dùng `./commander shell`
+### Category 1: Lifecycle Commands
 
-### DO:
-- ✅ Luôn load skill trước
-- ✅ Dùng commander CLI cho mọi thao tác
-- ✅ Commander tự wrapper docker compose
+| Command | Aliases | Description | When to Use |
+|---------|---------|-------------|-------------|
+| `up` | start, launch | Build & start all containers | "khởi động", "bật server", "start" |
+| `down` | stop, shutdown | Stop & remove all containers | "dừng hệ thống", "tắt", "stop" |
+| `restart` | - | Restart all containers | "restart", "khởi động lại" |
+| `rebuild` | - | Rebuild & restart all containers | "rebuild", "build lại", "cài đặt lại" |
 
-## 📋 Tóm tắt
-
-Commander là CLI tool để quản lý hệ thống AiCMR, bao gồm:
-- ✅ Quản lý containers (up, down, restart, rebuild)
-- ✅ Health check và diagnostics
-- ✅ Xem logs và truy cập shell
-- ✅ Database migrations
-
-## 🎯 Mục tiêu của Skill
-
-Giúp AI agents thực hiện các tác vụ sau:
-
-1. **Khởi động hệ thống**
-   - Build và start tất cả containers
-   - Auto-check và auto-migration
-
-2. **Dừng hệ thống**
-   - Stop tất cả containers
-
-3. **Health check**
-   - Kiểm tra nhanh trạng thái hệ thống (5s hoặc 10s)
-   - Kiểm tra chi tiết container status
-
-4. **Chẩn đoán vấn đề**
-   - Diagnose chi tiết các lỗi hệ thống
-
-5. **Xem logs**
-   - Logs tất cả services
-   - Logs từng service cụ thể (backend, frontend, db, redis)
-
-6. **Truy cập shell**
-   - Vào shell của service (backend, frontend, db, redis)
-
-7. **Database migrations**
-   - Chạy migrations
-   - Tạo migration mới
-
-## 🚀 Cách sử dụng lệnh commander
-
-### Mapping Lệnh Tự nhiên → Lệnh Commander
-
-| Người dùng nói | Lệnh commander chạy (dùng ./commander) |
-|----------------|---------------------|
-| "khởi động hệ thống", "bật server", "start" | `./commander up` |
-| "dừng hệ thống", "tắt server", "stop" | `./commander down` |
-| "kiểm tra health", "health check", "trạng thái" | `./commander health` |
-| "xem container status", "container status", "status" | `./commander status` |
-| "chẩn đoán", "diagnose", "kiểm tra lỗi" | `./commander diagnose` |
-| "xem logs", "logs", "log" | `./commander logs` |
-| "xem logs backend", "logs backend" | `./commander logs backend` |
-| "vào shell backend", "shell backend" | `./commander shell backend` |
-| "vào shell mysql", "shell mysql" | `./commander shell mysql` |
-| "xem tất cả lệnh", "help", "tìm hiểu lệnh" | `./commander help` |
-
-## 📋 Chi tiết các lệnh
-
-### 1. Khởi động hệ thống
-
-**Lệnh**: `./commander up`
-
-**Mô tả**:
-- Build và start tất cả containers
-- Auto-check health
-- Auto-migration
-
-**Aliases**: `start`, `up`
-
-**Khi dùng**:
-- Người dùng nói: "khởi động hệ thống", "bật server", "start", "bật lên"
-
-**Ví dụ**:
+**Quick Examples:**
 ```bash
-# Người dùng nói: "Khởi động hệ thống"
-./commander up
-
-# Output:
-# ✅ Building containers...
-# ✅ Starting containers...
-# ✅ Health check passed...
-# ✅ Migrations completed...
-# ✅ System ready!
+./commander up       # Build + start
+./commander down     # Stop + remove
+./commander rebuild  # Rebuild + restart
 ```
 
-### 2. Dừng hệ thống
+### Category 2: Status & Health Commands
 
-**Lệnh**: `./commander down`
+| Command | Aliases | Description | Output |
+|---------|---------|-------------|--------|
+| `health` | check, quick-check | Quick health check (5s) | ✅/❌ per service |
+| `status` | ps, list | Detailed container status | CPU, MEM, Uptime |
+| `diagnose` | diag, check-error | Full system diagnostics | Network, volumes, env |
 
-**Mô tả**:
-- Stop và remove tất cả containers
-
-**Aliases**: `stop`, `down`
-
-**Khi dùng**:
-- Người dùng nói: "dừng hệ thống", "tắt server", "stop", "tắt"
-
-**Ví dụ**:
+**Quick Examples:**
 ```bash
-# Người dùng nói: "Dừng hệ thống"
-./commander down
-
-# Output:
-# 🛑 Stopping containers...
-# 🛑 Containers stopped successfully.
+./commander health    # Quick check
+./commander status    # Detailed status
+./commander diagnose  # Full diagnostics
 ```
 
-### 3. Health check nhanh
+### Category 3: Logs Commands
 
-**Lệnh**: `./commander health`
+| Command | Description | Output |
+|---------|-------------|--------|
+| `logs` | Logs all services | All service logs |
+| `logs <service>` | Logs specific service | Single service logs |
 
-**Mô tả**:
-- Kiểm tra nhanh trạng thái hệ thống (5s hoặc 10s)
-- Check các services có hoạt động không
+**Available Services:**
+- `backend` - FastAPI backend
+- `frontend` - Next.js frontend
+- `mysql` - MySQL database
+- `redis` - Redis cache
+- `nginx` - Reverse proxy
 
-**Aliases**: `health`, `check-health`
-
-**Khi dùng**:
-- Người dùng nói: "kiểm tra health", "health check", "trạng thái nhanh", "check health"
-
-**Ví dụ**:
+**Quick Examples:**
 ```bash
-# Người dùng nói: "Kiểm tra health"
-./commander health
-
-# Output:
-# 🏥 System Health Check
-# ✅ Backend: Healthy
-# ✅ Frontend: Healthy
-# ✅ Database: Healthy
-# ✅ Redis: Healthy
-#
-# Overall Status: ✅ All systems operational
+./commander logs              # All logs
+./commander logs backend      # Backend logs only
+./commander logs mysql        # Database logs only
 ```
 
-### 4. Container status
+### Category 4: Access Commands
 
-**Lệnh**: `./commander status`
+| Command | Description | Use Case |
+|---------|-------------|----------|
+| `shell <service>` | Open shell in service | Debugging, manual commands |
 
-**Mô tả**:
-- Chi tiết status của từng container
-- CPU, memory usage, uptime
+**Available Services:** backend, frontend, mysql, redis, nginx
 
-**Aliases**: `status`, `ps`
-
-**Khi dùng**:
-- Người dùng nói: "xem container status", "container status", "status", "xem trạng thái"
-
-**Ví dụ**:
+**Quick Examples:**
 ```bash
-# Người dùng nói: "Xem container status"
-./commander status
-
-# Output:
-# 📊 Container Status
-#
-# NAME           STATUS    PORTS                   CPU     MEM
-# aicmr-backend  Up 2h     0.0.0.0:8000->8000/tcp   2%     512MB
-# aicmr-frontend Up 2h     0.0.0.0:3000->3000/tcp   1%     256MB
-# aicmr-db       Up 2h     0.0.0.0:3306->3306/tcp   0.5%   1GB
-# aicmr-redis    Up 2h     0.0.0.0:6379->6379/tcp   0.2%   64MB
+./commander shell backend     # Backend shell (Python)
+./commander shell mysql       # Database shell (MySQL)
+./commander shell frontend    # Frontend shell (Node.js)
 ```
 
-### 5. Chẩn đoán vấn đề
+### Category 5: Utility Commands
 
-**Lệnh**: `./commander diagnose`
+| Command | Description |
+|---------|-------------|
+| `help` | Show all available commands |
 
-**Mô tả**:
-- Chẩn đoán chi tiết các lỗi hệ thống
-- Check network, volumes, environment
+---
 
-**Aliases**: `diagnose`, `diag`, `check-error`
+## 🔄 Standard Workflow
 
-**Khi dùng**:
-- Người dùng nói: "chẩn đoán", "diagnose", "kiểm tra lỗi", "có lỗi gì", "đi chẩn đoán"
+### Workflow: Starting System
 
-**Ví dụ**:
+```
+USER: "Khởi động hệ thống"
+    ↓
+AGENT:
+    1. Load skill: commander-management
+    2. Execute: ./commander up
+    3. Wait for completion (monitor output)
+    4. Analyze result:
+       - ✅ "System ready!" → SUCCESS
+       - ❌ Errors found → Troubleshoot
+    5. Report to user with summary
+    6. Suggest next action:
+       - "Test API at http://localhost:8000/health"
+       - "Check frontend at http://localhost:3000"
+       - "View logs: ./commander logs"
+```
+
+### Workflow: Checking Health
+
+```
+USER: "Kiểm tra health" or "Hệ thống có ổn không?"
+    ↓
+AGENT:
+    1. Load skill: commander-management
+    2. Execute: ./commander health
+    3. Analyze output:
+       ├─ All ✅ → Report healthy
+       ├─ Some ❌ → Identify failed services
+       └─ Mixed → Report partial status
+    4. If unhealthy:
+       a. Execute: ./commander diagnose
+       b. Execute: ./commander status
+       c. Check failed service logs
+       d. Report root cause
+       e. Suggest fixes
+    5. Always suggest next action
+```
+
+### Workflow: Debugging Issues
+
+```
+USER: "Backend không hoạt động" or "Có lỗi gì không?"
+    ↓
+AGENT:
+    1. Load skill: commander-management
+    2. Check status: ./commander status
+    3. Identify problematic container(s)
+    4. Get diagnostics: ./commander diagnose
+    5. View specific logs: ./commander logs [service]
+    6. Analyze error patterns:
+       ├─ Connection refused → Port conflict
+       ├─ Permission denied → Volume mount issue
+       ├─ Out of memory → Resource limit
+       └─ Database error → Check DB logs
+    7. Report findings with diagnosis
+    8. Suggest specific fixes
+    9. Offer to execute fix (if safe)
+```
+
+### Workflow: Viewing Logs
+
+```
+USER: "Xem logs" or "Lỗi gì đó?"
+    ↓
+AGENT:
+    1. Load skill: commander-management
+    2. Ask: "Logs của service nào? (backend/frontend/mysql/all)"
+    3. Execute appropriate command:
+       - ./commander logs [service]
+    4. Analyze logs:
+       ├─ Look for ERROR keywords
+       ├─ Look for Exception/Traceback
+       ├─ Check timestamps (recent errors?)
+       └─ Identify error patterns
+    5. Report relevant findings:
+       - Show last 20-50 lines
+       - Highlight errors in RED
+       - Summarize root cause
+    6. Suggest fixes based on errors
+```
+
+### Workflow: Database Operations
+
+```
+USER: "Chạy migration" or "Update database"
+    ↓
+AGENT:
+    1. Load skill: commander-management
+    2. Execute: ./commander shell backend
+    3. In shell, run:
+       - alembic upgrade head
+       - OR python manage.py migrate
+    4. Monitor output for errors
+    5. Report success/failure
+    6. If failure:
+       - Check database logs: ./commander logs mysql
+       - Verify database connection
+       - Suggest manual intervention
+```
+
+---
+
+## 🎯 Advanced Scenarios
+
+### Scenario 1: System Won't Start
+
+**Symptoms:**
+- `./commander up` fails
+- Containers exit immediately
+- Port conflicts
+
+**Workflow:**
 ```bash
-# Người dùng nói: "Chẩn đoán hệ thống"
+# Step 1: Diagnose
 ./commander diagnose
 
-# Output:
-# 🔍 System Diagnostics
-#
-# Network: ✅ OK
-# Volumes: ✅ OK
-# Environment: ✅ OK
-# Containers: ✅ OK
-#
-# No issues found.
-```
+# Step 2: Check what's running
+./commander status
 
-### 6. Xem logs
-
-**Lệnh**: `./commander logs [service]`
-
-**Mô tả**:
-- Logs tất cả services hoặc 1 service cụ thể
-- Follow logs theo thời gian thực
-
-**Aliases**: `logs`, `log`
-
-**Khi dùng**:
-- Người dùng nói: "xem logs", "logs", "log", "kiểm tra log", "lỗi thì xem log"
-
-**Services có thể xem logs**:
-- `backend` - Backend API logs
-- `frontend` - Frontend logs
-- `mysql` - Database logs
-- `redis` - Redis logs
-- `nginx` - Nginx proxy logs
-
-**Ví dụ**:
-```bash
-# Người dùng nói: "Xem logs"
+# Step 3: Check for port conflicts
+# Look for: "port is already allocated"
 ./commander logs
 
-# Người dùng nói: "Xem logs backend"
-./commander logs backend
+# Step 4: Fix based on diagnosis
+# - Port conflict → Stop conflicting service
+# - Volume issue → Check disk space
+# - Image issue → ./commander rebuild
 
-# Output:
-# 📋 Logs: backend
-#
-# [2026-01-21 10:00:00] INFO  Starting server on port 8000...
-# [2026-01-21 10:00:01] INFO  Connected to database...
-# [2026-01-21 10:00:02] INFO  Server ready!
-```
-
-### 7. Truy cập shell
-
-**Lệnh**: `./commander shell <service>`
-
-**Mô tả**:
-- Vào shell của service (backend, frontend, db, redis)
-
-**Aliases**: `shell`, `sh`
-
-**Khi dùng**:
-- Người dùng nói: "vào shell backend", "shell backend", "vào backend shell", "truy cập shell"
-- Người dùng nói: "vào shell mysql", "shell mysql", "vào database shell"
-
-**Services có thể truy cập**:
-- `backend` - FastAPI backend container
-- `frontend` - Next.js frontend container
-- `mysql` - MySQL database container
-- `redis` - Redis cache container
-- `nginx` - Nginx proxy container
-
-**Ví dụ**:
-```bash
-# Người dùng nói: "Vào shell backend"
-./commander shell backend
-
-# Output:
-# 🐚 Entering backend shell...
-#
-# root@aicmr-backend:/app#
-
-# Người dùng nói: "Vào shell mysql"
-./commander shell mysql
-
-# Output:
-# 🐚 Entering mysql shell...
-#
-# root@aicmr-mysql:/app#
-```
-
-### 8. Database migrations
-
-Lệnh database migrations hiện chưa có trong commander CLI. Nếu cần chạy migrations, hãy vào shell của backend hoặc database service.
-
-**Aliases**: `migrate`, `migration`
-
-**Khi dùng**:
-- Người dùng nói: "chạy migration", "migrate", "chạy db migrate"
-
-**Ví dụ**:
-```bash
-# Người dùng nói: "Chạy migration"
-./commander shell backend
-# Trong shell: alembic upgrade head hoặc python manage.py migrate
-```
-
-### 9. Tạo migration mới
-
-Lệnh tạo migration hiện chưa có trong commander CLI. Nếu cần tạo migration mới, hãy vào shell của backend service.
-
-**Khi dùng**:
-- Người dùng nói: "tạo migration mới", "tạo migrate"
-
-**Ví dụ**:
-```bash
-# Người dùng nói: "Tạo migration cho messages"
-./commander shell backend
-# Trong shell: alembic revision --autogenerate -m "messages"
-# Hoặc: python manage.py makemigrations messages
-```
-
-### 10. Help
-
-**Lệnh**: `./commander help`
-
-**Mô tả**:
-- Xem tất cả lệnh có sẵn
-- Hiển thị mô tả và usage
-
-**Aliases**: `help`, `--help`, `-h`
-
-**Khi dùng**:
-- Người dùng nói: "help", "xem tất cả lệnh", "tìm hiểu lệnh", "có lệnh gì"
-
-**Ví dụ**:
-```bash
-# Người dùng nói: "Help"
-./commander help
-
-# Output:
-# 📚 Commander - AiCMR CLI
-#
-# Usage: ./commander [command]
-#
-# Serve Commands:
-#   up               Khởi động + build
-#   down             Dừng tất cả
-#   restart          Restart containers
-#   rebuild          Rebuild + restart
-#
-# Server Commands:
-#   health           Health check nhanh
-#   status           Container status
-#   diagnose         Chẩn đoán vấn đề
-#
-# Logs Commands:
-#   logs             Logs tất cả services
-#   logs <service>   Logs 1 service
-#
-# Development Commands:
-#   shell <service>  Truy cập shell
-#
-# Database Commands:
-#   (Hiện chưa có trong CLI - dùng shell)
-#
-# Other Commands:
-#   help             Xem tất cả lệnh
-```
-
-## 🤖 AI Agent Workflow
-
-Khi người dùng yêu cầu một tác vụ liên quan đến hệ thống, AI agent sẽ:
-
-### Step 1: Hiểu yêu cầu
-
-Phân tích câu của người dùng và map đến lệnh commander phù hợp.
-
-**Ví dụ**:
-```
-Người dùng: "Khởi động hệ thống"
-→ Nhận ra: up
-→ Chạy: ./commander up
-
-Người dùng: "Có lỗi gì không?"
-→ Nhận ra: diagnose
-→ Chạy: ./commander diagnose
-```
-
-### Step 2: Chạy lệnh commander
-
-```bash
-# Ví dụ: Khởi động hệ thống
+# Step 5: Try again
 ./commander up
+```
 
-# Ví dụ: Health check
+### Scenario 2: Container Keeps Restarting
+
+**Symptoms:**
+- Container status: "Restarting"
+- Health check fails
+- Logs show crash loop
+
+**Workflow:**
+```bash
+# Step 1: Check restart count
+./commander status
+# Look for: "Restart: 5 (5 seconds ago)"
+
+# Step 2: View recent logs
+./commander logs [service]
+
+# Step 3: Analyze crash pattern
+# - Same error every time? → Fix code/config
+# - Random errors? → Resource issue
+# - Database error? → Check DB connection
+
+# Step 4: Stop container to prevent crash loop
+./commander down
+
+# Step 5: Fix issue (code/config change)
+
+# Step 6: Restart
+./commander up
+```
+
+### Scenario 3: Database Connection Issues
+
+**Symptoms:**
+- Backend shows "Can't connect to database"
+- MySQL container healthy but can't connect
+- Connection timeout errors
+
+**Workflow:**
+```bash
+# Step 1: Check all containers healthy
 ./commander health
 
-# Ví dụ: Xem logs backend
-./commander logs backend
-```
-
-### Step 3: Phân tích output
-
-Đọc output từ lệnh commander và đưa ra kết luận cho người dùng.
-
-**Ví dụ output analysis**:
-```
-✅ "All systems operational" → Hệ thống hoạt động bình thường
-❌ "Backend not responding" → Cần check logs backend
-⚠️ "Database connection timeout" → Cần check database và connection
-```
-
-### Step 4: Đề xuất hành động tiếp theo
-
-Dựa trên kết quả, đề xuất hành động tiếp theo cho người dùng.
-
-**Ví dụ**:
-```
-✅ Health check passed → Hệ thống OK, không cần làm gì
-❌ Backend lỗi → Đề xuất: "Vào shell backend check logs?"
-⚠️ Database timeout → Đề xuất: "Check db logs và connection?"
-```
-
-## 📋 Quyết định khi nào xem logs
-
-**Chỉ xem logs khi**:
-- ❌ Hệ thống báo lỗi
-- ❌ Health check thất bại
-- ❌ Container status abnormal
-- ❌ Người dùng yêu cầu kiểm tra lỗi
-
-**KHÔNG xem logs khi**:
-- ✅ Hệ thống hoạt động bình thường
-- ✅ Health check passed
-- ✅ Status tất cả containers OK
-
-## 🔍 Troubleshooting
-
-### Lỗi: Lệnh commander không tìm thấy
-
-**Nguyên nhân**:
-- File `commander` không tồn tại
-- File không có execute permission
-
-**Giải pháp**:
-```bash
-# Kiểm tra file tồn tại
-ls -l commander
-
-# Thêm execute permission nếu cần
-chmod +x commander
-```
-
-### Lỗi: Containers không start
-
-**Giải pháp**:
-```bash
-# Diagnose
-./commander diagnose
-
-# Xem logs
-./commander logs <service>
-
-# Rebuild
-./commander rebuild
-```
-
-### Lỗi: Health check thất bại
-
-**Giải pháp**:
-```bash
-# Check status
-./commander status
-
-# Diagnose
-./commander diagnose
-
-# Xem logs service lỗi
-./commander logs <service>
-```
-
-### Lỗi: Migration fail
-
-**Giải pháp**:
-```bash
-# Xem logs database
+# Step 2: Check MySQL logs
 ./commander logs mysql
+# Look for: "Access denied", "Connection refused"
 
-# Vào shell backend
-./commander shell backend
+# Step 3: Check backend logs
+./commander logs backend
+# Look for: "sqlalchemy.exc.OperationalError"
 
-# Kiểm tra migrations
-# Thử migrate lại trong shell
-# alembic upgrade head
+# Step 4: Access MySQL shell
+./commander shell mysql
+# In shell:
+mysql -u root -p
+SHOW DATABASES;
+SELECT user, host FROM mysql.user;
+EXIT;
+
+# Step 5: Verify .env DB credentials
+# Step 6: Restart if config changed
+./commander restart
 ```
 
-## 📝 Best Practices
+### Scenario 4: Out of Memory
 
-### Dành cho AI Agents
+**Symptoms:**
+- Container OOMKilled
+- System slow
+- Services randomly crash
 
-1. **Luôn hiểu đúng yêu cầu của người dùng**
-   - Phân tích ngữ cảnh câu
-   - Map đúng lệnh commander
-   - Nếu không chắc, hỏi lại người dùng
+**Workflow:**
+```bash
+# Step 1: Check resource usage
+./commander status
+# Look for: MEM usage
 
-2. **Chạy lệnh từng bước**
-   - Không chạy nhiều lệnh cùng lúc
-   - Đợi kết quả từng lệnh
-   - Phân tích output trước khi tiếp tục
+# Step 2: Check system memory
+docker stats --no-stream
 
-3. **Chỉ xem logs khi cần thiết**
-   - Không auto-view logs khi không có lỗi
-   - Chỉ xem logs khi hệ thống báo lỗi
-   - Focus vào service có lỗi
+# Step 3: Identify memory hog
+# Look for: Unusual high memory usage
 
-4. **Luôn báo cáo kết quả**
-   - Tóm tắt ngắn gọn
-   - Đưa ra hành động đề xuất
-   - Không output quá dài
+# Step 4: Options:
+# a) Restart containers
+./commander restart
 
-5. **Sử dụng đúng alias**
-    - Nếu người dùng nói "stop", dùng `./commander down`
-    - Nếu người dùng nói "status", dùng `./commander status`
-    - Lưu ý các alias của từng lệnh
-
-### Dành cho Developers
-
-1. **Backup trước khi rebuild**
-    ```bash
-    # Backup database
-    ./commander shell mysql
-    # Trong shell: mysqldump...
-
-    # Rebuild
-    ./commander rebuild
-    ```
-
-2. **Kiểm tra health sau khi change**
-    ```bash
-    # Sau khi change config
-    ./commander rebuild
-    ./commander health
-    ./commander status
-    ```
-
-3. **Logs chỉ khi lỗi**
-   ```bash
-   # Không auto-view logs
-   # Chỉ khi có lỗi
-   ./commander logs backend  # Chỉ khi backend lỗi
-   ```
-
-4. **Use shell cho debugging**
-   ```bash
-   # Vào shell để debug
-   ./commander shell backend
-   # Trong shell: ls, cat, ps, netstat...
-   ```
-
-## 🎯 Ví dụ thực tế
-
-### Ví dụ 1: Khởi động hệ thống mới
-
-```
-Người dùng: "Khởi động hệ thống"
-
-AI Agent:
-→ Phân tích: up
-→ Chạy: ./commander up
-→ Output: ✅ System ready!
-→ Báo cáo: "✅ Hệ thống đã khởi động thành công!"
+# b) Reduce container limits (in docker-compose.yml)
+# c) Stop unused services
+# d) Add more RAM to system
 ```
 
-### Ví dụ 2: Kiểm tra lỗi
+### Scenario 5: After Code Changes
 
-```
-Người dùng: "Hệ thống có lỗi không?"
+**Workflow:**
+```bash
+# Step 1: Stop containers (optional)
+./commander down
 
-AI Agent:
-→ Phân tích: diagnose
-→ Chạy: ./commander diagnose
-→ Output: ✅ No issues found
-→ Báo cáo: "✅ Hệ thống hoạt động bình thường, không có lỗi!"
-```
+# Step 2: Rebuild with new code
+./commander rebuild
 
-### Ví dụ 3: Backend lỗi
+# Step 3: Wait for rebuild complete
+# Monitor output for build errors
 
-```
-Người dùng: "Backend không hoạt động"
+# Step 4: Health check
+./commander health
 
-AI Agent:
-→ Phân tích: status để check
-→ Chạy: ./commander status
-→ Output: aicmr-backend Down
-→ Báo cáo: "❌ Backend đang Down. Để tôi kiểm tra logs..."
-→ Chạy: ./commander logs backend
-→ Output: [ERROR] Database connection failed
-→ Báo cáo: "❌ Backend lỗi do không kết nối được database. Đề xuất: check database status?"
+# Step 5: Verify specific functionality
+# - Test API: curl http://localhost:8000/health
+# - Test frontend: Open http://localhost:3000
+# - Check logs: ./commander logs
+
+# Step 6: Report status
 ```
 
-### Ví dụ 4: Xem logs backend
+### Scenario 6: Complete System Failure
 
+**Symptoms:**
+- Nothing works
+- All containers down
+- Can't access anything
+
+**Emergency Procedure:**
+```bash
+# Step 1: Stop everything
+./commander down
+
+# Step 2: Remove orphaned containers
+docker ps -a
+docker rm -f $(docker ps -aq)
+
+# Step 3: Check Docker daemon
+docker info
+
+# Step 4: Restart Docker (if needed)
+# Windows: Restart Docker Desktop
+# Linux: sudo systemctl restart docker
+
+# Step 5: Check disk space
+df -h
+
+# Step 6: Clean up if needed
+docker system prune -a
+
+# Step 7: Fresh start
+./commander up
+
+# Step 8: If still fails → Check logs
+./commander logs
 ```
-Người dùng: "Xem logs backend"
-
-AI Agent:
-→ Phân tích: logs backend
-→ Chạy: ./commander logs backend
-→ Output: 50 dòng logs gần nhất
-→ Báo cáo: "📋 Logs backend (50 dòng gần nhất): [show logs]"
-```
-
-## 📚 Tài liệu liên quan
-
-- **CLI Configuration**: `cli-configuration-skill` - Cấu hình CLI
-- **Task Management**: `task-management` - Quản lý task
-- **Full Documentation**: `scripts/README.md` - Reference đầy đủ
-
-## 🔗 Architecture
-
-```
-Data Flow:
-
-User Request
-    ↓
-AI Agent (Skill)
-    ↓
-Parse & Map to Commander Command
-    ↓
-Execute ./commander <command>
-    ↓
-Analyze Output
-    ↓
-Report & Recommend Next Action
-```
-
-Key Components:
-1. **User Input** - Yêu cầu tự nhiên tiếng Việt
-2. **AI Agent** - Phân tích và map lệnh
-3. **Commander** - Execute lệnh CLI
-4. **Output Analysis** - Phân tích kết quả
-5. **Report** - Báo cáo và đề xuất
 
 ---
 
-**Version**: 1.0 (Commander Management Skill for AI)
-**Updated**: 2026-01-21
+## 🔧 Troubleshooting Guide
+
+### Problem Category 1: Container Issues
+
+#### Problem: Container won't start
+**Symptoms:**
+```
+Error: Container exited with code 1
+```
+
+**Diagnosis:**
+```bash
+./commander logs [service]
+```
+
+**Common Causes:**
+1. **Port already in use**
+   - Solution: Stop conflicting service
+   - Check: `netstat -ano | findstr :8000` (Windows)
+   - Or: `lsof -i :8000` (Linux/Mac)
+
+2. **Volume mount error**
+   - Solution: Check volume exists
+   - Check: `docker volume ls`
+
+3. **Config file error**
+   - Solution: Check .env file syntax
+   - Check: `cat .env`
+
+4. **Image build failed**
+   - Solution: `./commander rebuild`
+
+#### Problem: Container keeps restarting
+**Diagnosis:**
+```bash
+./commander logs [service] | tail -50
+```
+
+**Common Causes:**
+1. **Application crash**
+   - Check logs for Python/Node exception
+   - Fix code/config
+   - Restart
+
+2. **Health check failing**
+   - Check health check configuration
+   - Temporarily disable to debug
+
+3. **Dependency not ready**
+   - Check database is up
+   - Wait longer before starting
+   - Add `depends_on` with `condition: service_healthy`
+
+#### Problem: Container extremely slow
+**Diagnosis:**
+```bash
+./commander status
+# Check CPU/MEM usage
+```
+
+**Solutions:**
+1. **Resource limit reached**
+   - Check Docker resource limits
+   - Increase allocated RAM/CPU
+
+2. **Database query slow**
+   - Check: `./commander logs mysql`
+   - Optimize queries
+   - Add indexes
+
+3. **Cache cold**
+   - Wait for cache to warm up
+   - Check Redis: `./commander logs redis`
+
+---
+
+### Problem Category 2: Networking Issues
+
+#### Problem: Can't access backend (localhost:8000)
+**Diagnosis:**
+```bash
+# Step 1: Check backend running
+./commander status
+# Look for: aicmr-backend "Up"
+
+# Step 2: Check backend logs
+./commander logs backend
+# Look for: "Uvicorn running on http://0.0.0.0:8000"
+
+# Step 3: Check port binding
+docker port aicmr-backend
+
+# Step 4: Test from inside container
+./commander shell backend
+# In shell: curl http://localhost:8000/health
+```
+
+**Common Causes:**
+1. **Port mapping wrong**
+   - Check docker-compose.yml
+   - Should be: `"8000:8000"`
+
+2. **Wrong interface**
+   - Using 127.0.0.1 instead of 0.0.0.0
+   - Fix: Bind to 0.0.0.0 in config
+
+3. **Firewall blocking**
+   - Check Windows Firewall
+   - Allow port 8000
+
+#### Problem: Can't access frontend (localhost:3000)
+**Similar to backend issue, but for frontend**
+```bash
+# Check frontend status
+./commander status
+
+# Check frontend logs
+./commander logs frontend
+# Look for: "ready - started server on"
+```
+
+---
+
+### Problem Category 3: Database Issues
+
+#### Problem: Can't connect to database
+**Symptoms:**
+```
+sqlalchemy.exc.OperationalError: (mysql.connector.errors.DatabaseError) 2003 (HY000): Can't connect to MySQL server
+```
+
+**Diagnosis:**
+```bash
+# Step 1: Check MySQL container
+./commander status
+# Look for: aicmr-mysql "Up"
+
+# Step 2: Check MySQL logs
+./commander logs mysql
+# Look for: "ready for connections" OR "ERROR"
+
+# Step 3: Test MySQL connection
+./commander shell mysql
+# In shell:
+mysql -u aicmr_user -p
+# Enter password from .env
+```
+
+**Common Causes:**
+1. **Wrong credentials**
+   - Check .env DB_USER, DB_PASSWORD
+   - Verify MySQL user exists
+
+2. **Database not ready**
+   - Wait for MySQL to fully start
+   - Check logs for "ready for connections"
+
+3. **Wrong host**
+   - Windows: host.docker.internal
+   - Linux/Mac: mysql (container name)
+   - Check .env DB_HOST
+
+#### Problem: Database migration failed
+**Diagnosis:**
+```bash
+# Check alembic logs
+./commander logs backend | grep -i alembic
+
+# Check current migration state
+./commander shell backend
+# In shell:
+alembic current
+alembic history
+```
+
+**Solutions:**
+1. **Missing migration file**
+   - Create migration: `alembic revision --autogenerate -m "description"`
+   - Apply: `alembic upgrade head`
+
+2. **Migration conflict**
+   - Downgrade: `alembic downgrade -1`
+   - Fix conflict
+   - Upgrade: `alembic upgrade head`
+
+3. **Database out of sync**
+   - Stamp head: `alembic stamp head`
+   - Re-run: `alembic upgrade head`
+
+---
+
+### Problem Category 4: Build Issues
+
+#### Problem: Build failed during `./commander rebuild`
+**Symptoms:**
+```
+ERROR [builder] FAILED to build
+```
+
+**Diagnosis:**
+```bash
+# Check build logs
+./commander logs
+
+# Look for specific error in output
+# Usually near "ERROR" keyword
+```
+
+**Common Causes:**
+1. **Syntax error in code**
+   - Check logs for Python/Node syntax error
+   - Fix code
+   - Rebuild: `./commander rebuild`
+
+2. **Missing dependency**
+   - Check requirements.txt or package.json
+   - Add missing dependency
+   - Rebuild
+
+3. **Network timeout**
+   - Check internet connection
+   - Docker can't download packages
+   - Retry rebuild
+
+4. **Out of disk space**
+   - Check: `df -h`
+   - Clean up: `docker system prune -a`
+   - Retry
+
+---
+
+## 🚨 Emergency Procedures
+
+### Emergency 1: Complete System Crash
+
+**When:** All containers down, nothing works
+
+**Procedure:**
+```bash
+# 1. Stop everything
+./commander down
+
+# 2. Force remove all containers
+docker rm -f $(docker ps -aq) 2>/dev/null
+
+# 3. Clean Docker system
+docker system prune -a --volumes
+
+# 4. Verify Docker daemon
+docker info
+# If error → Restart Docker Desktop/daemon
+
+# 5. Fresh start
+./commander up
+
+# 6. If still fails → Check system logs
+# Windows: Event Viewer
+# Linux: journalctl -xe
+```
+
+### Emergency 2: Database Corruption
+
+**When:** Database won't start, data corrupted
+
+**Procedure:**
+```bash
+# ⚠️ WARNING: May cause data loss!
+# Only attempt if backup available
+
+# 1. Stop all services
+./commander down
+
+# 2. Access MySQL data directory
+# Windows: \\wsl$\docker-desktop-data\data\aicmr_mysql
+# Linux: /var/lib/docker/volumes/aicmr_mysql/_data
+
+# 3. Backup current data (if possible)
+cp -r /var/lib/docker/volumes/aicmr_mysql/_data /backup/mysql
+
+# 4. Remove corrupted volume
+docker volume rm aicmr_mysql
+
+# 5. Start services (will create fresh DB)
+./commander up
+
+# 6. Run migrations
+./commander shell backend
+alembic upgrade head
+
+# 7. Restore from backup if needed
+# Or recreate data from scratch
+```
+
+### Emergency 3: Disk Space Full
+
+**When:** Can't write logs, containers crash
+
+**Procedure:**
+```bash
+# 1. Check disk space
+df -h
+
+# 2. Clean Docker unused data
+docker system prune -a
+
+# 3. Remove old logs
+# Backend logs
+docker logs aicmr-backend --tail 0 > /dev/null
+# Repeat for other containers
+
+# 4. Remove Docker volumes (unused)
+docker volume prune
+
+# 5. Restart services
+./commander restart
+```
+
+### Emergency 4: Port Conflicts
+
+**When:** "port is already allocated"
+
+**Procedure:**
+```bash
+# 1. Find process using port
+# Windows:
+netstat -ano | findstr :8000
+# Linux/Mac:
+lsof -i :8000
+
+# 2. Kill conflicting process
+# Windows:
+taskkill /PID <pid> /F
+# Linux/Mac:
+kill -9 <pid>
+
+# 3. Restart services
+./commander restart
+```
+
+---
+
+## ✅ Best Practices
+
+### For AI Agents
+
+#### DO's ✅
+
+1. **ALWAYS load this skill first**
+   - For ANY system-related request
+   - No exceptions
+
+2. **Follow the workflow**
+   - Understand request
+   - Map to commander command
+   - Execute commander
+   - Analyze output
+   - Report results
+
+3. **Check before acting**
+   - Verify current state
+   - Don't restart if already running
+   - Don't start if already started
+
+4. **Monitor execution**
+   - Watch output for errors
+   - Wait for completion
+   - Don't assume success
+
+5. **Report clearly**
+   - Summarize what happened
+   - Highlight errors if any
+   - Suggest next actions
+
+6. **Ask when unsure**
+   - Better to ask than guess wrong
+   - Clarify ambiguous requests
+   - Confirm destructive actions
+
+#### DON'Ts ❌
+
+1. **Don't use docker compose directly**
+   - Always use commander
+   - Commander abstracts complexity
+
+2. **Don't skip diagnostics**
+   - Check status before restarting
+   - View logs before declaring failure
+   - Diagnose before fixing
+
+3. **Don't make assumptions**
+   - Verify container state
+   - Check error messages
+   - Don't guess root cause
+
+4. **Don't be destructive**
+   - Ask before deleting data
+   - Confirm before `down`
+   - Warn about consequences
+
+5. **Don't overwhelm user**
+   - Summarize long outputs
+   - Show only relevant logs
+   - One action at a time
+
+### For Developers
+
+#### DO's ✅
+
+1. **Use commander for all operations**
+   - Daily start/stop
+   - Deployments
+   - Debugging
+
+2. **Check health before major changes**
+   - Run `./commander health`
+   - Verify all services OK
+   - Backup before rebuild
+
+3. **Monitor logs regularly**
+   - `./commander logs` during development
+   - Check for warnings (not just errors)
+   - Spot issues early
+
+4. **Clean up periodically**
+   - `docker system prune -a`
+   - Remove old images
+   - Free disk space
+
+5. **Document custom commands**
+   - Add to commander if used often
+   - Share with team
+
+#### DON'Ts ❌
+
+1. **Don't bypass commander**
+   - Use docker compose only if necessary
+   - Commander provides standardization
+
+2. **Don't ignore warnings**
+   - Warnings → Future errors
+   - Fix early
+
+3. **Don't modify running containers**
+   - Stop first, then change
+   - Restart to apply
+
+4. **Don't forget to backup**
+   - Before rebuild
+   - Before migrations
+   - Before major changes
+
+---
+
+## 📋 Checklist
+
+### Before Starting System
+
+- [ ] Disk space available (>5GB free)
+- [ ] Docker daemon running
+- [ ] No port conflicts (8000, 3000, 3306, 6379)
+- [ ] .env file configured
+- [ ] Network connection available
+
+### After Starting System
+
+- [ ] All containers "Up" status
+- [ ] Health check passed
+- [ ] Backend accessible at http://localhost:8000/health
+- [ ] Frontend accessible at http://localhost:3000
+- [ ] No errors in logs
+
+### Before Making Changes
+
+- [ ] Backup database (if needed)
+- [ ] Commit code changes
+- [ ] Document what will change
+- [ ] Rollback plan ready
+
+### After Making Changes
+
+- [ ] Rebuild successful
+- [ ] All containers healthy
+- [ ] Test critical functionality
+- [ ] Check logs for errors
+- [ ] Monitor for 5 minutes
+
+### Troubleshooting
+
+- [ ] Identify symptoms clearly
+- [ ] Check status first
+- [ ] Run diagnostics
+- [ ] View relevant logs
+- [ ] Document findings
+- [ ] Test proposed fix
+- [ ] Verify resolution
+
+---
+
+## 🔗 Quick Reference Card
+
+```
+SYSTEM MANAGEMENT COMMANDS
+
+Lifecycle:
+  up          - Start all containers
+  down        - Stop all containers
+  rebuild     - Rebuild & restart
+  restart     - Restart containers
+
+Status:
+  health      - Quick health check
+  status      - Detailed container status
+  diagnose    - Full system diagnostics
+
+Logs:
+  logs        - View all service logs
+  logs [svc]  - View specific service logs
+
+Access:
+  shell [svc] - Open shell in service
+
+Services: backend, frontend, mysql, redis, nginx
+
+EXAMPLES:
+  ./commander up
+  ./commander logs backend
+  ./commander shell mysql
+  ./commander health
+
+TROUBLESHOOTING:
+  1. ./commander status    - Check what's running
+  2. ./commander diagnose  - Find issues
+  3. ./commander logs [svc] - View errors
+  4. ./commander rebuild   - Fix most issues
+
+EMERGENCY:
+  ./commander down
+  docker system prune -a
+  ./commander up
+```
+
+---
+
+## 📚 Related Resources
+
+### Internal Skills
+- **backend-api-builder** - Build backend APIs
+- **backend-api-tester** - Test backend APIs
+- **git-commit-push** - Commit changes
+
+### Documentation
+- **scripts/README.md** - Commander full documentation
+- **docker-compose.yml** - Container definitions
+- **CLAUDE.md** - Project overview
+
+### External Resources
+- Docker Documentation: https://docs.docker.com/
+- Docker Compose: https://docs.docker.com/compose/
+- MySQL Reference: https://dev.mysql.com/doc/
+
+---
+
+## 📝 Version History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| 1.0 | 2026-01-21 | Initial version |
+| 2.0 | 2026-01-23 | **OPTIMIZED** - Better structure, advanced scenarios, emergency procedures |
+
+---
+
+**Maintained by:** Claude Code AI
+**Last Updated:** 2026-01-23
+**Status:** Production Ready ✅
+
+---
+
+**🎯 Remember: This skill is the GATEKEEPER for all system operations. When in doubt, load it first!**

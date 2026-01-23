@@ -30,7 +30,8 @@ async def get_install_status(request: Request, db: AsyncSession = Depends(get_db
         result = await db.execute(select(Setting).where(Setting.key == "is_installed"))
         setting = result.scalar_one_or_none()
 
-        is_installed = setting is not None and setting.value == "true"
+        # Explicit bool conversion for type safety
+        is_installed: bool = bool(setting and setting.value == "true")
 
         return InstallStatusResponse(
             installed=is_installed, step="setup_done" if is_installed else "ready"
@@ -46,7 +47,7 @@ async def get_install_status(request: Request, db: AsyncSession = Depends(get_db
                 result = await db.execute(select(Setting).where(Setting.key == "is_installed"))
                 setting = result.scalar_one_or_none()
 
-                is_installed = setting is not None and setting.value == "true"
+                is_installed: bool = bool(setting and setting.value == "true")
 
                 return InstallStatusResponse(
                     installed=is_installed, step="setup_done" if is_installed else "ready"
@@ -89,28 +90,30 @@ async def setup_install(data: InstallSetupRequest, db: AsyncSession = Depends(ge
             status_code=status.HTTP_403_FORBIDDEN, detail="Mã cài đặt không hợp lệ."
         )
 
-    # 2. Kiểm tra trạng thái cài đặt (Chặn reinstall)
-    result = await db.execute(select(Setting).where(Setting.key == "is_installed"))
-    setting = result.scalar_one_or_none()
-
-    if setting and setting.value == "true":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Hệ thống đã được cài đặt. Không thể cài đặt lại.",
-        )
-
-    # 3. Kiểm tra đã có user nào chưa (Chặn install nếu đã có admin)
-    result = await db.execute(select(User).limit(1))
-    existing_user = result.scalar_one_or_none()
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Hệ thống đã có người dùng. Không thể cài đặt lại.",
-        )
-
-    # 4. Thực hiện Transaction tạo dữ liệu
+    # 2. Thực hiện Transaction tạo dữ liệu
     try:
-        async with db.begin_nested():
+        async with db.begin():
+            # 2.1. Kiểm tra lại trạng thái cài đặt với lock để tránh race condition
+            result = await db.execute(
+                select(Setting).where(Setting.key == "is_installed")
+                .with_for_update()
+            )
+            setting = result.scalar_one_or_none()
+
+            if setting and setting.value == "true":
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Hệ thống đã được cài đặt. Không thể cài đặt lại.",
+                )
+
+            # 2.2. Kiểm tra đã có user nào chưa (Chặn install nếu đã có admin)
+            result = await db.execute(select(User).limit(1))
+            existing_user = result.scalar_one_or_none()
+            if existing_user:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Hệ thống đã có người dùng. Không thể cài đặt lại.",
+                )
             # Tạo User Admin
             user_data = UserCreate(
                 email=data.email,
@@ -147,13 +150,15 @@ async def setup_install(data: InstallSetupRequest, db: AsyncSession = Depends(ge
             ]
 
             db.add_all(settings_to_save)
-            await db.flush()
-
-            # Clear cache for status endpoint
-            await FastAPICache.clear(namespace="get_install_status")
 
             logger.info(f"Hệ thống đã được cài đặt bởi Admin: {admin_user.email}")
 
+        # Cache clear sau khi commit thành công
+        await FastAPICache.clear(namespace="get_install_status")
+
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
     except Exception as e:
         logger.error(f"Lỗi cài đặt: {e}")
         raise HTTPException(

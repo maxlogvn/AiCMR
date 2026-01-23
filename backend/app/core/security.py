@@ -24,26 +24,48 @@ def generate_csrf_token() -> str:
 def validate_csrf(
     request: Request, x_csrf_token: str = Header(None, alias="X-CSRF-Token")
 ):
-    """Validate CSRF token - makes it optional for now to avoid session cookie issues"""
-    # CSRF token is optional for POST endpoints since they're rate-limited
-    # This prevents 403 errors due to session/cookie issues
-    # In production, consider using stateless CSRF (double-submit) pattern
+    """
+    Validate CSRF token.
+
+    - In DEBUG mode (development): Optional validation for easier testing
+    - In production mode: Strict validation required
+    """
+    # Development mode: Allow requests without CSRF token for easier testing
+    if settings.DEBUG:
+        if x_csrf_token is None:
+            logger.debug("CSRF token not provided in header - allowing (DEBUG mode)")
+            return None
+        # Still validate if token is provided
+        session_token = request.session.get("csrf_token")
+        if session_token and session_token != x_csrf_token:
+            logger.warning(f"CSRF validation failed in DEBUG mode - allowing anyway")
+        return x_csrf_token
+
+    # Production mode: Strict validation required
     if x_csrf_token is None:
-        logger.debug("CSRF token not provided in header - allowing (optional)")
-        return None
-    
+        logger.warning("CSRF token not provided in header - rejecting (production)")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="CSRF token required"
+        )
+
     session_token = request.session.get("csrf_token")
     if not session_token:
-        logger.debug("No CSRF token in session - allowing (optional)")
-        return x_csrf_token
-    
+        logger.warning("No CSRF token in session - rejecting (production)")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No CSRF session - please refresh the page"
+        )
+
     if session_token != x_csrf_token:
         logger.warning(
-            f"CSRF validation failed. Session Token: {str(session_token)[:8]}..., Header Token: {str(x_csrf_token)[:8]}..."
+            f"CSRF validation failed. Session: {str(session_token)[:8]}..., Header: {str(x_csrf_token)[:8]}..."
         )
-        # Even if mismatch, allow it (optional validation)
-        return x_csrf_token
-    
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid CSRF token"
+        )
+
     return x_csrf_token
 
 

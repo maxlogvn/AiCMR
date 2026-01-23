@@ -13,7 +13,7 @@ class PostMetadataCreate(PostMetadataBase):
 
 
 class PostMetadataUpdate(BaseModel):
-    value: str = Field(None, min_length=1)
+    value: str | None = Field(None, min_length=1)
 
 
 class PostMetadataResponse(PostMetadataBase):

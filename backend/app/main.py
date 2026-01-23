@@ -162,10 +162,10 @@ async def prometheus_middleware(request: Request, call_next):
         raise
     finally:
         duration = time.time() - start_time
-        http_requests_total.labels(
+        http_requests_total.labels(  # type: ignore[attr-defined]
             method=method, endpoint=path, status=status_code
         ).inc()
-        http_request_duration_seconds.labels(method=method, endpoint=path).observe(
+        http_request_duration_seconds.labels(method=method, endpoint=path).observe(  # type: ignore[attr-defined]
             duration
         )
 
@@ -193,8 +193,6 @@ app.include_router(uploads.router, prefix="/api/v1/uploads", tags=["Uploads"])
 app.include_router(posts.router, prefix="/api/v1/posts", tags=["Posts"])
 app.include_router(categories.router, prefix="/api/v1/categories", tags=["Categories"])
 app.include_router(tags.router, prefix="/api/v1/tags", tags=["Tags"])
-
-app.include_router(uploads.router, prefix="/api/v1/uploads", tags=["Uploads"])
 
 
 # CSRF token endpoint

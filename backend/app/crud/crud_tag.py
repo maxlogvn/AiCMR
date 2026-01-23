@@ -139,7 +139,7 @@ async def update_post_count(db: AsyncSession, tag_id: int, increment: bool = Tru
     """Cập nhật post_count cache cho tag"""
     tag = await get_tag_by_id(db, tag_id)
     if tag:
-        tag.post_count += 1 if increment else -1
+        tag.post_count += 1 if increment else -1 
         await db.flush()
 
 
@@ -180,7 +180,7 @@ async def merge_tags(db: AsyncSession, source_id: int, target_id: int) -> bool:
         )
 
         # Update target tag post count
-        target_tag.post_count += source_tag.post_count
+        target_tag.post_count += source_tag.post_count 
 
         # Delete source tag
         await db.delete(source_tag)

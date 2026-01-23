@@ -57,5 +57,5 @@ class PostQuery(BaseModel):
     tag_ids: Optional[List[int]] = None
     search: Optional[str] = None  # Tìm kiếm theo tiêu đề/nội dung
     author_id: Optional[int] = None
-    date_from: Optional[datetime] = None
-    date_to: Optional[datetime] = None
+    date_from: Optional[str] = None  # ISO date string from query params
+    date_to: Optional[str] = None    # ISO date string from query params

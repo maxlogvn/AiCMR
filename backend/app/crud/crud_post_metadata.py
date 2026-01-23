@@ -59,7 +59,7 @@ async def set_metadata(
 
     if existing:
         # Cập nhật nếu đã tồn tại
-        existing.value = value
+        existing.value = value 
         await db.flush()
         await db.refresh(existing)
         await FastAPICache.clear(namespace="post_metadata")
@@ -99,7 +99,7 @@ async def update_metadata(
     if not db_obj:
         return None
 
-    db_obj.value = value
+    db_obj.value = value 
     await db.flush()
     await db.refresh(db_obj)
     await FastAPICache.clear(namespace="post_metadata")

@@ -140,7 +140,7 @@ async def get_with_post_count(db: AsyncSession, category_id: int) -> Optional[Ca
     direct_count = result.scalar() or 0
 
     # Update post_count
-    category.post_count = direct_count
+    category.post_count = direct_count 
 
     return category
 
@@ -172,7 +172,7 @@ async def update_post_count(db: AsyncSession, category_id: int, increment: bool 
     """Cập nhật post_count cache cho category"""
     category = await get_category_by_id(db, category_id)
     if category:
-        category.post_count += 1 if increment else -1
+        category.post_count += 1 if increment else -1 
         await db.flush()
 
 
@@ -189,11 +189,13 @@ async def reorder_categories(db: AsyncSession, items: list[dict]) -> bool:
     try:
         for item in items:
             category_id = item.get('id')
+            if category_id is None:
+                continue
             display_order = item.get('order')
 
             category = await get_category_by_id(db, category_id)
-            if category:
-                category.display_order = display_order
+            if category and display_order is not None:
+                category.display_order = display_order 
 
         await db.flush()
         await FastAPICache.clear(namespace="category")

@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request, Query
 from fastapi_pagination import Page, paginate
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from fastapi_cache import FastAPICache
 from fastapi_cache.decorator import cache
 
@@ -17,6 +19,7 @@ from app.core.constants import (
     CACHE_POST_LIST_SECONDS,
 )
 from app.models.user import User
+from app.models.category import Category
 from app.schemas.category import CategoryCreate, CategoryUpdate, CategoryResponse
 from app.crud import (
     get_category_by_id,
@@ -119,7 +122,7 @@ async def reorder_categories_endpoint(
     return {"message": "Categories reordered successfully"}
 
 
-@router.post("/", response_model=CategoryResponse)
+@router.post("/", response_model=CategoryResponse, status_code=status.HTTP_201_CREATED)
 async def create_category_endpoint(
     request: Request,
     category_in: CategoryCreate,
@@ -131,6 +134,15 @@ async def create_category_endpoint(
     Create a new category (admin only).
     """
     category = await create_category(db=db, obj_in=category_in)
+
+    # Re-fetch with eager loading to avoid MissingGreenlet error
+    result = await db.execute(
+        select(Category)
+        .options(selectinload(Category.children))
+        .where(Category.id == category.id)
+    )
+    category = result.scalar_one_or_none()
+
     logger.info(f"Admin {current_user.email} created category: {category.name}")
     return category
 

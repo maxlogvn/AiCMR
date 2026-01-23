@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Query
 from fastapi_pagination import Page, paginate
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from fastapi_cache import FastAPICache
 from fastapi_cache.decorator import cache
 
@@ -35,6 +37,7 @@ from app.crud import (
     update_metadata,
     delete_metadata,
 )
+from app.services.post_storage import PostStorageService
 from loguru import logger
 
 router = APIRouter()
@@ -102,7 +105,7 @@ async def list_posts(
 # ==================== AUTHENTICATED USER ENDPOINTS ====================
 
 
-@router.post("/me", response_model=PostResponse)
+@router.post("/me", response_model=PostResponse, status_code=status.HTTP_201_CREATED)
 async def create_post_endpoint(
     request: Request,
     post_in: PostCreate,
@@ -120,8 +123,16 @@ async def create_post_endpoint(
     post = await create_post(
         db=db,
         obj_in=post_in,
-        user_id=current_user.id
+        user_id=int(current_user.id)  # type: ignore[arg-type]
     )
+
+    # Re-fetch with eager loading to avoid MissingGreenlet error
+    result = await db.execute(
+        select(Post)
+        .options(selectinload(Post.tags))
+        .where(Post.id == post.id)
+    )
+    post = result.scalar_one_or_none()
 
     logger.info(f"User {current_user.email} created post: {post.title}")
     return post
@@ -143,7 +154,7 @@ async def list_my_posts(
     """
     posts, total = await get_user_posts(
         db=db,
-        user_id=current_user.id,
+        user_id=int(current_user.id),  # type: ignore[arg-type]
         skip=(page - 1) * size,
         limit=size,
         status=status
@@ -179,7 +190,7 @@ async def get_my_post(
         )
 
     # Check ownership
-    if post.user_id != current_user.id and current_user.rank < MODERATOR_RANK:
+    if post.author_id != current_user.id and current_user.rank < MODERATOR_RANK:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions to view this post"
@@ -212,7 +223,7 @@ async def update_my_post(
         )
 
     # Check ownership
-    if post.user_id != current_user.id and current_user.rank < MODERATOR_RANK:
+    if post.author_id != current_user.id and current_user.rank < MODERATOR_RANK:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions to update this post"
@@ -252,7 +263,7 @@ async def delete_my_post(
         )
 
     # Check ownership
-    if post.user_id != current_user.id and current_user.rank < MODERATOR_RANK:
+    if post.author_id != current_user.id and current_user.rank < MODERATOR_RANK:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions to delete this post"
@@ -299,7 +310,7 @@ async def change_post_status(
         )
 
     # Check ownership
-    if post.user_id != current_user.id and current_user.rank < MODERATOR_RANK:
+    if post.author_id != current_user.id and current_user.rank < MODERATOR_RANK:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions to change status of this post"
@@ -313,10 +324,10 @@ async def change_post_status(
         )
 
     # Update status
-    post.status = new_status
+    post.status = new_status 
     if new_status == "published" and post.published_at is None:
         from datetime import datetime, timezone
-        post.published_at = datetime.now(timezone.utc)
+        post.published_at = datetime.now(timezone.utc) 
 
     await db.flush()
     await db.refresh(post)
@@ -404,13 +415,21 @@ async def update_any_post(
 
     # Moderator restrictions
     if current_user.rank == MODERATOR_RANK:
-        # Moderators can only update status (for moderation)
-        if not post_in.status and not any(field != "status" for field in post_in.model_fields_set):
-            pass  # Only status change - allowed
+        updating_fields = post_in.model_fields_set
+
+        if not updating_fields:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No fields provided for update"
+            )
+
+        # Allow if ONLY status field is being updated
+        if updating_fields == {"status"}:
+            pass  # Allowed
         else:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Moderators can only update post status"
+                detail=f"Moderators can only update post status. Attempted to update: {', '.join(updating_fields)}"
             )
 
     updated_post = await update_post(
@@ -487,9 +506,9 @@ async def bulk_publish_posts(
     for post_id in action.post_ids:
         post = await get_post_by_id(db, post_id)
         if post:
-            post.status = "published"
+            post.status = "published" 
             if post.published_at is None:
-                post.published_at = datetime.now(timezone.utc)
+                post.published_at = datetime.now(timezone.utc) 
             updated_posts.append(post_id)
 
     await db.flush()
@@ -527,7 +546,7 @@ async def bulk_archive_posts(
     for post_id in action.post_ids:
         post = await get_post_by_id(db, post_id)
         if post:
-            post.status = "archived"
+            post.status = "archived" 
             updated_posts.append(post_id)
 
     await db.flush()
@@ -603,14 +622,14 @@ async def get_post_metadata(
         )
 
     # Check permissions
-    if post.user_id != current_user.id and current_user.rank < MODERATOR_RANK:
+    if post.author_id != current_user.id and current_user.rank < MODERATOR_RANK:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions to view metadata"
         )
 
     # Get all metadata
-    metadata_list = await get_all_metadata(db, post_id)
+    metadata_list = await get_all_metadata(db, int(post_id))  # type: ignore[arg-type]
     return {
         "post_id": post_id,
         "metadata": [{"key": m.key, "value": m.value} for m in metadata_list],
@@ -643,7 +662,7 @@ async def update_post_metadata(
         )
 
     # Check permissions
-    if post.user_id != current_user.id and current_user.rank < MODERATOR_RANK:
+    if post.author_id != current_user.id and current_user.rank < MODERATOR_RANK:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions to update metadata"
@@ -709,7 +728,7 @@ async def delete_post_metadata_key(
         )
 
     # Check permissions
-    if post.user_id != current_user.id and current_user.rank < MODERATOR_RANK:
+    if post.author_id != current_user.id and current_user.rank < MODERATOR_RANK:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions to delete metadata"
@@ -774,13 +793,13 @@ async def export_posts_for_rag(
             
         # Get content from storage
         try:
-            content = await PostStorageService.read_post_content(post_id, post.slug)
+            content = await PostStorageService.read_post_content(post_id, str(post.slug))  # type: ignore[arg-type]
         except Exception as e:
             logger.error(f"Failed to read content for post {post_id}: {e}")
             continue
         
         # Get metadata
-        metadata_list = await get_all_metadata(db, post_id)
+        metadata_list = await get_all_metadata(db, int(post_id))  # type: ignore[arg-type]
         metadata_dict = {m.key: m.value for m in metadata_list}
         
         posts_data.append({
@@ -903,7 +922,7 @@ async def get_post_by_slug_endpoint(
 
     # Increment view count
     try:
-        await increment_post_view_count(db, post.id)
+        await increment_post_view_count(db, int(post.id))  # type: ignore[arg-type]
     except Exception as e:
         logger.warning(f"Failed to increment view count for post {post.id}: {e}")
 
@@ -961,7 +980,7 @@ async def get_post_for_rag(
     
     # Get content from storage
     try:
-        content = await PostStorageService.read_post_content(post.id, post.slug)
+        content = await PostStorageService.read_post_content(int(post.id), str(post.slug))  # type: ignore[arg-type]
     except Exception as e:
         logger.error(f"Failed to read content for post {slug}: {e}")
         raise HTTPException(
@@ -970,7 +989,7 @@ async def get_post_for_rag(
         )
     
     # Get metadata
-    metadata_list = await get_all_metadata(db, post.id)
+    metadata_list = await get_all_metadata(db, int(post.id))  # type: ignore[arg-type]
     metadata_dict = {m.key: m.value for m in metadata_list}
     
     return {

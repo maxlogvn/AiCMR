@@ -137,7 +137,7 @@ async def get_unused_tags_endpoint(
     return unused_tags
 
 
-@router.post("/", response_model=TagResponse)
+@router.post("/", response_model=TagResponse, status_code=status.HTTP_201_CREATED)
 async def create_tag_endpoint(
     request: Request,
     tag_in: TagCreate,
