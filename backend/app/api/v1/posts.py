@@ -21,7 +21,7 @@ from app.core.constants import (
 )
 from app.models.user import User
 from app.models.post import Post
-from app.schemas.post import PostCreate, PostUpdate, PostQuery, PostResponse, PostBulkAction
+from app.schemas.post import PostCreate, PostUpdate, PostQuery, PostResponse, PostBulkAction, PostListWithStats
 from app.crud import (
     get_post_by_id,
     get_post_by_slug,
@@ -46,7 +46,7 @@ router = APIRouter()
 # ==================== PUBLIC ENDPOINTS ====================
 
 
-@router.get("/", response_model=Page[PostResponse])
+@router.get("/", response_model=PostListWithStats)
 @cache(expire=CACHE_POST_LIST_SECONDS, namespace="posts")
 async def list_posts(
     request: Request,
@@ -341,7 +341,7 @@ async def change_post_status(
 # ==================== ADMIN/MODERATOR ENDPOINTS ====================
 
 
-@router.get("/all", response_model=Page[PostResponse])
+@router.get("/all", response_model=PostListWithStats)
 async def list_all_posts_admin(
     request: Request,
     status: str | None = Query(None, description="Filter by status (draft, published, archived)"),

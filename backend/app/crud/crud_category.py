@@ -73,9 +73,18 @@ async def create_category(
     obj_in: CategoryCreate
 ) -> Category:
     """Tạo chuyên mục mới"""
+    import re
+
+    # Auto-generate slug from name if not provided
+    slug = obj_in.slug
+    if not slug:
+        # Generate slug from name: lowercase, replace spaces with hyphens, remove special chars
+        slug = re.sub(r'[^\w\s-]', '', obj_in.name.lower())
+        slug = re.sub(r'[-\s]+', '-', slug).strip('-')
+
     db_obj = Category(
         name=obj_in.name,
-        slug=obj_in.slug,
+        slug=slug,
         description=obj_in.description,
         parent_id=obj_in.parent_id,
         is_active=obj_in.is_active,
@@ -147,8 +156,12 @@ async def get_with_post_count(db: AsyncSession, category_id: int) -> Optional[Ca
 
 async def get_tree_structure(db: AsyncSession) -> list[Category]:
     """Lấy cấu trúc cây của chuyên mục"""
-    # Lấy tất cả chuyên mục
-    result = await db.execute(select(Category).order_by(Category.display_order.asc(), Category.name.asc()))
+    # Lấy tất cả chuyên mục với eager loading children để tránh MissingGreenlet error
+    result = await db.execute(
+        select(Category)
+        .options(selectinload(Category.children))
+        .order_by(Category.display_order.asc(), Category.name.asc())
+    )
     all_categories = result.scalars().all()
 
     # Build tree structure

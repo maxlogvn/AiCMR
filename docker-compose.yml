@@ -62,8 +62,13 @@ services:
       - /app/.next
       - ./public:/app/public
     environment:
+      - NODE_ENV=development
       - NEXT_PUBLIC_API_URL=http://aicmr.local/backend
       - NEXT_PUBLIC_APP_URL=http://aicmr.local
+      # Debug mode cho Next.js - verbose logging
+      - NEXT_DEBUG=1
+    ports:
+      - "3000:3000"
     expose:
       - "3000"
     depends_on:

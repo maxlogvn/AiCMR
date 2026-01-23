@@ -10,6 +10,7 @@ import {
   FileText,
   FolderTree,
   Tag,
+  Bug,
 } from "lucide-react";
 import Link from "next/link";
 import { useUser } from "@/hooks/useUser";
@@ -27,6 +28,7 @@ export const useAdminSidebar = create<AdminSidebarStore>((set) => ({
 export default function AdminSidebar() {
   const { collapsed, setCollapsed } = useAdminSidebar();
   const { user } = useUser();
+  const isDev = process.env.NODE_ENV === "development";
 
   const menuItems = [
     {
@@ -65,6 +67,14 @@ export default function AdminSidebar() {
       href: "/dashboard/settings",
       minRank: 5,
     },
+    // Debug menu - only in development
+    ...(isDev ? [{
+      label: "Debug Tool",
+      icon: <Bug className="h-5 w-5 text-red-500" />,
+      href: "/dashboard/debug",
+      minRank: 1,
+      isDevOnly: true,
+    }] : []),
   ];
 
   return (
@@ -103,7 +113,7 @@ export default function AdminSidebar() {
       </div>
 
       {/* Show message if user has no permission for any items */}
-      {user && menuItems.every(item => user.rank < item.minRank) && (
+      {user && menuItems.filter(i => !(i as any).isDevOnly).every(item => user.rank < item.minRank) && (
         <div className="p-4 text-center text-sm text-zinc-600 dark:text-zinc-400">
           {!collapsed && "Bạn không có quyền truy cập các tính năng này."}
         </div>
@@ -111,7 +121,9 @@ export default function AdminSidebar() {
 
       <nav className="flex-1 p-2 space-y-1">
         {menuItems.map((item) => {
-          if (user && user.rank < item.minRank) {
+          const isDevOnly = (item as any).isDevOnly;
+          if (isDevOnly && !isDev) return null;
+          if (user && !isDevOnly && user.rank < item.minRank) {
             return null;
           }
 
@@ -121,7 +133,11 @@ export default function AdminSidebar() {
               href={item.href}
               className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 collapsed ? "justify-center" : "justify-start"
-              } hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300`}
+              } ${
+                isDevOnly
+                  ? "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30"
+                  : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300"
+              }`}
             >
               <span className="flex-shrink-0">{item.icon}</span>
               {!collapsed && <span>{item.label}</span>}

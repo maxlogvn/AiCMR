@@ -4,6 +4,7 @@ import ModeratorGuard from "@/components/auth/ModeratorGuard";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+// import { DebugToast, DevToolsPanel } from "@/components/debug/DebugToast"; // Disabled to prevent infinite loop
 
 export default function DashboardLayout({
   children,
@@ -19,6 +20,13 @@ export default function DashboardLayout({
           <main className="flex-1 p-4 sm:p-8">{children}</main>
         </div>
         <Footer />
+        {/* Debug Tools - Disabled temporarily */}
+        {/* {process.env.NODE_ENV === "development" && (
+          <>
+            <DebugToast />
+            <DevToolsPanel />
+          </>
+        )} */}
       </div>
     </ModeratorGuard>
   );

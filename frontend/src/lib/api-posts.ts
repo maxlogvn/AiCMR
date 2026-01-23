@@ -24,33 +24,33 @@ import type {
 export const postsApi = {
   // Public
   getPosts: (params: GetPostsParams) =>
-    api.get<PaginatedResponse<Post>>('/posts', { params }),
+    api.get<PaginatedResponse<Post>>('/posts/', { params }),
 
   getPostBySlug: (slug: string) =>
-    api.get<Post>(`/posts/${slug}`),
+    api.get<Post>(`/posts/${slug}/`),
 
   getPostRaw: (slug: string) =>
     api.get<string>(`/posts/${slug}/raw`),
 
   // ==================== Categories ====================
   getCategories: () =>
-    api.get<Category[]>('/categories'),
+    api.get<Category[]>('/categories/'),
 
   getCategoryBySlug: (slug: string) =>
     api.get<Category>(`/categories/${slug}`),
 
   getCategoryTree: () =>
-    api.get<Category[]>('/categories/tree'),
+    api.get<Category[]>('/categories/tree/'),
 
   // ==================== Tags ====================
   getTags: (params?: GetTagsParams) =>
-    api.get<PaginatedResponse<Tag>>('/tags', { params }),
+    api.get<PaginatedResponse<Tag>>('/tags/', { params }),
 
   getTagBySlug: (slug: string) =>
-    api.get<Tag>(`/tags/${slug}`),
+    api.get<Tag>(`/tags/${slug}/`),
 
   getTrendingTags: (limit: number = 10) =>
-    api.get<Tag[]>('/tags/trending', { params: { limit } }),
+    api.get<Tag[]>('/tags/trending/', { params: { limit } }),
 
   // ==================== Authenticated User Posts ====================
   createPost: (data: CreatePostRequest) =>

@@ -61,6 +61,20 @@ async def list_categories(
     return categories
 
 
+@router.get("/tree/", response_model=list[CategoryResponse])
+@cache(expire=CACHE_POST_LIST_SECONDS, namespace="categories")
+async def get_category_tree(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Get category tree structure (hierarchical).
+
+    NOTE: This route must be defined before /{slug} to avoid route conflicts.
+    """
+    return await get_tree_structure(db=db)
+
+
 @router.get("/{slug}", response_model=CategoryResponse)
 @cache(expire=CACHE_POST_LIST_SECONDS, namespace="categories")
 async def get_category_by_slug_endpoint(
@@ -79,18 +93,6 @@ async def get_category_by_slug_endpoint(
         )
 
     return category
-
-
-@router.get("/tree", response_model=list[CategoryResponse])
-@cache(expire=CACHE_POST_LIST_SECONDS, namespace="categories")
-async def get_category_tree(
-    request: Request,
-    db: AsyncSession = Depends(get_db),
-):
-    """
-    Get category tree structure (hierarchical).
-    """
-    return await get_tree_structure(db=db)
 
 
 # ==================== ADMIN ENDPOINTS ====================

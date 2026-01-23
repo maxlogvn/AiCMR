@@ -1,3 +1,4 @@
+
 from typing import Optional, List
 from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
@@ -59,3 +60,19 @@ class PostQuery(BaseModel):
     author_id: Optional[int] = None
     date_from: Optional[str] = None  # ISO date string from query params
     date_to: Optional[str] = None    # ISO date string from query params
+
+
+class PostStats(BaseModel):
+    total: int
+    published: int
+    draft: int
+    archived: int
+
+
+class PostListWithStats(BaseModel):
+    items: List[PostResponse]
+    total: int
+    page: int
+    size: int
+    pages: int
+    stats: PostStats

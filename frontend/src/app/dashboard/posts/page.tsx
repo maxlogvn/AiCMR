@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -103,7 +104,7 @@ export default function DashboardPostsPage() {
   }>({
     queryKey: ["admin", "posts", filterStatus, searchQuery, page],
     queryFn: async () => {
-      const response = await api.get("/backend/api/v1/posts/all", {
+      const response = await api.get("/posts/all", {
         params: {
           status: filterStatus === "all" ? undefined : filterStatus,
           search: searchQuery || undefined,
@@ -126,7 +127,7 @@ export default function DashboardPostsPage() {
 
   const publishMutation = useMutation({
     mutationFn: async (postIds: number[]) => {
-      return api.post("/backend/api/v1/posts/bulk/publish", { post_ids: postIds });
+      return api.post("/posts/bulk/publish", { post_ids: postIds });
     },
     onSuccess: (_, variables) => {
       showSuccess(`Đã đăng ${variables.length} bài viết`);
@@ -141,7 +142,7 @@ export default function DashboardPostsPage() {
 
   const archiveMutation = useMutation({
     mutationFn: async (postIds: number[]) => {
-      return api.post("/backend/api/v1/posts/bulk/archive", { post_ids: postIds });
+      return api.post("/posts/bulk/archive", { post_ids: postIds });
     },
     onSuccess: (_, variables) => {
       showSuccess(`Đã lưu trữ ${variables.length} bài viết`);
@@ -156,7 +157,7 @@ export default function DashboardPostsPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (postIds: number[]) => {
-      return api.post("/backend/api/v1/posts/bulk/delete", { post_ids: postIds });
+      return api.post("/posts/bulk/delete", { post_ids: postIds });
     },
     onSuccess: (_, variables) => {
       showSuccess(`Đã xóa ${variables.length} bài viết`);
