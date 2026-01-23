@@ -2,6 +2,10 @@
 .DS_Store
 Thumbs.db
 
+# Ignore all dot directories at root, except .claude
+/.*/
+!/.claude/
+
 # Docker
 .docker
 *.log
