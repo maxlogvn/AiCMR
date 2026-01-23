@@ -1,0 +1,48 @@
+{
+  "name": "backend-api-tester",
+  "version": "1.0.0",
+  "description": "Comprehensive guide for testing backend APIs in AiCMR. Includes manual testing patterns, automated testing with pytest, test scenarios, debugging techniques, and best practices.",
+  "author": "Claude Code AI",
+  "created": "2026-01-23",
+  "category": "backend-testing",
+  "tags": [
+    "testing",
+    "api",
+    "backend",
+    "pytest",
+    "httpx",
+    "integration-tests",
+    "debugging"
+  ],
+  "triggers": [
+    "test api",
+    "kiểm tra api",
+    "test endpoint",
+    "verify backend",
+    "check api",
+    "debug api",
+    "api lỗi",
+    "comprehensive test",
+    "test toàn bộ backend"
+  ],
+  "priority": "high",
+  "scope": "project",
+  "dependencies": [],
+  "capabilities": [
+    "manual_testing",
+    "automated_testing",
+    "test_fixtures",
+    "test_scenarios",
+    "assertion_patterns",
+    "debugging_tests",
+    "test_factories",
+    "batch_testing"
+  ],
+  "examples": [
+    "test POST /api/v1/posts endpoint",
+    "kiểm tra tất cả api backend",
+    "verify authentication endpoints work correctly",
+    "test toàn bộ CRUD operations",
+    "debug why POST /api/v1/categories returns 500"
+  ]
+}

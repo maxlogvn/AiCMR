@@ -167,7 +167,12 @@ class DebugLogger {
     this.log(LogLevel.WARN, message, category, data);
   }
 
-  error(message: string, category: string = 'app', data?: unknown) {
+  error(message: string, category: string = 'app', data?: unknown, p0?: {
+    stack: any;
+    filename: string;
+    lineno: number;
+    colno: number;
+  }) {
     this.log(LogLevel.ERROR, message, category, data);
   }
 

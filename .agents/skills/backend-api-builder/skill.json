@@ -1,0 +1,44 @@
+{
+  "name": "backend-api-builder",
+  "version": "1.0.0",
+  "description": "Comprehensive guide for building and fixing FastAPI endpoints in AiCMR backend. Includes CRUD templates, common pitfalls, SQLAlchemy async patterns, and best practices.",
+  "author": "Claude Code AI",
+  "created": "2026-01-23",
+  "category": "backend-development",
+  "tags": [
+    "fastapi",
+    "backend",
+    "api",
+    "crud",
+    "sqlalchemy",
+    "async",
+    "python"
+  ],
+  "triggers": [
+    "build api",
+    "create endpoint",
+    "add crud",
+    "fix backend",
+    "new api",
+    "sửa api",
+    "tạo endpoint",
+    "backend bug"
+  ],
+  "priority": "high",
+  "scope": "project",
+  "dependencies": [],
+  "capabilities": [
+    "crud_templates",
+    "status_code_guide",
+    "sqlalchemy_patterns",
+    "error_handling",
+    "testing_guidelines",
+    "security_checklist"
+  ],
+  "examples": [
+    "tạo api cho products",
+    "fix POST /api/v1/posts endpoint",
+    "add CRUD operations for comments",
+    "build backend API for orders"
+  ]
+}
