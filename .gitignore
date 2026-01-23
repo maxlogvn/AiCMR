@@ -2,9 +2,14 @@
 .DS_Store
 Thumbs.db
 
-# Ignore all dot directories at root, except .claude
+# Ignore all dot directories at root, except .agents
 /.*/
-!/.claude/
+!/.agents/
+
+# Local-only dot directories (keep out of git)
+.claude/
+.opencode/
+.trae/
 
 # Docker
 .docker
