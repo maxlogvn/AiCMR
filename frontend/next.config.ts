@@ -18,8 +18,7 @@ const nextConfig: NextConfig = {
   },
   // Development mode optimizations
   devIndicators: {
-    buildActivity: true,
-    buildActivityPosition: 'bottom-right',
+    position: 'bottom-right',
   },
   // Enable more verbose errors
   onDemandEntries: {

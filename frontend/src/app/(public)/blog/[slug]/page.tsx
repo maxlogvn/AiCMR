@@ -6,6 +6,7 @@ import { getFileUrl } from '@/lib/api';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { Button } from '@/components/ui/button';
 import { Eye, Heart, MessageSquare, Calendar, User, Share2, BookOpen, Tag as TagIcon, FolderOpen } from 'lucide-react';
 
@@ -27,7 +28,7 @@ export default function PostDetailPage() {
   if (error || !post) {
     return (
       <div className="container mx-auto max-w-4xl px-4 sm:px-6 py-8">
-        <div className="text-center py-12 text-red-600 dark:text-red-400">
+        <div className="text-center py-12 text-red-600 dark:text-red-500">
           <p>Failed to load post. Please try again later.</p>
         </div>
       </div>
@@ -38,7 +39,7 @@ export default function PostDetailPage() {
     <div className="container mx-auto max-w-4xl px-4 sm:px-6 py-8">
       {/* Breadcrumb */}
       <div className="mb-6">
-        <a href="/blog" className="text-primary hover:underline">
+        <a href="/blog" className="text-primary-600 hover:underline">
           ← Back to Blog
         </a>
       </div>
@@ -58,7 +59,7 @@ export default function PostDetailPage() {
         </h1>
 
         {/* Meta */}
-        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-4">
+        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-4">
           {post.author && (
             <div className="flex items-center gap-2">
               <User className="w-4 h-4" />
@@ -165,7 +166,7 @@ export default function PostDetailPage() {
             Related Posts
           </h2>
           <Card className="p-6">
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-gray-500 dark:text-gray-400">
               More posts in {post.category.name} coming soon...
             </p>
           </Card>
@@ -178,7 +179,7 @@ export default function PostDetailPage() {
           Comments ({post.comment_count})
         </h2>
         <Card className="p-6">
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-gray-500 dark:text-gray-400">
             Comments feature coming soon...
           </p>
         </Card>

@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { Trash2, Edit, Lock } from "lucide-react";
-import { Button } from "@/components/ui/button-wrapped";
+import { Button } from "@/components/ui/button";
 import type { User } from "@/types";
 
 interface UserRowProps {
@@ -42,14 +42,14 @@ function UserRowComponent({ user, currentUser, onDelete }: UserRowProps) {
   };
 
   return (
-    <tr className="border-b border-zinc-100 dark:border-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
-      <td className="p-4 text-zinc-600 dark:text-zinc-400 font-mono text-sm">
+    <tr className="border-b border-gray-100 dark:border-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+      <td className="p-4 text-gray-600 dark:text-gray-400 font-mono text-sm">
         {user.id}
       </td>
-      <td className="p-4 text-zinc-900 dark:text-white">{user.email}</td>
-      <td className="p-4 text-zinc-900 dark:text-white">{user.username}</td>
+      <td className="p-4 text-gray-900 dark:text-white">{user.email}</td>
+      <td className="p-4 text-gray-900 dark:text-white">{user.username}</td>
       <td className="p-4">
-        <span className="px-2 py-1 rounded-full text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200">
+        <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
           {getRankLabel(user.rank)}
         </span>
       </td>
@@ -78,7 +78,7 @@ function UserRowComponent({ user, currentUser, onDelete }: UserRowProps) {
           )}
           {showDelete && (
             <Button
-              variant="danger"
+              variant="destructive"
               size="sm"
               onClick={() => {
                 if (

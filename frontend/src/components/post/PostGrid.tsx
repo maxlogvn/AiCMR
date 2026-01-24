@@ -33,7 +33,7 @@ export function PostGrid({
 
   if (!posts || posts.length === 0) {
     return (
-      <div className="text-center py-12 text-gray-600 dark:text-gray-400">
+      <div className="text-center py-12 text-gray-500 dark:text-gray-400">
         <p>No posts found</p>
       </div>
     );

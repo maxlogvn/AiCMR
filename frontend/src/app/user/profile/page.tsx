@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { User, Edit2, Lock, Home, BookOpen } from "lucide-react";
+import { User, Edit2, Lock, Home } from "lucide-react";
 import { useUser } from "@/hooks/useUser";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { Card } from "@/components/ui/card-wrapped";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { RankBadge } from "@/components/ui/rank-badge";
+import { Button } from "@/components/ui/button";
 import Breadcrumb from "@/components/layout/Breadcrumb";
-import QuickNavigation from "@/components/layout/QuickNavigation";
 
 export default function ProfilePage() {
   const { user, isLoading, error } = useUser();
@@ -19,151 +21,124 @@ export default function ProfilePage() {
     return (
       <div className="max-w-2xl mx-auto px-4">
         <Card>
-          <div className="p-6 text-center text-red-600 dark:text-red-400">
+          <CardContent className="p-6 text-center text-red-600 dark:text-red-500">
             Không thể tải thông tin người dùng
-          </div>
+          </CardContent>
         </Card>
       </div>
     );
   }
 
-  const getRankLabel = (rank: number): string => {
-    if (rank === 5) return "Admin";
-    if (rank >= 3) return "Moderator";
-    if (rank >= 1) return "Member";
-    return "Guest";
-  };
-
-  const getRankBadgeColor = (rank: number): string => {
-    if (rank === 5)
-      return "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900";
-    if (rank >= 3)
-      return "bg-zinc-700 text-white dark:bg-zinc-600 dark:text-zinc-300";
-    if (rank >= 1)
-      return "bg-zinc-400 text-white dark:bg-zinc-600 dark:text-zinc-300";
-    return "bg-zinc-200 text-zinc-900 dark:bg-zinc-700 dark:text-zinc-300";
-  };
-
-  // Quick navigation links
-  const quickLinks = [
-    {
-      label: "Đổi Mật Khẩu",
-      href: "/user/change-password",
-      icon: <Lock className="h-5 w-5" />,
-      description: "Cập nhật mật khẩu của bạn",
-    },
-    ...(user.rank >= 3
-      ? [
-          {
-            label: "Quản Trị Viên",
-            href: "/dashboard",
-            icon: <User className="h-5 w-5" />,
-            description: "Truy cập bảng điều khiển quản trị",
-          },
-        ]
-      : []),
-    {
-      label: "Về Trang Chủ",
-      href: "/",
-      icon: <Home className="h-5 w-5" />,
-      description: "Quay lại trang chủ",
-    },
-  ];
-
   return (
     <div className="max-w-2xl mx-auto">
       <Breadcrumb />
 
-      <Card title="Hồ sơ của bạn">
-        <div className="text-center mb-6">
-          <div className="mx-auto h-16 w-16 bg-zinc-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mb-4">
-            <User className="h-8 w-8 text-zinc-600 dark:text-zinc-400" />
-          </div>
-          <div className="inline-block px-3 py-1 rounded-full text-sm font-medium mb-2">
-            <span
-              className={`px-3 py-1 rounded-full text-sm font-medium ${getRankBadgeColor(user.rank)}`}
-            >
-              {getRankLabel(user.rank)}
-            </span>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <div className="p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-              Email
-            </label>
-            <div className="text-zinc-900 dark:text-white font-medium">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-center">Hồ sơ của bạn</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {/* Avatar Section */}
+          <div className="text-center mb-6">
+            <div className="mx-auto h-16 w-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
+              <User className="h-8 w-8 text-gray-500 dark:text-gray-400" />
+            </div>
+            <div className="mb-2">
+              <RankBadge rank={user.rank as any} />
+            </div>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">
               {user.email}
+            </p>
+          </div>
+
+          {/* User Details */}
+          <div className="space-y-3">
+            <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Email
+              </label>
+              <div className="text-gray-900 dark:text-white font-medium">
+                {user.email}
+              </div>
+            </div>
+
+            <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Tên đăng nhập
+              </label>
+              <div className="text-gray-900 dark:text-white font-medium">
+                {user.username}
+              </div>
+            </div>
+
+            <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                ID người dùng
+              </label>
+              <div className="text-gray-900 dark:text-white font-mono text-sm">
+                {user.id}
+              </div>
+            </div>
+
+            <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Trạng thái
+              </label>
+              <div>
+                <Badge
+                  variant={user.is_active ? "success" : "destructive"}
+                  className="text-xs"
+                >
+                  {user.is_active ? "Hoạt động" : "Không hoạt động"}
+                </Badge>
+              </div>
+            </div>
+
+            <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Ngày tham gia
+              </label>
+              <div className="text-gray-900 dark:text-white text-sm">
+                {new Date(user.created_at).toLocaleDateString("vi-VN", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </div>
             </div>
           </div>
 
-          <div className="p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-              Tên đăng nhập
-            </label>
-            <div className="text-zinc-900 dark:text-white font-medium">
-              {user.username}
-            </div>
+          {/* Action Button */}
+          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <Link href="/user/change-password">
+              <Button variant="outline" className="w-full">
+                <Edit2 className="h-4 w-4 mr-2" />
+                Đổi mật khẩu
+              </Button>
+            </Link>
           </div>
 
-          <div className="p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-              ID người dùng
-            </label>
-            <div className="text-zinc-900 dark:text-white font-mono">
-              {user.id}
-            </div>
+          {/* Quick Links */}
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <Link href="/">
+              <Button variant="ghost" className="w-full justify-start">
+                <Home className="h-4 w-4 mr-2" />
+                Trang chủ
+              </Button>
+            </Link>
+            {user.rank >= 3 && (
+              <Link href="/dashboard">
+                <Button variant="ghost" className="w-full justify-start">
+                  <Lock className="h-4 w-4 mr-2" />
+                  Dashboard
+                </Button>
+              </Link>
+            )}
           </div>
-
-          <div className="p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-              Trạng thái
-            </label>
-            <div>
-              <span
-                className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  user.is_active
-                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                    : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                }`}
-              >
-                {user.is_active ? "Hoạt động" : "Không hoạt động"}
-              </span>
-            </div>
-          </div>
-
-          <div className="p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-              Ngày tham gia
-            </label>
-            <div className="text-zinc-900 dark:text-white">
-              {new Date(user.created_at).toLocaleDateString("vi-VN", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-6 pt-6 border-t border-zinc-200 dark:border-zinc-800">
-          <Link
-            href="/user/change-password"
-            className="w-full flex items-center justify-center px-4 py-2 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
-          >
-            <Edit2 className="h-4 w-4 mr-2" />
-            Chỉnh sửa hồ sơ (Đổi mật khẩu)
-          </Link>
-        </div>
+        </CardContent>
       </Card>
-
-      {/* Quick Navigation */}
-      <div className="mt-8">
-        <QuickNavigation links={quickLinks} title="Thao Tác Nhanh" />
-      </div>
     </div>
   );
 }

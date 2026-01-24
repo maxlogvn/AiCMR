@@ -1,26 +1,15 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Lock, Save } from "lucide-react";
+import { Lock, Save, ArrowLeft } from "lucide-react";
+import Link from "next/link";
 import { useToast } from "@/hooks/useToast";
 import api from "@/lib/api";
-import { Input } from "@/components/ui/input-wrapped";
-import { Button } from "@/components/ui/button-wrapped";
-
-const Card = dynamic(
-  () =>
-    import("@/components/ui/card-wrapped").then((mod) => ({
-      default: mod.Card,
-    })),
-  {
-    loading: () => (
-      <div className="animate-pulse h-64 bg-zinc-200 rounded-lg dark:bg-zinc-800" />
-    ),
-  },
-);
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import Breadcrumb from "@/components/layout/Breadcrumb";
 
 const changePasswordSchema = z
   .object({
@@ -63,61 +52,90 @@ export default function ChangePasswordPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4">
-      <Card title="Đổi mật khẩu">
-        <div className="mb-8">
-          <div className="flex items-center space-x-2 mb-4">
-            <Lock className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
-            <h2 className="text-xl font-semibold text-zinc-900 dark:text-white">
-              Đổi mật khẩu
-            </h2>
+      <Breadcrumb />
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center space-x-2">
+            <Lock className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+            <CardTitle>Đổi mật khẩu</CardTitle>
           </div>
-
+        </CardHeader>
+        <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <Input
-              label="Mật khẩu cũ"
-              type="password"
-              autoComplete="current-password"
-              error={errors.old_password?.message}
-              {...register("old_password")}
-            />
+            {/* Old Password */}
+            <div>
+              <label htmlFor="old_password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Mật khẩu cũ
+              </label>
+              <input
+                id="old_password"
+                type="password"
+                autoComplete="current-password"
+                {...register("old_password")}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                placeholder="••••••••"
+              />
+              {errors.old_password && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-500">{errors.old_password.message}</p>
+              )}
+            </div>
 
-            <Input
-              label="Mật khẩu mới"
-              type="password"
-              autoComplete="new-password"
-              error={errors.new_password?.message}
-              {...register("new_password")}
-            />
+            {/* New Password */}
+            <div>
+              <label htmlFor="new_password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Mật khẩu mới
+              </label>
+              <input
+                id="new_password"
+                type="password"
+                autoComplete="new-password"
+                {...register("new_password")}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                placeholder="••••••••"
+              />
+              {errors.new_password && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-500">{errors.new_password.message}</p>
+              )}
+            </div>
 
-            <Input
-              label="Xác nhận mật khẩu mới"
-              type="password"
-              autoComplete="new-password"
-              error={errors.confirm_password?.message}
-              {...register("confirm_password")}
-            />
+            {/* Confirm Password */}
+            <div>
+              <label htmlFor="confirm_password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Xác nhận mật khẩu mới
+              </label>
+              <input
+                id="confirm_password"
+                type="password"
+                autoComplete="new-password"
+                {...register("confirm_password")}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                placeholder="••••••••"
+              />
+              {errors.confirm_password && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-500">{errors.confirm_password.message}</p>
+              )}
+            </div>
 
+            {/* Submit Button */}
             <div className="pt-2">
-              <Button
-                type="submit"
-                isLoading={isSubmitting}
-                className="flex items-center justify-center space-x-2"
-              >
+              <Button type="submit" disabled={isSubmitting} className="w-full">
                 <Save className="h-4 w-4 mr-2" />
-                Lưu thay đổi
+                {isSubmitting ? "Đang xử lý..." : "Lưu thay đổi"}
               </Button>
             </div>
           </form>
-        </div>
 
-        <div className="mt-6 pt-6 border-t border-zinc-200 dark:border-zinc-800">
-          <a
-            href="/user/profile"
-            className="w-full flex items-center justify-center px-4 py-2 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
-          >
-            Quay lại hồ sơ
-          </a>
-        </div>
+          {/* Back Link */}
+          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <Link href="/user/profile">
+              <Button variant="outline" className="w-full">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Quay lại hồ sơ
+              </Button>
+            </Link>
+          </div>
+        </CardContent>
       </Card>
     </div>
   );

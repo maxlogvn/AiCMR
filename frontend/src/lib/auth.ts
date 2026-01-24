@@ -89,10 +89,16 @@ export const authService = {
       // Continue anyway
     }
 
-    // Clear token from storage
+    // Clear tokens from storage
     if (typeof window !== "undefined") {
       localStorage.removeItem("access_token");
-      
+      localStorage.removeItem("refresh_token");
+
+      // Reset API state (csrf tokens, interceptors)
+      const { resetCsrfToken, resetApiState } = await import("./api");
+      resetCsrfToken();
+      resetApiState();
+
       // Dispatch custom event for components to listen
       window.dispatchEvent(new CustomEvent("auth:logout"));
     }

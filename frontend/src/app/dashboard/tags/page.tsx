@@ -1,15 +1,23 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Grid, List } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { TagList, TagForm, MergeDialog } from '@/components/tag';
-import type { Tag } from '@/types/post';
+/**
+ * Tags Page - Linear/Vercel Style Redesign
+ *
+ * Features:
+ * - Grid of minimal cards with color badges
+ * - Color badge only (not full colored card)
+ * - Empty state with icon + CTA
+ * - Merge tags functionality
+ */
 
-type ViewMode = 'grid' | 'list';
+import { useState } from "react";
+import { Tag as TagIcon, Plus, Hash } from "lucide-react";
+import { PageHeader } from "@/components/dashboard";
+import { Button } from "@/components/ui/button";
+import { TagList, TagForm, MergeDialog } from "@/components/tag";
+import type { Tag } from "@/types/post";
 
 export default function TagsPage() {
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [selectedTag, setSelectedTag] = useState<Tag | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isMergeOpen, setIsMergeOpen] = useState(false);
@@ -25,51 +33,30 @@ export default function TagsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Tags</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
-            Manage your blog tags
-          </p>
-        </div>
+    <div>
+      {/* Page Header */}
+      <PageHeader
+        title="Tags"
+        subtitle="Quản lý tags để người dùng dễ dàng tìm kiếm nội dung"
+        icon={TagIcon}
+        actions={
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => setIsMergeOpen(true)}>
+              <Hash className="h-4 w-4 mr-2" />
+              Gộp tags
+            </Button>
+            <Button onClick={handleCreate}>
+              <Plus className="h-4 w-4 mr-2" />
+              Tạo tag
+            </Button>
+          </div>
+        }
+      />
 
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setIsMergeOpen(true)}>
-            Merge Tags
-          </Button>
-          <Button onClick={handleCreate}>
-            + New Tag
-          </Button>
-        </div>
-      </div>
-
-      {/* View Toggle */}
-      <div className="flex items-center gap-2">
-        <Button
-          variant={viewMode === 'grid' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setViewMode('grid')}
-        >
-          <Grid className="w-4 h-4 mr-2" />
-          Grid View
-        </Button>
-        <Button
-          variant={viewMode === 'list' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setViewMode('list')}
-        >
-          <List className="w-4 h-4 mr-2" />
-          List View
-        </Button>
-      </div>
-
-      {/* Content */}
+      {/* Tags Grid */}
       <TagList
         onCreateTag={handleCreate}
         onEditTag={handleEdit}
-        onMergeTags={() => setIsMergeOpen(true)}
       />
 
       {/* Form Dialog */}

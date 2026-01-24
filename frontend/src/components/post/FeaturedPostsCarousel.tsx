@@ -99,14 +99,14 @@ export function FeaturedPostsCarousel({
         <div className="max-w-3xl">
           {/* Category */}
           {currentPost.category && (
-            <Badge className="bg-primary text-primary-foreground mb-4">
+            <Badge className="bg-primary-600 text-white mb-4">
               {currentPost.category.name}
             </Badge>
           )}
 
           {/* Title */}
           <Link href={`/blog/${currentPost.slug}`}>
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-3 hover:text-primary transition-colors">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-3 hover:text-primary-600 transition-colors">
               {currentPost.title}
             </h2>
           </Link>
@@ -146,7 +146,7 @@ export function FeaturedPostsCarousel({
             <button
               key={index}
               className={`w-2 h-2 rounded-full transition-all ${
-                index === currentIndex ? 'bg-primary w-6' : 'bg-white/50'
+                index === currentIndex ? 'bg-primary-600 w-6' : 'bg-white/50'
               }`}
               onClick={() => goToSlide(index)}
               aria-label={`Go to slide ${index + 1}`}

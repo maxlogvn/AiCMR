@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   Activity,
   Bug,
@@ -8,7 +8,6 @@ import {
   Trash2,
   RefreshCw,
   Server,
-  Database,
   AlertTriangle,
   CheckCircle,
   XCircle,
@@ -18,11 +17,34 @@ import {
   ChevronRight,
   Copy,
   RotateCcw,
+  X,
+  Search,
+  MoreVertical,
+  AlertOctagon,
+  Calendar,
+  Folder,
+  Ban,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { debugLogger, LogLevel, useDebugLogs, type LogEntry } from '@/lib/debug-logger';
-import api from '@/lib/api';
 
 interface HealthCheck {
   name: string;
@@ -33,10 +55,17 @@ interface HealthCheck {
 }
 
 const LOG_LEVEL_COLORS: Record<LogLevel, string> = {
-  [LogLevel.DEBUG]: 'text-gray-500 bg-gray-100 dark:bg-gray-800',
-  [LogLevel.INFO]: 'text-blue-600 bg-blue-100 dark:bg-blue-900',
-  [LogLevel.WARN]: 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900',
-  [LogLevel.ERROR]: 'text-red-600 bg-red-100 dark:bg-red-900',
+  [LogLevel.DEBUG]: 'text-gray-500 bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700',
+  [LogLevel.INFO]: 'text-blue-600 bg-blue-100 dark:bg-blue-900 border-blue-300 dark:border-blue-700',
+  [LogLevel.WARN]: 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900 border-yellow-300 dark:border-yellow-700',
+  [LogLevel.ERROR]: 'text-red-600 bg-red-100 dark:bg-red-900 border-red-300 dark:border-red-700',
+};
+
+const LOG_LEVEL_ICONS: Record<LogLevel, React.ReactNode> = {
+  [LogLevel.DEBUG]: <Search className="w-3 h-3" />,
+  [LogLevel.INFO]: <CheckCircle className="w-3 h-3" />,
+  [LogLevel.WARN]: <AlertTriangle className="w-3 h-3" />,
+  [LogLevel.ERROR]: <XCircle className="w-3 h-3" />,
 };
 
 const LOG_LEVEL_NAMES: Record<LogLevel, string> = {
@@ -45,6 +74,8 @@ const LOG_LEVEL_NAMES: Record<LogLevel, string> = {
   [LogLevel.WARN]: 'WARN',
   [LogLevel.ERROR]: 'ERROR',
 };
+
+const LOGS_PER_PAGE = 50;
 
 export default function DebugDashboard() {
   const [healthChecks, setHealthChecks] = useState<HealthCheck[]>([
@@ -56,17 +87,52 @@ export default function DebugDashboard() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedLevel, setSelectedLevel] = useState<LogLevel | 'all'>('all');
   const [expandedLogs, setExpandedLogs] = useState<Set<string>>(new Set());
+  const [page, setPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Get all unique categories
-  const allLogs = useDebugLogs({ limit: 200 });
-  const categories = ['all', ...Array.from(new Set(allLogs.map(l => l.category)))];
+  // Delete confirmation states
+  const [deleteDialog, setDeleteDialog] = useState<{
+    open: boolean;
+    type: 'single' | 'category' | 'level' | 'all' | 'old';
+    logId?: string;
+    category?: string;
+    level?: LogLevel;
+    days?: number;
+  }>({ open: false, type: 'all' });
 
-  // Filter logs
-  const filteredLogs = allLogs.filter(log => {
-    if (selectedCategory !== 'all' && log.category !== selectedCategory) return false;
-    if (selectedLevel !== 'all' && log.level < (selectedLevel === 'all' ? 0 : selectedLevel)) return false;
-    return true;
-  });
+  // Get all logs
+  const allLogs = useDebugLogs({ limit: 1000 });
+
+  // Get unique categories
+  const categories = useMemo(() => {
+    return ['all', ...Array.from(new Set(allLogs.map(l => l.category)))].sort();
+  }, [allLogs]);
+
+  // Filter and search logs
+  const filteredLogs = useMemo(() => {
+    return allLogs.filter(log => {
+      // Category filter
+      if (selectedCategory !== 'all' && log.category !== selectedCategory) return false;
+      // Level filter
+      if (selectedLevel !== 'all' && log.level < selectedLevel) return false;
+      // Search query
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const messageMatch = log.message.toLowerCase().includes(query);
+        const dataMatch = log.data ? JSON.stringify(log.data).toLowerCase().includes(query) : false;
+        if (!messageMatch && !dataMatch) return false;
+      }
+      return true;
+    });
+  }, [allLogs, selectedCategory, selectedLevel, searchQuery]);
+
+  // Pagination
+  const paginatedLogs = useMemo(() => {
+    const startIndex = (page - 1) * LOGS_PER_PAGE;
+    return filteredLogs.slice(startIndex, startIndex + LOGS_PER_PAGE);
+  }, [filteredLogs, page]);
+
+  const totalPages = Math.ceil(filteredLogs.length / LOGS_PER_PAGE);
 
   const errorCount = allLogs.filter(l => l.level === LogLevel.ERROR).length;
   const warnCount = allLogs.filter(l => l.level === LogLevel.WARN).length;
@@ -109,9 +175,10 @@ export default function DebugDashboard() {
     });
   }, []);
 
+  // Run health checks on mount
   useEffect(() => {
     runHealthChecks();
-    const interval = setInterval(runHealthChecks, 30000); // Refresh every 30s
+    const interval = setInterval(runHealthChecks, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -127,9 +194,61 @@ export default function DebugDashboard() {
     });
   };
 
-  const clearLogs = () => {
-    debugLogger.clearLogs();
-    setExpandedLogs(new Set());
+  const deleteSingleLog = (logId: string) => {
+    setDeleteDialog({ open: true, type: 'single', logId });
+  };
+
+  const deleteByCategory = (category: string) => {
+    setDeleteDialog({ open: true, type: 'category', category });
+  };
+
+  const deleteByLevel = (level: LogLevel) => {
+    setDeleteDialog({ open: true, type: 'level', level });
+  };
+
+  const deleteOldLogs = (days: number) => {
+    setDeleteDialog({ open: true, type: 'old', days });
+  };
+
+  const confirmDelete = () => {
+    switch (deleteDialog.type) {
+      case 'single':
+        if (deleteDialog.logId) {
+          debugLogger.deleteLog(deleteDialog.logId);
+          setExpandedLogs(prev => {
+            const next = new Set(prev);
+            next.delete(deleteDialog.logId!);
+            return next;
+          });
+        }
+        break;
+      case 'category':
+        if (deleteDialog.category) {
+          debugLogger.deleteLogsByCategory(deleteDialog.category);
+          if (selectedCategory === deleteDialog.category) {
+            setSelectedCategory('all');
+          }
+        }
+        break;
+      case 'level':
+        if (deleteDialog.level !== undefined) {
+          debugLogger.deleteLogsByLevel(deleteDialog.level);
+        }
+        break;
+      case 'all':
+        debugLogger.clearLogs();
+        setExpandedLogs(new Set());
+        setPage(1);
+        break;
+      case 'old':
+        if (deleteDialog.days) {
+          const cutoffDate = new Date();
+          cutoffDate.setDate(cutoffDate.getDate() - deleteDialog.days);
+          debugLogger.deleteLogsBefore(cutoffDate);
+        }
+        break;
+    }
+    setDeleteDialog({ ...deleteDialog, open: false });
   };
 
   const downloadReport = () => {
@@ -137,10 +256,8 @@ export default function DebugDashboard() {
   };
 
   const clearLocalStorage = () => {
-    // Clear debug logs from localStorage
     localStorage.removeItem('aicmr_debug_logs');
-    clearLogs();
-    // Reload page to reset state
+    debugLogger.clearLogs();
     window.location.reload();
   };
 
@@ -164,7 +281,7 @@ export default function DebugDashboard() {
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-red-100 dark:bg-red-900 rounded-lg">
             <Bug className="w-5 h-5 text-red-600 dark:text-red-400" />
@@ -176,19 +293,53 @@ export default function DebugDashboard() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" size="sm" onClick={runHealthChecks}>
             <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh
+            Health Check
           </Button>
           <Button variant="outline" size="sm" onClick={downloadReport}>
             <Download className="w-4 h-4 mr-2" />
             Export
           </Button>
-          <Button variant="outline" size="sm" onClick={clearLogs}>
-            <Trash2 className="w-4 h-4 mr-2" />
-            Clear
-          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Trash2 className="w-4 h-4 mr-2" />
+                Clear
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setDeleteDialog({ open: true, type: 'all' })}>
+                <XCircle className="w-4 h-4 mr-2 text-red-500" />
+                Clear All Logs
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => deleteOldLogs(1)}>
+                <Calendar className="w-4 h-4 mr-2" />
+                Delete logs older than 1 day
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => deleteOldLogs(7)}>
+                <Calendar className="w-4 h-4 mr-2" />
+                Delete logs older than 7 days
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => deleteOldLogs(30)}>
+                <Calendar className="w-4 h-4 mr-2" />
+                Delete logs older than 30 days
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => deleteByLevel(LogLevel.ERROR)}>
+                <AlertOctagon className="w-4 h-4 mr-2 text-red-500" />
+                Delete all errors
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => deleteByLevel(LogLevel.WARN)}>
+                <AlertTriangle className="w-4 h-4 mr-2 text-yellow-500" />
+                Delete all warnings
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <Button variant="destructive" size="sm" onClick={clearLocalStorage}>
             <RotateCcw className="w-4 h-4 mr-2" />
             Reset Storage
@@ -201,7 +352,7 @@ export default function DebugDashboard() {
         {healthChecks.map(check => (
           <div
             key={check.name}
-            className="border rounded-lg p-4 bg-white dark:bg-gray-800"
+            className="border rounded-lg p-4 bg-white dark:bg-gray-800 transition-all hover:shadow-md"
           >
             <div className="flex items-center justify-between mb-2">
               <span className="font-medium text-sm">{check.name}</span>
@@ -331,20 +482,49 @@ export default function DebugDashboard() {
             <Filter className="w-4 h-4 text-gray-500" />
             <span className="text-sm font-medium">Filters:</span>
           </div>
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-3 py-1.5 border rounded-md text-sm bg-white dark:bg-gray-700"
-          >
-            {categories.map(cat => (
-              <option key={cat} value={cat}>
-                {cat === 'all' ? 'All Categories' : cat}
-              </option>
-            ))}
-          </select>
+
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search logs..."
+              value={searchQuery}
+              onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
+              className="pl-8 pr-3 py-1.5 border rounded-md text-sm bg-white dark:bg-gray-700 w-48"
+            />
+          </div>
+
+          {/* Category Filter */}
+          <div className="flex items-center gap-2">
+            <select
+              value={selectedCategory}
+              onChange={(e) => { setSelectedCategory(e.target.value); setPage(1); }}
+              className="px-3 py-1.5 border rounded-md text-sm bg-white dark:bg-gray-700"
+            >
+              {categories.map(cat => (
+                <option key={cat} value={cat}>
+                  {cat === 'all' ? 'All Categories' : cat}
+                </option>
+              ))}
+            </select>
+            {selectedCategory !== 'all' && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0"
+                onClick={() => deleteByCategory(selectedCategory)}
+                title={`Delete all ${selectedCategory} logs`}
+              >
+                <Ban className="w-3 h-3 text-red-500" />
+              </Button>
+            )}
+          </div>
+
+          {/* Level Filter */}
           <select
             value={selectedLevel}
-            onChange={(e) => setSelectedLevel(e.target.value === 'all' ? 'all' : Number(e.target.value) as LogLevel)}
+            onChange={(e) => { setSelectedLevel(e.target.value === 'all' ? 'all' : Number(e.target.value) as LogLevel); setPage(1); }}
             className="px-3 py-1.5 border rounded-md text-sm bg-white dark:bg-gray-700"
           >
             <option value="all">All Levels</option>
@@ -353,87 +533,168 @@ export default function DebugDashboard() {
             <option value={String(LogLevel.INFO)}>Info & Above</option>
             <option value={String(LogLevel.DEBUG)}>All</option>
           </select>
+
           <span className="text-sm text-gray-500 ml-auto">
             Showing {filteredLogs.length} of {allLogs.length} logs
           </span>
         </div>
 
         {/* Logs List */}
-        <div className="max-h-[500px] overflow-y-auto">
-          {filteredLogs.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
-              <Bug className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>No logs found</p>
+        <div className="max-h-[600px] overflow-y-auto">
+          {paginatedLogs.length === 0 ? (
+            <div className="p-12 text-center text-gray-500">
+              <Bug className="w-16 h-16 mx-auto mb-4 opacity-30" />
+              <p className="text-lg font-medium">No logs found</p>
+              <p className="text-sm mt-1">
+                {searchQuery || selectedCategory !== 'all' || selectedLevel !== 'all'
+                  ? 'Try adjusting your filters'
+                  : 'Logs will appear here as events occur'}
+              </p>
             </div>
           ) : (
-            <div className="divide-y">
-              {filteredLogs.map((log) => (
-                <div
-                  key={log.id}
-                  className="p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50"
-                >
+            <>
+              <div className="divide-y">
+                {paginatedLogs.map((log) => (
                   <div
-                    className="flex items-start gap-3 cursor-pointer"
-                    onClick={() => toggleExpand(log.id)}
+                    key={log.id}
+                    className="group p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                   >
-                    <button className="mt-0.5">
-                      {expandedLogs.has(log.id) ? (
-                        <ChevronDown className="w-4 h-4 text-gray-400" />
-                      ) : (
-                        <ChevronRight className="w-4 h-4 text-gray-400" />
-                      )}
-                    </button>
-                    <Badge
-                      variant="outline"
-                      className={`${LOG_LEVEL_COLORS[log.level]} shrink-0`}
-                    >
-                      {LOG_LEVEL_NAMES[log.level]}
-                    </Badge>
-                    <span className="text-xs text-gray-500 shrink-0">
-                      {new Date(log.timestamp).toLocaleTimeString()}
-                    </span>
-                    <Badge variant="outline" className="shrink-0 text-xs">
-                      {log.category}
-                    </Badge>
-                    <span className="flex-1 truncate">{log.message}</span>
-                    {log.url && (
+                    <div className="flex items-start gap-3">
+                      {/* Expand button */}
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          copyToClipboard(log.url!);
-                        }}
-                        className="shrink-0 p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
+                        className="mt-0.5"
+                        onClick={() => toggleExpand(log.id)}
                       >
-                        <Copy className="w-3 h-3 text-gray-400" />
+                        {expandedLogs.has(log.id) ? (
+                          <ChevronDown className="w-4 h-4 text-gray-400" />
+                        ) : (
+                          <ChevronRight className="w-4 h-4 text-gray-400" />
+                        )}
                       </button>
+
+                      {/* Level Badge */}
+                      <Badge
+                        variant="outline"
+                        className={`${LOG_LEVEL_COLORS[log.level]} shrink-0 flex items-center gap-1`}
+                      >
+                        {LOG_LEVEL_ICONS[log.level]}
+                        {LOG_LEVEL_NAMES[log.level]}
+                      </Badge>
+
+                      {/* Timestamp */}
+                      <span className="text-xs text-gray-500 shrink-0">
+                        {new Date(log.timestamp).toLocaleTimeString()}
+                      </span>
+
+                      {/* Category Badge */}
+                      <Badge variant="outline" className="shrink-0 text-xs">
+                        <Folder className="w-3 h-3 mr-1" />
+                        {log.category}
+                      </Badge>
+
+                      {/* Message */}
+                      <span className="flex-1 truncate text-sm">{log.message}</span>
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {log.url && (
+                          <button
+                            onClick={() => copyToClipboard(log.url!)}
+                            className="shrink-0 p-1.5 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
+                            title="Copy URL"
+                          >
+                            <Copy className="w-3.5 h-3.5 text-gray-400" />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => deleteSingleLog(log.id)}
+                          className="shrink-0 p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded"
+                          title="Delete this log"
+                        >
+                          <X className="w-3.5 h-3.5 text-red-400" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Expanded Details */}
+                    {expandedLogs.has(log.id) && (
+                      <div className="mt-3 ml-7 pl-4 border-l-2 border-gray-200 dark:border-gray-700 animate-in slide-in-from-top-2 duration-200">
+                        {log.stack && (
+                          <pre className="text-xs bg-red-50 dark:bg-red-900/20 p-3 rounded mb-2 overflow-x-auto border border-red-100 dark:border-red-900">
+                            {log.stack}
+                          </pre>
+                        )}
+                        {log.data != null && (
+                          <pre className="text-xs bg-gray-100 dark:bg-gray-800 p-3 rounded overflow-x-auto border border-gray-200 dark:border-gray-700">
+                            {JSON.stringify(log.data, null, 2)}
+                          </pre>
+                        )}
+                        {log.url && (
+                          <p className="text-xs text-gray-500 mt-2">
+                            URL: <span className="break-all">{log.url}</span>
+                          </p>
+                        )}
+                      </div>
                     )}
                   </div>
+                ))}
+              </div>
 
-                  {expandedLogs.has(log.id) && (
-                    <div className="mt-3 ml-7 pl-4 border-l-2 border-gray-200 dark:border-gray-700">
-                      {log.stack && (
-                        <pre className="text-xs bg-red-50 dark:bg-red-900/20 p-2 rounded mb-2 overflow-x-auto">
-                          {log.stack}
-                        </pre>
-                      )}
-                      {log.data && (
-                        <pre className="text-xs bg-gray-100 dark:bg-gray-800 p-2 rounded overflow-x-auto">
-                          {JSON.stringify(log.data, null, 2)}
-                        </pre>
-                      )}
-                      {log.url && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          URL: <span className="break-all">{log.url}</span>
-                        </p>
-                      )}
-                    </div>
-                  )}
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="p-4 border-t flex items-center justify-between">
+                  <div className="text-sm text-gray-500">
+                    Page {page} of {totalPages}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage(p => Math.max(1, p - 1))}
+                      disabled={page === 1}
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                      disabled={page === totalPages}
+                    >
+                      Next
+                    </Button>
+                  </div>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertOctagon className="w-5 h-5 text-red-500" />
+              Confirm Delete
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteDialog.type === 'single' && 'Are you sure you want to delete this log entry?'}
+              {deleteDialog.type === 'category' && `Are you sure you want to delete all logs from "${deleteDialog.category}" category?`}
+              {deleteDialog.type === 'level' && `Are you sure you want to delete all ${deleteDialog.level !== undefined ? LogLevel[deleteDialog.level] : ''} logs?`}
+              {deleteDialog.type === 'all' && 'Are you sure you want to clear all logs? This action cannot be undone.'}
+              {deleteDialog.type === 'old' && `Are you sure you want to delete logs older than ${deleteDialog.days} days?`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -1,219 +1,236 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import { useQuery } from "@tanstack/react-query";
-import { Users, UserPlus, Activity, TrendingUp, Shield, Settings, BarChart3 } from "lucide-react";
-import { useUser } from "@/hooks/useUser";
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import Breadcrumb from "@/components/layout/Breadcrumb";
-import QuickNavigation from "@/components/layout/QuickNavigation";
-import type { StatsOverview } from "@/types";
+/**
+ * Stats Page - Linear/Vercel Style Redesign
+ *
+ * Features:
+ * - Statistics overview cards
+ * - Charts for visual data
+ * - Time range filter
+ * - Export functionality
+ */
 
-const Card = dynamic(() =>
-  import("@/components/ui/card-wrapped").then((mod) => ({ default: mod.Card })),
-);
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "next/navigation";
+import { Download, BarChart3, TrendingUp, Users, FileText, Eye } from "lucide-react";
+import { PageHeader, StatsCard } from "@/components/dashboard";
+import { Button } from "@/components/ui/button";
+import { PostsChart } from "@/components/dashboard/PostsChart";
+import { StatusBreakdown } from "@/components/dashboard/StatusBreakdown";
+import { TopCategories } from "@/components/dashboard/TopCategories";
+import { TopAuthors } from "@/components/dashboard/TopAuthors";
+import { exportToCsv, getCsvFilename } from "@/lib/exportToCsv";
+
+type TimeRange = "7d" | "30d" | "90d" | "all";
+
+interface PostsTimeData {
+  date: string;
+  count: number;
+}
+
+interface StatusData {
+  status: string;
+  count: number;
+}
+
+interface CategoryData {
+  id: number;
+  name: string;
+  slug: string;
+  count: number;
+}
+
+interface AuthorData {
+  id: number;
+  username: string;
+  full_name: string | null;
+  avatar: string | null;
+  count: number;
+}
+
+interface StatsDetailsResponse {
+  posts_over_time: PostsTimeData[];
+  posts_by_status: StatusData[];
+  top_categories: CategoryData[];
+  top_authors: AuthorData[];
+}
+
+const TIME_RANGES: { value: TimeRange; label: string }[] = [
+  { value: "7d", label: "7 ngày" },
+  { value: "30d", label: "30 ngày" },
+  { value: "90d", label: "90 ngày" },
+  { value: "all", label: "Tất cả" },
+];
+
+async function fetchStatsDetails(range: TimeRange): Promise<StatsDetailsResponse> {
+  const response = await fetch(`/api/v1/stats/details?range=${range}`);
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch stats details");
+  }
+
+  return response.json();
+}
 
 export default function DashboardStatsPage() {
-  const { isLoading, user } = useUser();
+  const searchParams = useSearchParams();
+  const rangeFromUrl = searchParams.get("range") as TimeRange | null;
 
-  const {
-    data: stats,
-    isLoading: statsLoading,
-    error,
-  } = useQuery<StatsOverview>({
-    queryKey: ["dashboard", "stats"],
-    queryFn: async () => {
-      const { statsApi } = await import("@/lib/api");
-      const response = await statsApi.getStatsOverview();
-      return response.data;
-    },
+  const [selectedRange, setSelectedRange] = useState<TimeRange>(
+    rangeFromUrl && ["7d", "30d", "90d", "all"].includes(rangeFromUrl)
+      ? rangeFromUrl
+      : "30d"
+  );
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["stats-details", selectedRange],
+    queryFn: () => fetchStatsDetails(selectedRange),
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  if (isLoading || statsLoading) return <LoadingSpinner />;
-  if (error)
-    return (
-      <div className="text-red-500 p-8 text-center">
-        Đã xảy ra lỗi khi tải thống kê.
-      </div>
-    );
+  // Calculate summary stats
+  const totalPosts = data?.posts_over_time.reduce((sum, item) => sum + item.count, 0) || 0;
+  const publishedPosts = data?.posts_by_status.find(s => s.status === "published")?.count || 0;
+  const draftPosts = data?.posts_by_status.find(s => s.status === "draft")?.count || 0;
+  const totalCategories = data?.top_categories.length || 0;
 
-  const getRankLabel = (rank: number): string => {
-    const labels: Record<number, string> = {
-      0: "Guest",
-      1: "Member",
-      3: "Moderator",
-      5: "Admin",
-    };
-    return labels[rank] || "Unknown";
+  const handleRangeChange = (newRange: TimeRange) => {
+    setSelectedRange(newRange);
+    // Update URL without refreshing
+    const url = new URL(window.location.href);
+    url.searchParams.set("range", newRange);
+    window.history.replaceState({}, "", url.toString());
   };
 
-  const getRankColor = (rank: number): string => {
-    const colors: Record<number, string> = {
-      0: "bg-zinc-200 text-zinc-800",
-      1: "bg-blue-100 text-blue-800",
-      3: "bg-orange-100 text-orange-800",
-      5: "bg-red-100 text-red-800",
-    };
-    return colors[rank] || "bg-gray-100 text-gray-800";
-  };
+  const handleExport = () => {
+    if (!data) return;
 
-  // Quick navigation links for dashboard
-  const quickLinks = [
-    {
-      label: "Quản Lý Người Dùng",
-      href: "/dashboard/users-manager",
-      icon: <Users className="h-5 w-5" />,
-      description: "Quản lý tất cả người dùng trong hệ thống",
-    },
-    {
-      label: "Quản Lý Bài Đăng",
-      href: "/dashboard/posts",
-      icon: <BarChart3 className="h-5 w-5" />,
-      description: "Xem và quản lý các bài đăng",
-    },
-    ...(user && user.rank === 5
-      ? [
-          {
-            label: "Cài Đặt Hệ Thống",
-            href: "/dashboard/settings",
-            icon: <Settings className="h-5 w-5" />,
-            description: "Cấu hình cài đặt hệ thống",
-          },
-        ]
-      : []),
-  ];
+    // Export posts over time
+    const postsTimeData = data.posts_over_time.map((item) => ({
+      Ngày: item.date,
+      "Số bài viết": item.count,
+    }));
+    exportToCsv(postsTimeData, getCsvFilename("posts_over_time"));
+
+    // Export posts by status
+    const statusData = data.posts_by_status.map((item) => ({
+      Trạng_thái: item.status,
+      "Số bài viết": item.count,
+    }));
+    exportToCsv(statusData, getCsvFilename("posts_by_status"));
+
+    // Export top categories
+    const categoryData = data.top_categories.map((item) => ({
+      ID: item.id,
+      Danh_muc: item.name,
+      "Số bài viết": item.count,
+    }));
+    exportToCsv(categoryData, getCsvFilename("top_categories"));
+
+    // Export top authors
+    const authorData = data.top_authors.map((item) => ({
+      ID: item.id,
+      Username: item.username,
+      "Họ tên": item.full_name || "",
+      "Số bài viết": item.count,
+    }));
+    exportToCsv(authorData, getCsvFilename("top_authors"));
+  };
 
   return (
-    <div className="max-w-7xl mx-auto">
-      <Breadcrumb />
+    <div className="space-y-6">
+      {/* Page Header */}
+      <PageHeader
+        title="Thống kê"
+        subtitle="Phân tích bài viết và hoạt động của người dùng"
+        icon={BarChart3}
+        actions={
+          <div className="flex items-center gap-2">
+            {/* Time range selector */}
+            <div className="inline-flex rounded-lg border bg-card p-1">
+              {TIME_RANGES.map((range) => (
+                <button
+                  key={range.value}
+                  onClick={() => handleRangeChange(range.value)}
+                  className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                    selectedRange === range.value
+                      ? "bg-orange-500 text-white"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  }`}
+                >
+                  {range.label}
+                </button>
+              ))}
+            </div>
 
-      <div className="mb-6">
-        <div className="flex items-center space-x-2">
-          <Shield className="h-6 w-6 text-zinc-900 dark:text-white" />
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
-            Tổng quan hệ thống
-          </h1>
+            {/* Export button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExport}
+              disabled={!data || isLoading}
+              className="gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Export
+            </Button>
+          </div>
+        }
+      />
+
+      {/* Error State */}
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 dark:bg-red-900/20 p-4">
+          <p className="text-sm text-red-600 dark:text-red-400">
+            Đã xảy ra lỗi khi tải dữ liệu thống kê. Vui lòng thử lại.
+          </p>
         </div>
+      )}
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatsCard
+          title="Tổng bài viết"
+          value={totalPosts}
+          icon={FileText}
+          changeLabel="bài viết"
+        />
+        <StatsCard
+          title="Đã đăng"
+          value={publishedPosts}
+          icon={TrendingUp}
+          changeLabel="công khai"
+          trend="up"
+        />
+        <StatsCard
+          title="Bản nháp"
+          value={draftPosts}
+          icon={Eye}
+          changeLabel="chưa đăng"
+          trend="neutral"
+        />
+        <StatsCard
+          title="Danh mục"
+          value={totalCategories}
+          icon={BarChart3}
+          changeLabel="danh mục"
+        />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        <Card>
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm text-zinc-600 dark:text-zinc-400">
-                Tổng người dùng
-              </div>
-              <div className="text-3xl font-bold text-zinc-900 dark:text-white">
-                {stats?.total_users || 0}
-              </div>
-            </div>
-            <Users className="h-10 w-10 text-zinc-400 dark:text-zinc-600" />
-          </div>
-        </Card>
+      {/* Charts Grid */}
+      <div className="grid grid-cols-1 gap-6">
+        {/* Posts Over Time Chart - Full width */}
+        <PostsChart data={data?.posts_over_time || []} isLoading={isLoading} />
 
-        <Card>
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm text-zinc-600 dark:text-zinc-400">
-                Đang hoạt động
-              </div>
-              <div className="text-3xl font-bold text-green-600 dark:text-green-400">
-                {stats?.active_users || 0}
-              </div>
-            </div>
-            <Activity className="h-10 w-10 text-green-400 dark:text-green-600" />
-          </div>
-        </Card>
+        {/* Second row: Status Breakdown and Top Categories */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <StatusBreakdown data={data?.posts_by_status || []} isLoading={isLoading} />
+          <TopCategories data={data?.top_categories || []} isLoading={isLoading} />
+        </div>
 
-        <Card>
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm text-zinc-600 dark:text-zinc-400">
-                Không hoạt động
-              </div>
-              <div className="text-3xl font-bold text-red-600 dark:text-red-400">
-                {stats?.inactive_users || 0}
-              </div>
-            </div>
-            <TrendingUp className="h-10 w-10 text-red-400 dark:text-red-600" />
-          </div>
-        </Card>
-
-        <Card>
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm text-zinc-600 dark:text-zinc-400">
-                Tỷ lệ hoạt động
-              </div>
-              <div className="text-3xl font-bold text-zinc-900 dark:text-white">
-                {stats && stats.total_users > 0
-                  ? ((stats.active_users / stats.total_users) * 100).toFixed(1)
-                  : "0"}
-                %
-              </div>
-            </div>
-            <UserPlus className="h-10 w-10 text-zinc-400 dark:text-zinc-600" />
-          </div>
-        </Card>
-      </div>
-
-      {/* Quick Navigation */}
-      <QuickNavigation links={quickLinks} title="Hành Động Nhanh" />
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card title="Phân bố theo Rank">
-          <div className="space-y-3">
-            {Object.entries(stats?.by_rank || {}).map(([rank, count]) => (
-              <div key={rank} className="flex items-center justify-between">
-                <span className="text-sm text-zinc-700 dark:text-zinc-300">
-                  {getRankLabel(Number(rank))}
-                </span>
-                <div className="flex items-center space-x-2">
-                  <div className="text-2xl font-bold text-zinc-900 dark:text-white">
-                    {count}
-                  </div>
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${getRankColor(Number(rank))}`}
-                  >
-                    {getRankLabel(Number(rank))}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        <Card title="Người dùng mới nhất">
-          <div className="space-y-3">
-            {stats?.recent_users.map((user) => (
-              <div
-                key={user.id}
-                className="flex items-center justify-between p-2 bg-zinc-50 dark:bg-zinc-800 rounded-lg"
-              >
-                <div>
-                  <div className="text-sm text-zinc-600 dark:text-zinc-400">
-                    {user.email}
-                  </div>
-                  <div className="text-xs text-zinc-500">{user.username}</div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-medium ${getRankColor(user.rank)}`}
-                  >
-                    {getRankLabel(user.rank)}
-                  </span>
-                  <span className="text-xs text-zinc-500">
-                    {new Date(user.created_at).toLocaleDateString("vi-VN", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
+        {/* Top Authors - Full width */}
+        <TopAuthors data={data?.top_authors || []} isLoading={isLoading} />
       </div>
     </div>
   );

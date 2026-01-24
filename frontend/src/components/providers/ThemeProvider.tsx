@@ -1,54 +1,76 @@
-"use client";
+'use client';
 
-import { createContext, useContext, useEffect, useState } from "react";
+/**
+ * ThemeProvider Component
+ *
+ * Provides theme context with dark/light mode toggle.
+ * Persists theme preference to localStorage.
+ *
+ * Linear/Vercel style theme system with orange primary color.
+ */
 
-type Theme = "dark" | "light" | "system";
+import { createContext, useContext, useEffect, useState } from 'react';
+
+type Theme = 'light' | 'dark';
 
 interface ThemeContextType {
   theme: Theme;
+  toggleTheme: () => void;
   setTheme: (theme: Theme) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+const THEME_KEY = 'aicmr-theme';
+const DEFAULT_THEME: Theme = 'dark'; // Default to dark like Linear
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("system");
+  const [theme, setThemeState] = useState<Theme>(DEFAULT_THEME);
   const [mounted, setMounted] = useState(false);
 
+  // Load theme from localStorage on mount
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true);
-    const storedTheme = localStorage.getItem("theme") as Theme;
-    if (storedTheme) {
-      setTheme(storedTheme);
+    const stored = localStorage.getItem(THEME_KEY) as Theme | null;
+    if (stored && (stored === 'light' || stored === 'dark')) {
+      setThemeState(stored);
+    } else {
+      // Detect system preference
+      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setThemeState(systemPrefersDark ? 'dark' : 'light');
     }
+    setMounted(true);
   }, []);
 
+  // Apply theme to document
   useEffect(() => {
     if (!mounted) return;
 
     const root = document.documentElement;
-    root.classList.remove("light", "dark");
-
-    if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-        .matches
-        ? "dark"
-        : "light";
-      root.classList.add(systemTheme);
+    if (theme === 'dark') {
+      root.classList.add('dark');
     } else {
-      root.classList.add(theme);
+      root.classList.remove('dark');
     }
 
-    if (theme !== "system") {
-      localStorage.setItem("theme", theme);
-    } else {
-      localStorage.removeItem("theme");
-    }
+    // Save to localStorage
+    localStorage.setItem(THEME_KEY, theme);
   }, [theme, mounted]);
 
+  const toggleTheme = () => {
+    setThemeState(prev => prev === 'light' ? 'dark' : 'light');
+  };
+
+  const setTheme = (newTheme: Theme) => {
+    setThemeState(newTheme);
+  };
+
+  // Prevent flash of wrong theme
+  if (!mounted) {
+    return <>{children}</>;
+  }
+
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );
@@ -57,7 +79,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 export function useTheme() {
   const context = useContext(ThemeContext);
   if (context === undefined) {
-    throw new Error("useTheme must be used within a ThemeProvider");
+    throw new Error('useTheme must be used within a ThemeProvider');
   }
   return context;
 }

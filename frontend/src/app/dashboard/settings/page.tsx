@@ -1,25 +1,52 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import { useForm, UseFormRegister, UseFormSetValue } from "react-hook-form";
+/**
+ * Settings Page - Linear/Vercel Style Redesign
+ *
+ * Features:
+ * - Orange accent header (consistent with other dashboard pages)
+ * - Tabbed navigation for sections
+ * - Grouped settings by category
+ * - Better organization and UX
+ */
+
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Settings as SettingsIcon, Save, ExternalLink, Trash2 } from "lucide-react";
+import {
+  Settings as SettingsIcon,
+  Save,
+  ExternalLink,
+  Trash2,
+  Globe,
+  Search,
+  Share2,
+  BarChart3,
+  Upload,
+  FileText,
+  CheckCircle2,
+  AlertTriangle,
+} from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
-import { uploadsApi } from "@/lib/api";
 import { useUser } from "@/hooks/useUser";
 import { useToast } from "@/hooks/useToast";
-import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
-import { Input } from "@/components/ui/input-wrapped";
-import { Button } from "@/components/ui/button-wrapped";
+import { PageHeader } from "@/components/dashboard";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import FileUpload from "@/components/ui/FileUpload";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 import type { Settings as AppSettings, UpdateSettingsRequest } from "@/types";
 import type { Attachment } from "@/types";
-
-const Card = dynamic(() =>
-  import("@/components/ui/card-wrapped").then((mod) => ({ default: mod.Card })),
-);
 
 const settingsSchema = z.object({
   site_name: z.string().min(1, "Tên site là bắt buộc"),
@@ -47,6 +74,17 @@ const settingsSchema = z.object({
 
 type AppSettingsData = z.infer<typeof settingsSchema>;
 
+// Tab definitions
+type SettingsTab = "general" | "seo" | "social" | "analytics" | "upload";
+
+const tabs: { id: SettingsTab; label: string; icon: any }[] = [
+  { id: "general", label: "Tổng quan", icon: FileText },
+  { id: "seo", label: "SEO", icon: Search },
+  { id: "social", label: "Mạng xã hội", icon: Share2 },
+  { id: "analytics", label: "Analytics", icon: BarChart3 },
+  { id: "upload", label: "Upload", icon: Upload },
+];
+
 interface ImageFieldProps {
   label: string;
   fieldName: "logo_url" | "favicon_url" | "og_image" | "twitter_image";
@@ -69,7 +107,6 @@ function ImageField({
   maxSizeMB = 5,
 }: ImageFieldProps) {
   const handleUploadSuccess = (attachment: Attachment) => {
-    // Lưu URL proxy từ backend (đã được backend tự động chọn URL SEO nếu is_public=true)
     setValue(fieldName, attachment.url);
   };
 
@@ -77,18 +114,7 @@ function ImageField({
     setValue(fieldName, "");
   };
 
-  // Kiểm tra xem URL có phải là file public không dựa vào pattern backend trả về
-  const isPublicFile = urlValue?.startsWith("/media/");
-  const displayUrl = urlValue ? uploadsApi.getFileUrl(urlValue) : null;
-  
-  // Debug logging
-  console.log("ImageField Debug:", {
-    label,
-    fieldName,
-    urlValue,
-    isPublicFile,
-    displayUrl
-  });
+  const displayUrl = urlValue ? `/api/v1${urlValue}` : null;
 
   return (
     <div className="space-y-3">
@@ -162,6 +188,11 @@ export default function DashboardSettingsPage() {
   const { isLoading } = useUser();
   const { showSuccess, showError } = useToast();
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState<SettingsTab>("general");
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [pendingData, setPendingData] = useState<AppSettingsData | null>(null);
 
   const { data: settings, isLoading: settingsLoading } = useQuery<AppSettings>({
     queryKey: ["settings"],
@@ -178,11 +209,22 @@ export default function DashboardSettingsPage() {
     reset,
     setValue,
     watch,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, dirtyFields },
   } = useForm({
     resolver: zodResolver(settingsSchema),
     values: settings,
   });
+
+  // Track form changes for Save button active state
+  const formValues = watch();
+  const isDirty = Object.keys(dirtyFields).length > 0;
+
+  // Reset hasChanges when settings are loaded
+  useEffect(() => {
+    if (settings) {
+      setHasChanges(false);
+    }
+  }, [settings]);
 
   const mutation = useMutation({
     mutationFn: async (data: UpdateSettingsRequest) => {
@@ -192,6 +234,9 @@ export default function DashboardSettingsPage() {
     onSuccess: () => {
       showSuccess("Cập nhật cài đặt thành công!");
       queryClient.invalidateQueries({ queryKey: ["settings"] });
+      setSaveSuccess(true);
+      setHasChanges(false);
+      setTimeout(() => setSaveSuccess(false), 3000);
     },
     onError: (error) => {
       const err = error as { response?: { data?: { detail?: string } } };
@@ -199,236 +244,391 @@ export default function DashboardSettingsPage() {
     },
   });
 
-  const onSubmit = (data: AppSettingsData) => {
+  const handleConfirmSave = () => {
+    if (!pendingData) return;
     const cleanedData = Object.fromEntries(
-      Object.entries(data).map(([key, value]) => [key, value === null ? undefined : value])
+      Object.entries(pendingData).map(([key, value]) => [key, value === null ? undefined : value])
     );
     mutation.mutate(cleanedData as UpdateSettingsRequest);
+    setConfirmDialogOpen(false);
+    setPendingData(null);
   };
 
-  if (isLoading || settingsLoading) return <LoadingSpinner />;
+  const onSubmit = (data: AppSettingsData) => {
+    setPendingData(data);
+    setConfirmDialogOpen(true);
+  };
+
+  if (isLoading || settingsLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="h-10 w-10 rounded-lg bg-muted animate-pulse" />
+          <div>
+            <div className="h-7 w-48 bg-muted rounded mb-2 animate-pulse" />
+            <div className="h-4 w-64 bg-muted/50 rounded animate-pulse" />
+          </div>
+        </div>
+        <div className="h-96 rounded-lg border bg-card animate-pulse" />
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-7xl mx-auto px-4">
+    <div>
+      {/* Page Header - Orange accent (consistent with other pages) */}
+      <PageHeader
+        title="Cấu hình hệ thống"
+        subtitle="Tùy chỉnh cài đặt cho website của bạn"
+        icon={SettingsIcon}
+        badge={
+          <span className="rounded-full px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 whitespace-nowrap">
+            ⚠️ Requires Care
+          </span>
+        }
+      />
+
+      {/* Save success toast indicator - shown via toast when saved */}
+      {saveSuccess && (
+        <div className="mb-4 flex items-center gap-2 text-sm text-[rgb(var(--semantic-success))]">
+          <CheckCircle2 className="h-4 w-4" />
+          <span>Đã lưu cài đặt thành công</span>
+        </div>
+      )}
+
+      {/* Tabbed Navigation */}
       <div className="mb-6">
-        <div className="flex items-center space-x-2">
-          <SettingsIcon className="h-6 w-6 text-zinc-900 dark:text-white" />
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">
-            Cấu hình hệ thống
-          </h1>
+        <div className="border-b">
+          <nav className="flex gap-1 overflow-x-auto">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                    isActive
+                      ? "border-orange-500 text-orange-600 dark:text-orange-400"
+                      : "border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </nav>
         </div>
       </div>
 
+      {/* Settings Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <Card title="Thông tin chung">
+        {/* General Tab */}
+        {activeTab === "general" && (
           <div className="space-y-6">
-            <Input
-              label="Tên site"
-              placeholder="AiCMR - Hệ thống quản lý"
-              error={errors.site_name?.message}
-              {...register("site_name")}
-            />
+            {/* Site Identity Card */}
+            <div className="rounded-lg border bg-card p-6">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Globe className="h-5 w-5 text-muted-foreground" />
+                Danh tính website
+              </h3>
+              <div className="space-y-6">
+                <Input
+                  label="Tên site"
+                  placeholder="AiCMR - Hệ thống quản lý"
+                  error={errors.site_name?.message}
+                  {...register("site_name")}
+                />
 
-            <ImageField
-              label="Logo URL"
-              fieldName="logo_url"
-              urlValue={watch("logo_url")}
-              register={register}
-              error={errors.logo_url?.message}
-              setValue={setValue}
-              allowedExtensions={["jpg", "jpeg", "png", "svg", "webp"]}
-              maxSizeMB={5}
-            />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <ImageField
+                    label="Logo URL"
+                    fieldName="logo_url"
+                    urlValue={watch("logo_url")}
+                    register={register}
+                    error={errors.logo_url?.message}
+                    setValue={setValue}
+                    allowedExtensions={["jpg", "jpeg", "png", "svg", "webp"]}
+                    maxSizeMB={5}
+                  />
 
-            <ImageField
-              label="Favicon URL"
-              fieldName="favicon_url"
-              urlValue={watch("favicon_url")}
-              register={register}
-              error={errors.favicon_url?.message}
-              setValue={setValue}
-              allowedExtensions={["ico", "png", "jpg", "jpeg", "svg"]}
-              maxSizeMB={1}
-            />
+                  <ImageField
+                    label="Favicon URL"
+                    fieldName="favicon_url"
+                    urlValue={watch("favicon_url")}
+                    register={register}
+                    error={errors.favicon_url?.message}
+                    setValue={setValue}
+                    allowedExtensions={["ico", "png", "jpg", "jpeg", "svg"]}
+                    maxSizeMB={1}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
-        </Card>
+        )}
 
-        <Card title="SEO Metadata">
-          <div className="space-y-4">
-            <Input
-              label="SEO Title"
-              placeholder="AiCMR - Hệ thống quản lý người dùng"
-              error={errors.seo_title?.message}
-              {...register("seo_title")}
-            />
-
-            <Input
-              label="SEO Description"
-              placeholder="Mô tả ngắn gọn về website"
-              error={errors.seo_description?.message}
-              {...register("seo_description")}
-            />
-
-            <Input
-              label="SEO Keywords"
-              placeholder="keyword1, keyword2, keyword3"
-              error={errors.seo_keywords?.message}
-              {...register("seo_keywords")}
-            />
-
-            <Input
-              label="Canonical URL"
-              placeholder="https://yourdomain.com"
-              error={errors.canonical_url?.message}
-              {...register("canonical_url")}
-            />
-
-            <Input
-              label="Robots.txt"
-              placeholder="index, follow"
-              error={errors.robots?.message}
-              {...register("robots")}
-            />
-          </div>
-        </Card>
-
-        <Card title="Open Graph (Facebook/Social)">
+        {/* SEO Tab */}
+        {activeTab === "seo" && (
           <div className="space-y-6">
-            <Input
-              label="OG Title"
-              placeholder="Tiêu đề hiển thị khi chia sẻ"
-              error={errors.og_title?.message}
-              {...register("og_title")}
-            />
+            <div className="rounded-lg border bg-card p-6">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Search className="h-5 w-5 text-muted-foreground" />
+                Cấu hình SEO
+              </h3>
+              <div className="space-y-4">
+                <Input
+                  label="SEO Title"
+                  placeholder="AiCMR - Hệ thống quản lý người dùng"
+                  error={errors.seo_title?.message}
+                  {...register("seo_title")}
+                />
 
-            <Input
-              label="OG Description"
-              placeholder="Mô tả hiển thị khi chia sẻ"
-              error={errors.og_description?.message}
-              {...register("og_description")}
-            />
+                <Input
+                  label="SEO Description"
+                  placeholder="Mô tả ngắn gọn về website"
+                  error={errors.seo_description?.message}
+                  {...register("seo_description")}
+                />
 
-            <ImageField
-              label="OG Image URL"
-              fieldName="og_image"
-              urlValue={watch("og_image")}
-              register={register}
-              error={errors.og_image?.message}
-              setValue={setValue}
-              allowedExtensions={["jpg", "jpeg", "png", "webp"]}
-              maxSizeMB={5}
-            />
+                <Input
+                  label="SEO Keywords"
+                  placeholder="keyword1, keyword2, keyword3"
+                  error={errors.seo_keywords?.message}
+                  {...register("seo_keywords")}
+                />
 
-            <Input
-              label="OG Type"
-              error={errors.og_type?.message}
-              {...register("og_type")}
-            />
+                <Input
+                  label="Canonical URL"
+                  placeholder="https://yourdomain.com"
+                  error={errors.canonical_url?.message}
+                  {...register("canonical_url")}
+                />
 
-            <Input
-              label="OG URL"
-              placeholder="https://yourdomain.com"
-              error={errors.og_url?.message}
-              {...register("og_url")}
-            />
+                <Input
+                  label="Robots.txt"
+                  placeholder="index, follow"
+                  error={errors.robots?.message}
+                  {...register("robots")}
+                />
+              </div>
+            </div>
           </div>
-        </Card>
+        )}
 
-        <Card title="Twitter Card">
+        {/* Social Tab */}
+        {activeTab === "social" && (
           <div className="space-y-6">
-            <Input
-              label="Card Type"
-              error={errors.twitter_card?.message}
-              {...register("twitter_card")}
-            />
+            {/* Open Graph Card */}
+            <div className="rounded-lg border bg-card p-6">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Share2 className="h-5 w-5 text-blue-500" />
+                Open Graph (Facebook/Social)
+              </h3>
+              <div className="space-y-6">
+                <Input
+                  label="OG Title"
+                  placeholder="Tiêu đề hiển thị khi chia sẻ"
+                  error={errors.og_title?.message}
+                  {...register("og_title")}
+                />
 
-            <Input
-              label="Twitter Title"
-              placeholder="Tiêu đề hiển thị trên Twitter"
-              error={errors.twitter_title?.message}
-              {...register("twitter_title")}
-            />
+                <Input
+                  label="OG Description"
+                  placeholder="Mô tả hiển thị khi chia sẻ"
+                  error={errors.og_description?.message}
+                  {...register("og_description")}
+                />
 
-            <Input
-              label="Twitter Description"
-              placeholder="Mô tả hiển thị trên Twitter"
-              error={errors.twitter_description?.message}
-              {...register("twitter_description")}
-            />
+                <ImageField
+                  label="OG Image URL"
+                  fieldName="og_image"
+                  urlValue={watch("og_image")}
+                  register={register}
+                  error={errors.og_image?.message}
+                  setValue={setValue}
+                  allowedExtensions={["jpg", "jpeg", "png", "webp"]}
+                  maxSizeMB={5}
+                />
 
-            <ImageField
-              label="Twitter Image URL"
-              fieldName="twitter_image"
-              urlValue={watch("twitter_image")}
-              register={register}
-              error={errors.twitter_image?.message}
-              setValue={setValue}
-              allowedExtensions={["jpg", "jpeg", "png", "webp"]}
-              maxSizeMB={5}
-            />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Input
+                    label="OG Type"
+                    error={errors.og_type?.message}
+                    {...register("og_type")}
+                  />
+                  <Input
+                    label="OG URL"
+                    placeholder="https://yourdomain.com"
+                    error={errors.og_url?.message}
+                    {...register("og_url")}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Twitter Card */}
+            <div className="rounded-lg border bg-card p-6">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Share2 className="h-5 w-5 text-sky-500" />
+                Twitter Card
+              </h3>
+              <div className="space-y-6">
+                <Input
+                  label="Card Type"
+                  error={errors.twitter_card?.message}
+                  {...register("twitter_card")}
+                />
+
+                <Input
+                  label="Twitter Title"
+                  placeholder="Tiêu đề hiển thị trên Twitter"
+                  error={errors.twitter_title?.message}
+                  {...register("twitter_title")}
+                />
+
+                <Input
+                  label="Twitter Description"
+                  placeholder="Mô tả hiển thị trên Twitter"
+                  error={errors.twitter_description?.message}
+                  {...register("twitter_description")}
+                />
+
+                <ImageField
+                  label="Twitter Image URL"
+                  fieldName="twitter_image"
+                  urlValue={watch("twitter_image")}
+                  register={register}
+                  error={errors.twitter_image?.message}
+                  setValue={setValue}
+                  allowedExtensions={["jpg", "jpeg", "png", "webp"]}
+                  maxSizeMB={5}
+                />
+              </div>
+            </div>
           </div>
-        </Card>
+        )}
 
-        <Card title="Google Analytics">
-          <div className="space-y-4">
-            <Input
-              label="Google Analytics ID"
-              placeholder="G-XXXXXXXXXX"
-              error={errors.google_analytics_id?.message}
-              {...register("google_analytics_id")}
-            />
+        {/* Analytics Tab */}
+        {activeTab === "analytics" && (
+          <div className="space-y-6">
+            <div className="rounded-lg border bg-card p-6">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-muted-foreground" />
+                Google Analytics
+              </h3>
+              <div className="space-y-4">
+                <Input
+                  label="Google Analytics ID"
+                  placeholder="G-XXXXXXXXXX"
+                  error={errors.google_analytics_id?.message}
+                  {...register("google_analytics_id")}
+                  helperText="Nhập ID Google Analytics (GA4) để theo dõi truy cập"
+                />
+              </div>
+            </div>
+
+            <div className="rounded-lg border bg-card p-6">
+              <h3 className="text-lg font-semibold mb-4">Custom Meta Tags</h3>
+              <div className="space-y-4">
+                <Input
+                  label="Custom Meta (JSON)"
+                  placeholder='{"name": "viewport", "content": "width=device-width"}'
+                  error={errors.custom_meta?.message}
+                  {...register("custom_meta")}
+                  helperText="Thêm custom meta tags dưới dạng JSON"
+                />
+              </div>
+            </div>
           </div>
-        </Card>
+        )}
 
-        <Card title="Cấu hình Upload">
-          <div className="space-y-4">
-            <Input
-              label="Định dạng cho phép"
-              placeholder="jpg, png, pdf, docx"
-              error={errors.upload_allowed_extensions?.message}
-              {...register("upload_allowed_extensions")}
-              helperText="Danh sách định dạng file phân cách bằng dấu phẩy"
-            />
-            <Input
-              label="Dung lượng tối đa (MB)"
-              type="number"
-              placeholder="10"
-              error={errors.upload_max_size_mb?.message}
-              {...register("upload_max_size_mb")}
-              helperText="Giới hạn kích thước file upload (tính bằng Megabytes)"
-            />
+        {/* Upload Tab */}
+        {activeTab === "upload" && (
+          <div className="space-y-6">
+            <div className="rounded-lg border bg-card p-6">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Upload className="h-5 w-5 text-muted-foreground" />
+                Cấu hình Upload
+              </h3>
+              <div className="space-y-4">
+                <Input
+                  label="Định dạng cho phép"
+                  placeholder="jpg, png, pdf, docx"
+                  error={errors.upload_allowed_extensions?.message}
+                  {...register("upload_allowed_extensions")}
+                  helperText="Danh sách định dạng file phân cách bằng dấu phẩy"
+                />
+                <Input
+                  label="Dung lượng tối đa (MB)"
+                  type="number"
+                  placeholder="10"
+                  error={errors.upload_max_size_mb?.message}
+                  {...register("upload_max_size_mb")}
+                  helperText="Giới hạn kích thước file upload (tính bằng Megabytes)"
+                />
+              </div>
+            </div>
           </div>
-        </Card>
+        )}
 
-        <Card title="Custom Meta Tags">
-          <div className="space-y-4">
-            <Input
-              label="Custom Meta (JSON)"
-              placeholder='{"name": "viewport", "content": "width=device-width"}'
-              error={errors.custom_meta?.message}
-              {...register("custom_meta")}
-            />
-          </div>
-        </Card>
-
-        <div className="flex justify-end space-x-4">
+        {/* Action Bar */}
+        <div className="sticky bottom-0 flex justify-end gap-4 p-4 border-t bg-background/95 backdrop-blur rounded-b-lg">
           <Button
             type="button"
             onClick={() => reset(settings || undefined)}
-            variant="secondary"
+            variant="outline"
           >
             Hủy bỏ
           </Button>
           <Button
             type="submit"
-            isLoading={isSubmitting}
-            className="flex items-center space-x-2"
+            disabled={isSubmitting || !isDirty}
+            className={cn(
+              "bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white",
+              isDirty && "shadow-lg shadow-yellow-500/20"
+            )}
           >
-            <Save className="h-4 w-4" />
-            <span>Lưu thay đổi</span>
+            <Save className="h-4 w-4 mr-2" />
+            {isSubmitting ? "Đang lưu..." : isDirty ? "Lưu thay đổi" : "Không có thay đổi"}
           </Button>
         </div>
       </form>
+
+      {/* Confirmation Dialog */}
+      <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-yellow-500" />
+              Xác nhận lưu cài đặt
+            </DialogTitle>
+            <DialogDescription>
+              Bạn đang thay đổi cài đặt hệ thống. Những thay đổi này có thể ảnh hưởng đến toàn bộ website.
+              Hãy chắc chắn rằng bạn đã kiểm tra kỹ các giá trị trước khi lưu.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setConfirmDialogOpen(false);
+                setPendingData(null);
+              }}
+            >
+              Hủy bỏ
+            </Button>
+            <Button
+              onClick={handleConfirmSave}
+              className="bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white"
+            >
+              <Save className="h-4 w-4 mr-2" />
+              Xác nhận lưu
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -18,7 +18,8 @@ export default function ModeratorGuard({ children }: ModeratorGuardProps) {
     if (mounted && !isLoading) {
       if (!user) {
         router.push("/login");
-      } else if (user.rank < 3) {
+      } else if (user.rank < 5) {
+        // Moderator is rank >= 5
         router.push("/user/profile");
       }
     }
@@ -36,7 +37,7 @@ export default function ModeratorGuard({ children }: ModeratorGuardProps) {
     );
   }
 
-  if (!user || user.rank < 3) {
+  if (!user || user.rank < 5) {
     return null;
   }
 

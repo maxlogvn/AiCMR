@@ -3,16 +3,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 from fastapi_cache import FastAPICache
-from fastapi_cache.decorator import cache
 
 from app.models.category import Category
 from app.schemas.category import CategoryCreate, CategoryUpdate
 from loguru import logger
 
 
-@cache(expire=300, namespace="category")
 async def get_category_by_id(db: AsyncSession, category_id: int) -> Optional[Category]:
-    """Lấy chuyên mục theo ID với relationships"""
+    """Lấy chuyên mục theo ID với relationships
+
+    Note: Non-cached version for internal CRUD operations.
+    API endpoints should use their own caching.
+    """
     result = await db.execute(
         select(Category)
         .options(selectinload(Category.children))
@@ -21,9 +23,12 @@ async def get_category_by_id(db: AsyncSession, category_id: int) -> Optional[Cat
     return result.scalar_one_or_none()
 
 
-@cache(expire=300, namespace="category")
 async def get_category_by_slug(db: AsyncSession, slug: str) -> Optional[Category]:
-    """Lấy chuyên mục theo slug"""
+    """Lấy chuyên mục theo slug
+
+    Note: Non-cached version for internal CRUD operations.
+    API endpoints should use their own caching.
+    """
     result = await db.execute(
         select(Category)
         .options(selectinload(Category.children))

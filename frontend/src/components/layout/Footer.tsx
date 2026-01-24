@@ -14,7 +14,7 @@ export default function Footer() {
           {/* Brand Section */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded flex items-center justify-center">
+              <div className="h-8 w-8 bg-gradient-to-br from-primary-600 to-indigo-600 rounded flex items-center justify-center">
                 <span className="text-white font-bold text-sm">AI</span>
               </div>
               <span className="text-lg font-bold text-white">AiCMR</span>
@@ -38,7 +38,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/(public)/blog"
+                  href="/blog"
                   className="text-zinc-400 hover:text-white text-sm transition-colors"
                 >
                   Blog

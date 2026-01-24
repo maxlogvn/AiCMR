@@ -113,7 +113,7 @@ export function DebugToast({ maxVisible = 3, position = 'bottom-right' }: DebugT
               <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                 {log.message}
               </p>
-              {log.data && (
+              {log.data != null && (
                 <details className="mt-2">
                   <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-700">
                     Details

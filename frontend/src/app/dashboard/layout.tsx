@@ -1,11 +1,15 @@
-"use client";
-
 import ModeratorGuard from "@/components/auth/ModeratorGuard";
-import AdminSidebar from "@/components/admin/AdminSidebar";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
-// import { DebugToast, DevToolsPanel } from "@/components/debug/DebugToast"; // Disabled to prevent infinite loop
+import { DashboardContent } from "@/components/dashboard";
 
+/**
+ * Dashboard Layout
+ *
+ * Uses the new unified dashboard layout with:
+ * - Fixed sidebar with user dropdown, collapse button, navigation
+ * - Mobile sidebar overlay
+ * - Mobile header with menu button
+ * - Rank-based navigation filtering
+ */
 export default function DashboardLayout({
   children,
 }: {
@@ -13,21 +17,9 @@ export default function DashboardLayout({
 }) {
   return (
     <ModeratorGuard>
-      <div className="flex flex-col min-h-screen">
-        <Navbar />
-        <div className="flex flex-1 bg-zinc-50 dark:bg-black">
-          <AdminSidebar />
-          <main className="flex-1 p-4 sm:p-8">{children}</main>
-        </div>
-        <Footer />
-        {/* Debug Tools - Disabled temporarily */}
-        {/* {process.env.NODE_ENV === "development" && (
-          <>
-            <DebugToast />
-            <DevToolsPanel />
-          </>
-        )} */}
-      </div>
+      <DashboardContent>
+        {children}
+      </DashboardContent>
     </ModeratorGuard>
   );
 }

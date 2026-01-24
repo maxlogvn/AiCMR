@@ -5,6 +5,7 @@ import { getFileUrl } from '@/lib/api';
 import { Eye, Heart, MessageSquare, Calendar, User } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal, Pencil, Trash2, Archive, Check } from 'lucide-react';
@@ -44,7 +45,7 @@ export function PostList({
 
   if (!posts || posts.length === 0) {
     return (
-      <div className="text-center py-12 text-gray-600 dark:text-gray-400">
+      <div className="text-center py-12 text-gray-500 dark:text-gray-400">
         <p>No posts found</p>
       </div>
     );
@@ -81,18 +82,7 @@ export function PostList({
                         {post.category.name}
                       </Badge>
                     )}
-                    <Badge
-                      variant="outline"
-                      className={`text-xs ${
-                        post.status === 'published'
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100'
-                          : post.status === 'draft'
-                          ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100'
-                          : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100'
-                      }`}
-                    >
-                      {post.status}
-                    </Badge>
+                    <StatusBadge status={post.status as any} className="text-xs" />
                     {post.is_featured && (
                       <Badge variant="default" className="text-xs">
                         Featured
@@ -151,13 +141,13 @@ export function PostList({
 
               {/* Excerpt */}
               {post.excerpt && (
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 line-clamp-2">
                   {post.excerpt}
                 </p>
               )}
 
               {/* Footer */}
-              <div className="flex flex-wrap items-center gap-4 text-xs text-gray-600 dark:text-gray-400">
+              <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
                 {post.author && (
                   <div className="flex items-center gap-1">
                     <User className="w-3.5 h-3.5" />

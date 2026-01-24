@@ -23,7 +23,9 @@ export default function Breadcrumb() {
     "/dashboard/users-manager": "Quản lý người dùng",
     "/dashboard/posts": "Quản lý bài đăng",
     "/dashboard/settings": "Cài đặt hệ thống",
-    "/(public)/blog": "Blog",
+    "/dashboard/categories": "Quản lý danh mục",
+    "/dashboard/tags": "Quản lý thẻ",
+    "/blog": "Blog",
   };
 
   // Generate breadcrumbs from pathname

@@ -32,8 +32,9 @@ export function PostCard({
   return (
     <Link href={`/blog/${post.slug}`}>
       <Card
-        className={`group overflow-hidden hover:shadow-lg transition-all duration-300 ${
-          isFeatured ? 'border-primary' : ''
+        hover
+        className={`group overflow-hidden transition-all duration-300 ${
+          isFeatured ? 'border-primary-600' : ''
         }`}
       >
         {/* Thumbnail */}

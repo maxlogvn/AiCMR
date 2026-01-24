@@ -162,7 +162,7 @@ export default function CreatePostPage() {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Quay lại
           </Button>
-          <h1 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
             Tạo Bài Đăng Mới
           </h1>
         </div>
@@ -194,7 +194,7 @@ export default function CreatePostPage() {
          <Card className="p-6">
            <h1 className="text-3xl font-bold mb-4">{formData.title || 'Bài đăng chưa có tiêu đề'}</h1>
            {formData.excerpt && (
-             <p className="text-zinc-600 dark:text-zinc-400 mb-4">{formData.excerpt}</p>
+             <p className="text-gray-500 dark:text-gray-400 mb-4">{formData.excerpt}</p>
            )}
            <div
              className="prose prose-gray dark:prose-invert max-w-none"
@@ -300,8 +300,8 @@ export default function CreatePostPage() {
                        htmlFor="thumbnail-upload"
                        className="cursor-pointer flex flex-col items-center gap-2"
                      >
-                       <Upload className="w-8 h-8 text-zinc-400" />
-                       <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                       <Upload className="w-8 h-8 text-gray-400" />
+                       <span className="text-sm text-gray-500 dark:text-gray-400">
                          {isUploading ? 'Đang tải lên...' : 'Bấm để tải ảnh đại diện'}
                        </span>
                      </label>

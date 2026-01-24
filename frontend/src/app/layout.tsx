@@ -1,4 +1,4 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import ClientProvider from "@/components/providers/QueryProvider";
 import { ToastProvider } from "@/hooks/useToast";
@@ -8,14 +8,10 @@ import InstallGuard from "@/components/auth/InstallGuard";
 import CsrfTokenProvider from "@/components/providers/CsrfTokenProvider";
 import type { PublicSettingsResponse } from "@/types";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  display: "swap",
 });
 
 // Default metadata (fallback)
@@ -71,7 +67,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${inter.variable} antialiased`}
         suppressHydrationWarning
       >
         <CsrfTokenProvider>

@@ -84,7 +84,7 @@ export default function BlogPage() {
   if (error) {
     return (
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-8">
-        <div className="text-center py-12 text-red-600 dark:text-red-400">
+        <div className="text-center py-12 text-red-600 dark:text-red-500">
           <p>Failed to load posts. Please try again later.</p>
         </div>
       </div>
@@ -98,7 +98,7 @@ export default function BlogPage() {
         <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
           Blog
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-gray-500 dark:text-gray-400">
           Khám phá nội dung bổ ích từ cộng đồng
         </p>
       </div>
@@ -116,7 +116,7 @@ export default function BlogPage() {
         <div className="flex-1">
           {/* View Toggle */}
           <div className="flex justify-between items-center mb-6">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               {data?.total || 0} posts found
             </p>
             <PostViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
@@ -148,7 +148,7 @@ export default function BlogPage() {
               )}
             </>
           ) : (
-            <div className="text-center py-12 text-gray-600 dark:text-gray-400">
+            <div className="text-center py-12 text-gray-500 dark:text-gray-400">
               <p>No posts found</p>
             </div>
           )}

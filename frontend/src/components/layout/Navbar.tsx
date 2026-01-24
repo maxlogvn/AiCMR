@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
-import { LogOut, User as UserIcon, Home, LayoutDashboard } from "lucide-react";
+import { LogOut, User as UserIcon, Home, LayoutDashboard, BookOpen } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,7 +14,7 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     if (isLoading) return;
-    
+
     try {
       await logout();
       router.push("/login");
@@ -34,7 +34,7 @@ export default function Navbar() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <div className="h-8 w-8 bg-gradient-to-br from-blue-600 to-indigo-600 rounded flex items-center justify-center">
+            <div className="h-8 w-8 bg-gradient-to-br from-primary-600 to-indigo-600 rounded flex items-center justify-center">
               <UserIcon className="h-5 w-5 text-white" />
             </div>
             <span className="text-xl font-bold text-gray-900 dark:text-white hidden sm:inline">
@@ -44,29 +44,40 @@ export default function Navbar() {
 
           {/* Navigation Links */}
           <div className="hidden md:flex items-center gap-6">
+            <Link
+              href="/"
+              className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                pathname === "/"
+                  ? "text-primary-600 dark:text-primary-400"
+                  : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              }`}
+            >
+              <Home className="h-4 w-4" />
+              Trang chủ
+            </Link>
+            <Link
+              href="/blog"
+              className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                pathname?.startsWith("/blog")
+                  ? "text-primary-600 dark:text-primary-400"
+                  : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+              }`}
+            >
+              <BookOpen className="h-4 w-4" />
+              Blog
+            </Link>
             {!isAuthenticated ? (
               /* Not logged in */
               <>
                 <Link
-                  href="/"
-                  className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                    pathname === "/" 
-                      ? "text-blue-600 dark:text-blue-400" 
-                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                  }`}
-                >
-                  <Home className="h-4 w-4" />
-                  Trang chủ
-                </Link>
-                <Link
                   href="/login"
-                  className="px-3 py-2 text-sm font-medium text-blue-600 hover:text-blue-500 transition-colors"
+                  className="px-3 py-2 text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors"
                 >
                   Đăng nhập
                 </Link>
                 <Link
                   href="/register"
-                  className="px-3 py-2 text-sm font-medium bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  className="px-3 py-2 text-sm font-medium bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors"
                 >
                   Đăng ký
                 </Link>
@@ -75,22 +86,11 @@ export default function Navbar() {
               /* Logged in */
               <>
                 <Link
-                  href="/"
-                  className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                    pathname === "/" 
-                      ? "text-blue-600 dark:text-blue-400" 
-                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                  }`}
-                >
-                  <Home className="h-4 w-4" />
-                  Trang chủ
-                </Link>
-                <Link
                   href="/dashboard"
                   className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                    pathname?.startsWith("/dashboard") 
-                      ? "text-blue-600 dark:text-blue-400" 
-                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                    pathname?.startsWith("/dashboard")
+                      ? "text-primary-600 dark:text-primary-400"
+                      : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                   }`}
                 >
                   <LayoutDashboard className="h-4 w-4" />
@@ -100,9 +100,9 @@ export default function Navbar() {
                   onClick={handleLogout}
                   disabled={isLoading}
                   className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                    isLoading 
-                      ? "text-gray-400 cursor-not-allowed" 
-                      : "text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400"
+                    isLoading
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-500"
                   }`}
                 >
                   <LogOut className="h-4 w-4" />
@@ -116,20 +116,20 @@ export default function Navbar() {
           <div className="md:hidden">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500"
             >
               <span className="sr-only">Open main menu</span>
-              <svg 
-                className="h-6 w-6" 
-                fill="none" 
-                viewBox="0 0 24 24" 
+              <svg
+                className="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
                 stroke="currentColor"
               >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M4 6h16M4 12h16M4 18h16" 
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
                 />
               </svg>
             </button>
@@ -140,35 +140,35 @@ export default function Navbar() {
         {mobileMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+              <Link
+                href="/"
+                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+              >
+                Trang chủ
+              </Link>
+              <Link
+                href="/blog"
+                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+              >
+                Blog
+              </Link>
               {!isAuthenticated ? (
                 <>
                   <Link
-                    href="/"
-                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
-                  >
-                    Trang chủ
-                  </Link>
-                  <Link
                     href="/login"
-                    className="block px-3 py-2 rounded-md text-base font-medium text-blue-600 hover:text-blue-700"
+                    className="block px-3 py-2 rounded-md text-base font-medium text-primary-600 hover:text-primary-700"
                   >
                     Đăng nhập
                   </Link>
                   <Link
                     href="/register"
-                    className="block px-3 py-2 rounded-md text-base font-medium bg-blue-600 text-white hover:bg-blue-700"
+                    className="block px-3 py-2 rounded-md text-base font-medium bg-primary-600 text-white hover:bg-primary-700"
                   >
                     Đăng ký
                   </Link>
                 </>
               ) : (
                 <>
-                  <Link
-                    href="/"
-                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
-                  >
-                    Trang chủ
-                  </Link>
                   <Link
                     href="/dashboard"
                     className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"

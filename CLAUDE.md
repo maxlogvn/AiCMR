@@ -169,6 +169,35 @@ Test fixtures in `tests/conftest.py` provide:
 - `client` - Test HTTP client
 - `test_user` / `admin_user` / `moderator_auth_headers` - Auth fixtures
 
+## Test Users
+
+Danh sách tài khoản test cho phát triển và kiểm thử:
+
+| Username    | Email                     | Password    | Rank      | Description                      |
+|-------------|--------------------------|-------------|-----------|----------------------------------|
+| admin       | admin.aicmr@gmail.com    | Admin@123   | ADMIN(10) | Super Admin - Full quyền truy cập |
+| moderator   | moderator.aicmr@gmail.com| Mod@123     | MODERATOR(5) | Moderator - Quản lý content, users |
+| editor      | editor.aicmr@gmail.com   | Editor@123  | EDITOR(3) | Editor - Đăng bài, quản lý bài viết |
+| member      | member.aicmr@gmail.com   | Member@123  | MEMBER(1) | Member - Người dùng thường        |
+| guest       | guest.aicmr@gmail.com    | Guest@123   | GUEST(0)  | Guest - Khách, quyền hạn thấp nhất |
+| testuser    | testuser.aicmr@gmail.com | Test@123    | MEMBER(1) | Test User - Dùng cho test tự động  |
+| inactive    | inactive.aicmr@gmail.com | Inactive@123 | MEMBER(1) | Inactive User - Tài khoản bị vô hiệu |
+
+**Reset test users:**
+```bash
+# Xóa toàn bộ users và tạo lại test users
+docker-compose exec -T backend python scripts/reset_test_users.py << 'EOF'
+yes
+EOF
+```
+
+**Rank System:**
+- **0 (GUEST)**: Khách - chưa đăng nhập hoặc quyền thấp nhất
+- **1-2 (MEMBER)**: Thành viên - người dùng thường
+- **3-4 (EDITOR)**: Editor - có thể đăng bài, quản lý bài viết
+- **5 (MODERATOR)**: Moderator - quản lý content, users
+- **10 (ADMIN)**: Admin - full quyền truy cập
+
 ## Platform-Specific Notes
 
 ### Windows Development

@@ -138,10 +138,18 @@ class DebugLogger {
       const prefix = `[${category}]`;
       switch (level) {
         case LogLevel.DEBUG:
-          this.originalConsole.debug?.(prefix, message, data) || console.debug(prefix, message, data);
+          if (this.originalConsole.debug) {
+            this.originalConsole.debug(prefix, message, data);
+          } else {
+            console.debug(prefix, message, data);
+          }
           break;
         case LogLevel.INFO:
-          this.originalConsole.log?.(prefix, message, data) || console.log(prefix, message, data);
+          if (this.originalConsole.log) {
+            this.originalConsole.log(prefix, message, data);
+          } else {
+            console.log(prefix, message, data);
+          }
           break;
         case LogLevel.WARN:
           this.originalConsole.warn(prefix, message, data);
@@ -168,10 +176,10 @@ class DebugLogger {
   }
 
   error(message: string, category: string = 'app', data?: unknown, p0?: {
-    stack: any;
-    filename: string;
-    lineno: number;
-    colno: number;
+    stack?: any;
+    filename?: string;
+    lineno?: number;
+    colno?: number;
   }) {
     this.log(LogLevel.ERROR, message, category, data);
   }
@@ -208,9 +216,36 @@ class DebugLogger {
     this.notifyListeners();
   }
 
+  deleteLog(id: string) {
+    this.logs = this.logs.filter(log => log.id !== id);
+    this.saveLogs();
+    this.notifyListeners();
+  }
+
+  deleteLogsByCategory(category: string) {
+    this.logs = this.logs.filter(log => log.category !== category);
+    this.saveLogs();
+    this.notifyListeners();
+  }
+
+  deleteLogsByLevel(level: LogLevel) {
+    this.logs = this.logs.filter(log => log.level !== level);
+    this.saveLogs();
+    this.notifyListeners();
+  }
+
+  deleteLogsBefore(date: Date) {
+    const timestamp = date.toISOString();
+    this.logs = this.logs.filter(log => log.timestamp > timestamp);
+    this.saveLogs();
+    this.notifyListeners();
+  }
+
   subscribe(listener: (logs: LogEntry[]) => void) {
     this.listeners.add(listener);
-    return () => this.listeners.delete(listener);
+    return () => {
+      this.listeners.delete(listener);
+    };
   }
 
   private notifyListeners() {
@@ -312,29 +347,17 @@ export const debugLogger = new DebugLogger();
 
 // Hook for React components
 export function useDebugLogs(filter?: { level?: LogLevel; category?: string; limit?: number }) {
-  const [logs, setLogs] = React.useState<LogEntry[]>([]);
-  const filterRef = React.useRef(filter);
-
-  // Only update filterRef if filter actually changed
-  React.useEffect(() => {
-    const filterStr = JSON.stringify(filter);
-    const currentStr = JSON.stringify(filterRef.current);
-    if (filterStr !== currentStr) {
-      filterRef.current = filter;
-    }
-  });
+  const [logs, setLogs] = React.useState<LogEntry[]>(() => debugLogger.getLogs(filter));
+  const [, forceUpdate] = React.useReducer(x => x + 1, 0);
 
   React.useEffect(() => {
-    // Initial load
-    setLogs(debugLogger.getLogs(filterRef.current));
-
     // Subscribe to updates
     const unsubscribe = debugLogger.subscribe(() => {
-      setLogs(debugLogger.getLogs(filterRef.current));
+      setLogs(debugLogger.getLogs(filter));
     });
 
     return unsubscribe;
-  }, []); // Empty deps - only subscribe once on mount
+  }, [filter]); // Re-subscribe when filter changes
 
   return logs;
 }
