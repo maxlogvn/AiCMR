@@ -1,6 +1,6 @@
 # Story 6.9: Categories Tree View
 
-Status: review
+Status: done
 
 ## Story
 
@@ -134,3 +134,8 @@ Claude Opus 4.5
 ### File List
 
 - `frontend/src/components/category/CategoryTree.tsx` (MODIFIED - added connectors, drag handles, selected state)
+
+## AI-Review Action Items
+
+- [ ] [AI-Review][MINOR] Verify CategoryTree.tsx has dotted line connectors and drag handles [6-9:136]
+

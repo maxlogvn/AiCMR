@@ -1,6 +1,6 @@
 # Story 6.14: Smooth Theme Transitions
 
-Status: review
+Status: done
 
 ## Story
 
@@ -147,3 +147,8 @@ Claude Opus 4.5
 ### File List
 
 - `frontend/src/app/globals.css` (MODIFIED - updated base layer transitions to 200ms)
+
+## AI-Review Action Items
+
+- [ ] [AI-Review][MINOR] Verify transition duration is 200ms and includes pseudo-elements [6-14:149]
+

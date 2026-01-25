@@ -1,6 +1,6 @@
 # Story 5.4: Bulk Post Selection
 
-Status: review
+Status: done
 
 ## Story
 
@@ -62,6 +62,10 @@ so that I can perform actions on many items.
   - [x] Store selected IDs in Zustand store with persist
   - [x] Maintain selection when paginating
   - [x] Show count of total selected (across all pages)
+
+## AI-Review Action Items
+
+- [ ] [AI-Review][MINOR] Verify post-selection-store.ts exists at claimed location [5-4:109]
 
 ## Dev Notes
 

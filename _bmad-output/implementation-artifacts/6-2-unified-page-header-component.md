@@ -1,6 +1,6 @@
 # Story 6.2: Unified Page Header Component
 
-Status: review
+Status: done
 
 ## Story
 
@@ -168,3 +168,7 @@ Claude Opus 4.5
 - `frontend/src/app/dashboard/categories/page.tsx` (NO CHANGE - already uses PageHeader)
 - `frontend/src/app/dashboard/tags/page.tsx` (NO CHANGE - already uses PageHeader)
 - `frontend/src/app/dashboard/users-manager/page.tsx` (NO CHANGE - already uses PageHeader)
+
+## AI-Review Action Items
+
+- [ ] [AI-Review][MINOR] PageHeader.tsx is in `components/dashboard/` not `components/layout/` as spec suggested [6-2:144]

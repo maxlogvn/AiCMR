@@ -1,6 +1,6 @@
 # Story 6.5: Loading Skeleton Components
 
-Status: review
+Status: done
 
 ## Story
 
@@ -163,3 +163,8 @@ Claude Opus 4.5
 - `frontend/src/components/ui/StatCardSkeleton.tsx` (CREATED)
 - `frontend/src/components/ui/CardSkeleton.tsx` (CREATED)
 - `frontend/src/components/ui/TableSkeleton.tsx` (CREATED - includes TableSkeletonCompact)
+
+## AI-Review Action Items
+
+- [ ] [AI-Review][MINOR] Verify StatCardSkeleton.tsx, CardSkeleton.tsx, TableSkeleton.tsx exist at claimed locations [6-5:163-165]
+

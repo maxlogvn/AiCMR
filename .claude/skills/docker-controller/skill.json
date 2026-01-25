@@ -1,10 +1,10 @@
 {
-  "name": "commander-management",
-  "version": "2.0.0",
-  "description": "Optimized system management skill for AiCMR. Provides standardized workflows, comprehensive troubleshooting, emergency procedures, and best practices for managing Docker containers through commander CLI.",
+  "name": "docker-controller",
+  "version": "3.0.0",
+  "description": "Platform-agnostic Docker management skill for AiCMR. Provides standardized workflows, comprehensive troubleshooting, and cross-platform container management through commander CLI.",
   "author": "Claude Code AI",
   "created": "2026-01-21",
-  "updated": "2026-01-23",
+  "updated": "2026-01-25",
   "category": "system-management",
   "priority": "highest",
   "tags": [
@@ -18,7 +18,8 @@
     "logs",
     "shell",
     "troubleshooting",
-    "emergency",
+    "cross-platform",
+    "platform-agnostic",
     "devops"
   ],
   "triggers": [
@@ -39,7 +40,8 @@
     "out of memory",
     "system crash",
     "migration",
-    "backup database"
+    "docker",
+    "container"
   ],
   "capabilities": [
     "lifecycle_management",
@@ -50,36 +52,32 @@
     "emergency_recovery",
     "performance_monitoring",
     "database_operations",
-    "maintenance_automation"
+    "maintenance_automation",
+    "cross_platform_deployment"
   ],
   "dependencies": [],
   "related_skills": [
     "backend-api-builder",
     "backend-api-tester",
-    "git-commit-push"
+    "git-commit"
   ],
   "examples": [
     "Start all AiCMR containers",
     "Check system health status",
     "View backend logs for debugging",
-    "Access MySQL shell to run migrations",
+    "Access MySQL shell to run queries",
     "Rebuild containers after code changes",
     "Troubleshoot database connection issues",
     "Emergency system recovery procedures",
-    "Performance monitoring and optimization",
-    "Database backup and restore",
-    "Routine maintenance tasks"
+    "Cross-platform deployment (Windows/Linux/macOS)"
   ],
   "key_improvements": [
-    "Added comprehensive decision tree",
-    "Standardized workflows for all operations",
-    "Added 6 advanced troubleshooting scenarios",
-    "Added 4 emergency procedures",
-    "Added performance monitoring examples",
-    "Added maintenance workflows",
-    "Better DO/DON'T sections",
-    "Complete checklists",
-    "Quick reference card",
-    "Working code examples"
+    "Unified docker-compose.yml (single file for all platforms)",
+    "Consistent container names across platforms",
+    "Added extra_hosts for host.docker.internal",
+    "Environment variable overrides",
+    "Simplified commander CLI (no platform detection)",
+    "Health checks for all services",
+    "Port configuration via environment variables"
   ]
 }

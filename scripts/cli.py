@@ -2,7 +2,8 @@
 """
 AiCMR CLI - Cross-Platform Management System
 
-Simplified single-file approach to avoid encoding and import issues.
+Platform-agnostic Docker management using single docker-compose.yml
+Works on Windows, Linux, and macOS without platform-specific overrides.
 """
 
 import subprocess
@@ -10,27 +11,24 @@ import sys
 import os
 from pathlib import Path
 
-# Get project root (scripts is inside scripts/)
+# Get project root
 SCRIPT_DIR = Path(__file__).parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 
-# Detect platform
-IS_WINDOWS = sys.platform == "win32"
-IS_MAC = sys.platform == "darwin"
-IS_LINUX = sys.platform.startswith("linux")
+# Docker compose command - single file for all platforms
+DOCKER_COMPOSE = ["docker-compose", "-f", str(PROJECT_ROOT / "docker-compose.yml")]
 
-# Docker compose command
-if IS_WINDOWS:
-    # Windows: use both base and override files
-    DOCKER_COMPOSE_BASE = [
-        "docker-compose",
-        "-f", str(PROJECT_ROOT / "docker-compose.yml"),
-        "-f", str(PROJECT_ROOT / "docker-compose.windows.yml")
-    ]
-else:
-    DOCKER_COMPOSE_BASE = ["docker-compose", "-f", str(PROJECT_ROOT / "docker-compose.yml")]
+# Unified container names (same across all platforms)
+CONTAINERS = {
+    "mysql": "aicmr-mysql",
+    "backend": "aicmr-backend",
+    "frontend": "aicmr-frontend",
+    "redis": "aicmr-redis",
+    "nginx": "aicmr-nginx",
+    "phpmyadmin": "aicmr-phpmyadmin",
+}
 
-# ANSI Color codes (ASCII only)
+# ANSI Color codes
 RESET = "\033[0m"
 RED = "\033[91m"
 GREEN = "\033[92m"
@@ -88,7 +86,7 @@ def print_url(name, url):
 
 def run_docker(cmd_args, capture=False):
     """Run docker-compose command"""
-    cmd = DOCKER_COMPOSE_BASE + cmd_args
+    cmd = DOCKER_COMPOSE + cmd_args
 
     if capture:
         try:
@@ -111,6 +109,14 @@ def run_docker(cmd_args, capture=False):
             return None
 
 
+def run_docker_raw(cmd):
+    """Run raw docker command"""
+    try:
+        return subprocess.run(cmd, capture_output=True, text=True)
+    except Exception as e:
+        return None
+
+
 def docker_up():
     """Start all services"""
     print_info("Starting containers...")
@@ -119,26 +125,9 @@ def docker_up():
 
 
 def docker_down():
-    """Stop all services with wait"""
-    print_info("Stopping containers (may take 10-20 seconds)...")
-
-    # Run docker-compose down
+    """Stop all services"""
+    print_info("Stopping containers...")
     result = run_docker(["down"])
-
-    # Wait for containers to stop
-    if result is None or result.returncode == 0:
-        import time
-        print_info("Waiting for containers to stop...")
-        time.sleep(15)  # Wait 15 seconds for graceful shutdown
-
-        # Verify containers are stopped
-        result2 = run_docker(["ps"], capture=True)
-        if result2 and "Up" not in result2.stdout:
-            return True
-        else:
-            print_warning("Some containers may still be running - check with 'python cli.py status'")
-            return False
-
     return result is None or result.returncode == 0
 
 
@@ -153,6 +142,9 @@ def docker_rebuild():
     """Rebuild containers"""
     print_info("Rebuilding containers...")
     result = run_docker(["build", "--no-cache"])
+    if result is None or result.returncode == 0:
+        print_info("Restarting with new images...")
+        result = run_docker(["up", "-d"])
     return result is None or result.returncode == 0
 
 
@@ -177,104 +169,61 @@ def docker_shell(service):
     """Access container shell"""
     print_info(f"Opening shell for {service}... (Ctrl+D to exit)")
 
-    if IS_WINDOWS:
-        # Windows: use docker exec with cmd.exe or specific tools
-        if service == "mysql":
-            run_docker(["exec", service, "mysql", "-u", "aicmr_user", "-paicmr"])
-        elif service == "redis":
-            run_docker(["exec", service, "redis-cli"])
-        else:
-            run_docker(["exec", service, "sh"])
+    container = CONTAINERS.get(service, service)
+
+    if service == "mysql":
+        run_docker_raw(["docker", "exec", "-it", container, "mysql", "-u", os.getenv("DB_USER", "aicmr_user"), "-p" + os.getenv("DB_PASSWORD", "")])
+    elif service == "redis":
+        run_docker_raw(["docker", "exec", "-it", container, "redis-cli"])
     else:
-        # Linux/Mac: use docker exec with /bin/sh
-        run_docker(["exec", service, "/bin/sh"])
-
-
-def docker_exec(service, command):
-    """Execute command in container"""
-    print_info(f"Executing command in {service}...")
-    run_docker(["exec", service, *command.split()])
+        shell = "sh" if sys.platform != "win32" else "sh"
+        run_docker_raw(["docker", "exec", "-it", container, shell])
 
 
 # ============================================================================
-# HEALTH CHECK FUNCTIONS (Docker-based, no HTTP requests)
+# HEALTH CHECK FUNCTIONS
 # ============================================================================
 
-def check_mysql():
-    """Check MySQL using docker exec"""
+def check_container(container_name):
+    """Check if container is running"""
     try:
-        cmd = ["docker", "exec", "-i"]
-        if IS_WINDOWS:
-            cmd += ["aicmr-mysql-windows", "mysqladmin", "ping"]
-        else:
-            cmd += ["aicmr-mysql-dev", "mysqladmin", "ping"]
-
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
-        return "mysqld is alive" in result.stdout or result.returncode == 0
-    except Exception:
-        return False
-
-
-def check_redis():
-    """Check Redis using docker exec"""
-    try:
-        cmd = ["docker", "exec", "-i"]
-        if IS_WINDOWS:
-            cmd += ["aicmr-redis-windows", "redis-cli", "ping"]
-        else:
-            cmd += ["aicmr-redis-dev", "redis-cli", "ping"]
-
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
-        return "PONG" in result.stdout
-    except Exception:
-        return False
-
-
-def check_backend():
-    """Check backend using docker ps (no HTTP requests)"""
-    try:
-        # Check if backend container is running
-        result = run_docker(["ps", "backend"], capture=True)
-        if result and "backend" in result.stdout and "Up" in result.stdout:
+        result = run_docker_raw([
+            "docker", "inspect", "-f",
+            "{{.State.Running}}", container_name
+        ])
+        if result and "true" in result.stdout:
             return True
         return False
     except Exception:
         return False
 
 
-def check_frontend():
-    """Check frontend using docker ps (no HTTP requests)"""
-    try:
-        # Check if frontend container is running
-        result = run_docker(["ps", "frontend"], capture=True)
-        if result and "frontend" in result.stdout and "Up" in result.stdout:
-            return True
-        return False
-    except Exception:
-        return False
+def check_service_health(service):
+    """Check service health using docker exec"""
+    container = CONTAINERS.get(service)
 
+    if service == "mysql":
+        result = run_docker_raw([
+            "docker", "exec", container,
+            "mysqladmin", "ping", "-h", "localhost"
+        ])
+        return result and result.returncode == 0
 
-def check_nginx():
-    """Check nginx using docker ps (no HTTP requests)"""
-    try:
-        # Check if nginx container is running
-        result = run_docker(["ps", "nginx"], capture=True)
-        if result and "nginx" in result.stdout and "Up" in result.stdout:
-            return True
-        return False
-    except Exception:
-        return False
+    elif service == "redis":
+        result = run_docker_raw([
+            "docker", "exec", container, "redis-cli", "ping"
+        ])
+        return result and "PONG" in result.stdout
+
+    else:
+        return check_container(container)
 
 
 def check_all():
     """Check all services"""
-    results = {
-        "mysql": check_mysql(),
-        "redis": check_redis(),
-        "backend": check_backend(),
-        "frontend": check_frontend(),
-        "nginx": check_nginx()
-    }
+    results = {}
+    for service, container in CONTAINERS.items():
+        results[service] = check_container(container)
     return results
 
 
@@ -290,11 +239,11 @@ def print_health_report():
         "redis": "Redis Cache",
         "backend": "Backend API",
         "frontend": "Frontend",
-        "nginx": "Rewrite Proxy",
+        "nginx": "Reverse Proxy",
     }
 
     for service, name in services.items():
-        status = results.get(service)
+        status = results.get(service, False)
         if status:
             print_success(f"{name}: Healthy")
         else:
@@ -302,7 +251,6 @@ def print_health_report():
 
     print_separator()
 
-    # Overall status
     healthy_count = sum(1 for v in results.values() if v)
     total_count = len(results)
 
@@ -321,7 +269,12 @@ def print_health_report():
 def check_docker():
     """Check if Docker is available"""
     try:
-        result = subprocess.run(["docker", "version"], capture_output=True, text=True, timeout=5)
+        result = subprocess.run(
+            ["docker", "version"],
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
         if result.returncode == 0:
             print_success("Docker is installed and accessible")
             return True
@@ -341,7 +294,6 @@ def validate_env():
         print_info("Usage: cp .env.example .env")
         return False
 
-    # Check required variables (basic check)
     try:
         with open(env_file, 'r') as f:
             content = f.read()
@@ -385,7 +337,7 @@ def cmd_up(args):
     else:
         print_separator()
         print_error("Start failed!")
-        print_info("Usage: python cli.py logs to view errors")
+        print_info("Run: ./commander logs to view errors")
         return 1
 
 
@@ -399,7 +351,7 @@ def cmd_down(args):
         print_success("Stopped successfully!")
         print_separator()
         print_info("Note: Data volumes are preserved")
-        print_info("To remove volumes, run: python cli.py rebuild")
+        print_info("To remove everything: docker-compose down -v")
         print_separator()
         return 0
     else:
@@ -419,8 +371,6 @@ def cmd_restart(args):
         print_separator()
         print_url("Frontend", "http://localhost:3000")
         print_url("Backend API", "http://localhost:8000")
-        print_url("API Docs", "http://localhost:8000/docs")
-        print_url("phpMyAdmin", "http://localhost:8080")
         print_separator()
         return 0
     else:
@@ -457,9 +407,7 @@ def cmd_health(args):
     """Check health of all services"""
     print_header("Health Check")
     print_separator()
-
     print_health_report()
-
     print_separator()
     print_info("Health Check Complete")
     print_separator()
@@ -467,7 +415,7 @@ def cmd_health(args):
 
 def cmd_logs(args):
     """Show logs for service"""
-    service = args.service if hasattr(args, 'service') else None
+    service = args.service if hasattr(args, 'service') and args.service else None
 
     if service:
         print_header(f"Logs for {service}")
@@ -481,7 +429,7 @@ def cmd_logs(args):
 
 def cmd_shell(args):
     """Access shell of service"""
-    service = args.service if hasattr(args, 'service') else "backend"
+    service = args.service if hasattr(args, 'service') and args.service else "backend"
 
     print_header(f"Shell into {service}")
     print_separator()
@@ -516,6 +464,12 @@ def cmd_diagnose(args):
 
     print_separator()
 
+    # Show container status
+    print_info("Container Status:")
+    docker_ps()
+
+    print_separator()
+
     # Run health checks
     cmd_health(args)
 
@@ -525,8 +479,8 @@ def cmd_version(args):
     print_header("AiCMR CLI Version")
     print_separator()
     print_info(f"Platform: {sys.platform}")
-    print_info(f"Python: {sys.version}")
-    print_info(f"Docker: compose v2")
+    print_info(f"Python: {sys.version.split()[0]}")
+    print_info(f"Docker: Compose v2 (single file)")
     print_info(f"Project: {PROJECT_ROOT}")
     print_separator()
 
@@ -544,46 +498,48 @@ def print_usage():
 
 Usage:
   python cli.py <command> [options]
+  OR
+  ./commander <command> [options]
 
 Available Commands:
 
-  [SERVE COMMANDS]
+  [LIFECYCLE]
     up                  Start all services
     down                Stop all services
     restart             Restart all services
     rebuild             Rebuild containers
 
-  [SERVER COMMANDS]
+  [STATUS]
     status              Show container status
     health              Check health of all services
     version             Show version info
 
-  [LOGS COMMANDS]
+  [LOGS]
     logs                Show logs for all services
     logs <service>      Show logs for specific service
                         Services: backend, frontend, mysql, redis, nginx
 
-  [SHELL COMMANDS]
+  [ACCESS]
     shell               Access backend shell (default)
-    shell <service>      Access specific service shell
+    shell <service>     Access specific service shell
                         Services: backend, mysql, redis, nginx
 
-  [OTHER COMMANDS]
+  [OTHER]
     install             Show installation instructions
     diagnose            Run system diagnosis
     help                Show this help message
 
 Examples:
-  python cli.py up
-  python cli.py logs backend
-  python cli.py shell mysql
-  python cli.py health
+  ./commander up
+  ./commander logs backend
+  ./commander shell mysql
+  ./commander health
 
 Notes:
-  - Windows: Uses docker-compose.windows.yml for platform-specific configs
-  - Linux/Mac: Uses docker-compose.yml
-  - All commands require Docker Desktop to be running
-  - Health checks use Docker commands (no HTTP requests required)
+  - Uses single docker-compose.yml (platform-agnostic)
+  - Container names are consistent across platforms
+  - All services include health checks
+  - Extra host: host.docker.internal available
 """)
 
 
@@ -600,10 +556,9 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
 
-    # Create subparsers for commands
     subparsers = parser.add_subparsers(dest='command', help='Available commands')
 
-    # Serve commands
+    # Lifecycle commands
     parser_up = subparsers.add_parser('up', help='Start all services')
     parser_up.set_defaults(func=cmd_up)
 
@@ -616,34 +571,34 @@ def main():
     parser_rebuild = subparsers.add_parser('rebuild', help='Rebuild containers')
     parser_rebuild.set_defaults(func=cmd_rebuild)
 
-    # Server commands
+    # Status commands
     parser_status = subparsers.add_parser('status', help='Show container status')
     parser_status.set_defaults(func=cmd_status)
 
-    parser_health = subparsers.add_parser('health', help='Check health of all services')
+    parser_health = subparsers.add_parser('health', help='Check health')
     parser_health.set_defaults(func=cmd_health)
 
-    parser_version = subparsers.add_parser('version', help='Show version info')
+    parser_version = subparsers.add_parser('version', help='Show version')
     parser_version.set_defaults(func=cmd_version)
 
     # Logs commands
     parser_logs = subparsers.add_parser('logs', help='Show logs')
-    parser_logs.add_argument('service', nargs='?', help='Service name (backend, frontend, mysql, redis, nginx)')
+    parser_logs.add_argument('service', nargs='?', help='Service name')
     parser_logs.set_defaults(func=cmd_logs)
 
     # Shell commands
     parser_shell = subparsers.add_parser('shell', help='Access shell')
-    parser_shell.add_argument('service', nargs='?', default='backend', help='Service name (default: backend)')
+    parser_shell.add_argument('service', nargs='?', default='backend', help='Service name')
     parser_shell.set_defaults(func=cmd_shell)
 
     # Other commands
-    parser_install = subparsers.add_parser('install', help='Show installation instructions')
+    parser_install = subparsers.add_parser('install', help='Show installation')
     parser_install.set_defaults(func=cmd_install)
 
-    parser_diagnose = subparsers.add_parser('diagnose', help='Run system diagnosis')
+    parser_diagnose = subparsers.add_parser('diagnose', help='Run diagnosis')
     parser_diagnose.set_defaults(func=cmd_diagnose)
 
-    parser_help = subparsers.add_parser('help', help='Show this help message')
+    parser_help = subparsers.add_parser('help', help='Show help')
     parser_help.set_defaults(func=lambda args: print_usage())
 
     # Parse arguments

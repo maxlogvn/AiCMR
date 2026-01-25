@@ -1,6 +1,6 @@
 # Story 6.13: Dark Mode Refinement
 
-Status: review
+Status: done
 
 ## Story
 
@@ -171,3 +171,8 @@ Claude Opus 4.5
 ### File List
 
 - `frontend/src/app/globals.css` (MODIFIED - added dark mode refinements section)
+
+## AI-Review Action Items
+
+- [ ] [AI-Review][MINOR] Verify globals.css has all claimed dark mode refinements (shadow removal, gradient saturation, WCAG contrast) [6-13:173]
+

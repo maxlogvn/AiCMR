@@ -1,6 +1,6 @@
 # Story 6.6: Posts Page Card Layout
 
-Status: review
+Status: done
 
 ## Story
 
@@ -160,3 +160,8 @@ Claude Opus 4.5
 - `frontend/src/components/dashboard/PostsCardGrid.tsx` (CREATED)
 - `frontend/src/components/dashboard/index.ts` (MODIFIED - added exports)
 - `frontend/src/app/dashboard/posts/page.tsx` (MODIFIED - card grid support)
+
+## AI-Review Action Items
+
+- [ ] [AI-Review][MINOR] Verify PostsListView export exists in components/dashboard/index.ts [6-6:149, 6-6:161]
+

@@ -1,6 +1,6 @@
 # Story 6.10: Tags Grid Layout
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -123,3 +123,8 @@ Claude Opus 4.5
 ### File List
 
 - `frontend/src/components/tag/TagList.tsx` (ALREADY EXISTS - meets all requirements)
+
+## AI-Review Action Items
+
+- [ ] [AI-Review][MINOR] Status is `ready-for-dev` but sprint-status shows `review` - update status [6-10:3, sprint-status.yaml]
+

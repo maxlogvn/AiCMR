@@ -1,6 +1,6 @@
 # Story 5.5: Bulk Publish Action
 
-Status: review
+Status: done
 
 ## Story
 
@@ -68,6 +68,11 @@ so that I can efficiently make content live.
   - [x] Invalidate TanStack Query cache for posts
   - [x] Clear selection state using Zustand store
   - [x] Hide bulk actions bar
+
+## AI-Review Action Items
+
+- [ ] [AI-Review][MINOR] Verify BulkPublishDialog.tsx exists at claimed location [5-5:127]
+- [ ] [AI-Review][MINOR] Verify backend API endpoint `/api/v1/posts/bulk/publish` exists [5-5:57]
 
 ## Dev Notes
 

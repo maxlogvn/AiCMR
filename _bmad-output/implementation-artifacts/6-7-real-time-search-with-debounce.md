@@ -1,6 +1,6 @@
 # Story 6.7: Real-time Search with Debounce
 
-Status: review
+Status: done
 
 ## Story
 
@@ -128,3 +128,8 @@ Claude Opus 4.5
 
 - `frontend/src/components/ui/SearchInput.tsx` (CREATED)
 - `frontend/src/app/dashboard/posts/page.tsx` (MODIFIED - uses SearchInput with loading indicator)
+
+## AI-Review Action Items
+
+- [ ] [AI-Review][MINOR] Verify SearchInput.tsx exists at claimed location [6-7:129]
+

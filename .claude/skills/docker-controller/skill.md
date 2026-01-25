@@ -1,6 +1,6 @@
-# Commander Management Skill - AiCMR
+# Docker Controller Skill - AiCMR
 
-**Version:** 2.0 (Optimized)
+**Version:** 3.0 (Platform-Agnostic)
 **Purpose:** Hướng dẫn AI agents quản lý hệ thống AiCMR thông qua commander CLI một cách hiệu quả và tối ưu.
 
 ---
@@ -29,6 +29,7 @@ Skill này cung cấp:
 - ✅ **Decision trees** rõ ràng
 - ✅ **Troubleshooting guides** chi tiết
 - ✅ **Best practices** đã proven
+- ✅ **Platform-agnostic** configuration
 
 ---
 
@@ -62,6 +63,9 @@ User Request
     │   │   │   └─ → ./commander down
     │   │   │
     │   │   ├─ Restart system?
+    │   │   │   └─ → ./commander restart
+    │   │   │
+    │   │   ├─ Rebuild after code changes?
     │   │   │   └─ → ./commander rebuild
     │   │   │
     │   │   ├─ Check health?
@@ -77,10 +81,6 @@ User Request
     │   │   │
     │   │   ├─ Access shell?
     │   │   │   └─ → ./commander shell [service]
-    │   │   │
-    │   │   ├─ Database operations?
-    │   │   │   └─ → ./commander shell backend
-    │   │   │       → alembic upgrade head
     │   │   │
     │   │   └─ Not sure?
     │   │       └─ → ./commander help
@@ -107,7 +107,7 @@ User Request
 | `up` | start, launch | Build & start all containers | "khởi động", "bật server", "start" |
 | `down` | stop, shutdown | Stop & remove all containers | "dừng hệ thống", "tắt", "stop" |
 | `restart` | - | Restart all containers | "restart", "khởi động lại" |
-| `rebuild` | - | Rebuild & restart all containers | "rebuild", "build lại", "cài đặt lại" |
+| `rebuild` | - | Rebuild & restart all containers | "rebuild", "build lại", "sau khi sửa code" |
 
 **Quick Examples:**
 ```bash
@@ -123,6 +123,7 @@ User Request
 | `health` | check, quick-check | Quick health check (5s) | ✅/❌ per service |
 | `status` | ps, list | Detailed container status | CPU, MEM, Uptime |
 | `diagnose` | diag, check-error | Full system diagnostics | Network, volumes, env |
+| `version` | - | Show CLI version info | Platform, Docker info |
 
 **Quick Examples:**
 ```bash
@@ -144,6 +145,7 @@ User Request
 - `mysql` - MySQL database
 - `redis` - Redis cache
 - `nginx` - Reverse proxy
+- `phpmyadmin` - phpMyAdmin
 
 **Quick Examples:**
 ```bash
@@ -165,6 +167,7 @@ User Request
 ./commander shell backend     # Backend shell (Python)
 ./commander shell mysql       # Database shell (MySQL)
 ./commander shell frontend    # Frontend shell (Node.js)
+./commander shell redis       # Redis CLI
 ```
 
 ### Category 5: Utility Commands
@@ -172,6 +175,7 @@ User Request
 | Command | Description |
 |---------|-------------|
 | `help` | Show all available commands |
+| `install` | Show installation instructions |
 
 ---
 
@@ -183,11 +187,11 @@ User Request
 USER: "Khởi động hệ thống"
     ↓
 AGENT:
-    1. Load skill: commander-management
+    1. Load skill: docker-controller
     2. Execute: ./commander up
     3. Wait for completion (monitor output)
     4. Analyze result:
-       - ✅ "System ready!" → SUCCESS
+       - ✅ "Started successfully!" → SUCCESS
        - ❌ Errors found → Troubleshoot
     5. Report to user with summary
     6. Suggest next action:
@@ -202,7 +206,7 @@ AGENT:
 USER: "Kiểm tra health" or "Hệ thống có ổn không?"
     ↓
 AGENT:
-    1. Load skill: commander-management
+    1. Load skill: docker-controller
     2. Execute: ./commander health
     3. Analyze output:
        ├─ All ✅ → Report healthy
@@ -223,7 +227,7 @@ AGENT:
 USER: "Backend không hoạt động" or "Có lỗi gì không?"
     ↓
 AGENT:
-    1. Load skill: commander-management
+    1. Load skill: docker-controller
     2. Check status: ./commander status
     3. Identify problematic container(s)
     4. Get diagnostics: ./commander diagnose
@@ -238,45 +242,20 @@ AGENT:
     9. Offer to execute fix (if safe)
 ```
 
-### Workflow: Viewing Logs
+### Workflow: After Code Changes
 
 ```
-USER: "Xem logs" or "Lỗi gì đó?"
+USER: "Tôi vừa sửa code"
     ↓
 AGENT:
-    1. Load skill: commander-management
-    2. Ask: "Logs của service nào? (backend/frontend/mysql/all)"
-    3. Execute appropriate command:
-       - ./commander logs [service]
-    4. Analyze logs:
-       ├─ Look for ERROR keywords
-       ├─ Look for Exception/Traceback
-       ├─ Check timestamps (recent errors?)
-       └─ Identify error patterns
-    5. Report relevant findings:
-       - Show last 20-50 lines
-       - Highlight errors in RED
-       - Summarize root cause
-    6. Suggest fixes based on errors
-```
-
-### Workflow: Database Operations
-
-```
-USER: "Chạy migration" or "Update database"
-    ↓
-AGENT:
-    1. Load skill: commander-management
-    2. Execute: ./commander shell backend
-    3. In shell, run:
-       - alembic upgrade head
-       - OR python manage.py migrate
-    4. Monitor output for errors
-    5. Report success/failure
-    6. If failure:
-       - Check database logs: ./commander logs mysql
-       - Verify database connection
-       - Suggest manual intervention
+    1. Ask: "Bạn muốn rebuild hệ thống không?"
+    2. If yes:
+       a. Execute: ./commander down
+       b. Execute: ./commander rebuild
+       c. Wait for rebuild complete
+       d. Execute: ./commander health
+    3. Report status
+    4. Verify functionality
 ```
 
 ---
@@ -322,7 +301,6 @@ AGENT:
 ```bash
 # Step 1: Check restart count
 ./commander status
-# Look for: "Restart: 5 (5 seconds ago)"
 
 # Step 2: View recent logs
 ./commander logs [service]
@@ -332,10 +310,10 @@ AGENT:
 # - Random errors? → Resource issue
 # - Database error? → Check DB connection
 
-# Step 4: Stop container to prevent crash loop
+# Step 4: Stop container
 ./commander down
 
-# Step 5: Fix issue (code/config change)
+# Step 5: Fix issue
 
 # Step 6: Restart
 ./commander up
@@ -350,116 +328,19 @@ AGENT:
 
 **Workflow:**
 ```bash
-# Step 1: Check all containers healthy
+# Step 1: Check all containers
 ./commander health
 
 # Step 2: Check MySQL logs
 ./commander logs mysql
-# Look for: "Access denied", "Connection refused"
 
-# Step 3: Check backend logs
-./commander logs backend
-# Look for: "sqlalchemy.exc.OperationalError"
-
-# Step 4: Access MySQL shell
+# Step 3: Access MySQL shell
 ./commander shell mysql
-# In shell:
-mysql -u root -p
-SHOW DATABASES;
-SELECT user, host FROM mysql.user;
-EXIT;
+# In shell: check connection
 
-# Step 5: Verify .env DB credentials
-# Step 6: Restart if config changed
+# Step 4: Verify .env DB credentials
+# Step 5: Restart if needed
 ./commander restart
-```
-
-### Scenario 4: Out of Memory
-
-**Symptoms:**
-- Container OOMKilled
-- System slow
-- Services randomly crash
-
-**Workflow:**
-```bash
-# Step 1: Check resource usage
-./commander status
-# Look for: MEM usage
-
-# Step 2: Check system memory
-docker stats --no-stream
-
-# Step 3: Identify memory hog
-# Look for: Unusual high memory usage
-
-# Step 4: Options:
-# a) Restart containers
-./commander restart
-
-# b) Reduce container limits (in docker-compose.yml)
-# c) Stop unused services
-# d) Add more RAM to system
-```
-
-### Scenario 5: After Code Changes
-
-**Workflow:**
-```bash
-# Step 1: Stop containers (optional)
-./commander down
-
-# Step 2: Rebuild with new code
-./commander rebuild
-
-# Step 3: Wait for rebuild complete
-# Monitor output for build errors
-
-# Step 4: Health check
-./commander health
-
-# Step 5: Verify specific functionality
-# - Test API: curl http://localhost:8000/health
-# - Test frontend: Open http://localhost:3000
-# - Check logs: ./commander logs
-
-# Step 6: Report status
-```
-
-### Scenario 6: Complete System Failure
-
-**Symptoms:**
-- Nothing works
-- All containers down
-- Can't access anything
-
-**Emergency Procedure:**
-```bash
-# Step 1: Stop everything
-./commander down
-
-# Step 2: Remove orphaned containers
-docker ps -a
-docker rm -f $(docker ps -aq)
-
-# Step 3: Check Docker daemon
-docker info
-
-# Step 4: Restart Docker (if needed)
-# Windows: Restart Docker Desktop
-# Linux: sudo systemctl restart docker
-
-# Step 5: Check disk space
-df -h
-
-# Step 6: Clean up if needed
-docker system prune -a
-
-# Step 7: Fresh start
-./commander up
-
-# Step 8: If still fails → Check logs
-./commander logs
 ```
 
 ---
@@ -469,10 +350,7 @@ docker system prune -a
 ### Problem Category 1: Container Issues
 
 #### Problem: Container won't start
-**Symptoms:**
-```
-Error: Container exited with code 1
-```
+**Symptoms:** `Container exited with code 1`
 
 **Diagnosis:**
 ```bash
@@ -482,17 +360,10 @@ Error: Container exited with code 1
 **Common Causes:**
 1. **Port already in use**
    - Solution: Stop conflicting service
-   - Check: `netstat -ano | findstr :8000` (Windows)
-   - Or: `lsof -i :8000` (Linux/Mac)
-
 2. **Volume mount error**
    - Solution: Check volume exists
-   - Check: `docker volume ls`
-
 3. **Config file error**
    - Solution: Check .env file syntax
-   - Check: `cat .env`
-
 4. **Image build failed**
    - Solution: `./commander rebuild`
 
@@ -503,195 +374,24 @@ Error: Container exited with code 1
 ```
 
 **Common Causes:**
-1. **Application crash**
-   - Check logs for Python/Node exception
-   - Fix code/config
-   - Restart
-
-2. **Health check failing**
-   - Check health check configuration
-   - Temporarily disable to debug
-
-3. **Dependency not ready**
-   - Check database is up
-   - Wait longer before starting
-   - Add `depends_on` with `condition: service_healthy`
-
-#### Problem: Container extremely slow
-**Diagnosis:**
-```bash
-./commander status
-# Check CPU/MEM usage
-```
-
-**Solutions:**
-1. **Resource limit reached**
-   - Check Docker resource limits
-   - Increase allocated RAM/CPU
-
-2. **Database query slow**
-   - Check: `./commander logs mysql`
-   - Optimize queries
-   - Add indexes
-
-3. **Cache cold**
-   - Wait for cache to warm up
-   - Check Redis: `./commander logs redis`
-
----
+1. **Application crash** - Fix code/config
+2. **Health check failing** - Check health configuration
+3. **Dependency not ready** - Check database is up
 
 ### Problem Category 2: Networking Issues
 
 #### Problem: Can't access backend (localhost:8000)
 **Diagnosis:**
 ```bash
-# Step 1: Check backend running
 ./commander status
-# Look for: aicmr-backend "Up"
-
-# Step 2: Check backend logs
 ./commander logs backend
-# Look for: "Uvicorn running on http://0.0.0.0:8000"
-
-# Step 3: Check port binding
 docker port aicmr-backend
-
-# Step 4: Test from inside container
-./commander shell backend
-# In shell: curl http://localhost:8000/health
 ```
 
 **Common Causes:**
-1. **Port mapping wrong**
-   - Check docker-compose.yml
-   - Should be: `"8000:8000"`
-
-2. **Wrong interface**
-   - Using 127.0.0.1 instead of 0.0.0.0
-   - Fix: Bind to 0.0.0.0 in config
-
-3. **Firewall blocking**
-   - Check Windows Firewall
-   - Allow port 8000
-
-#### Problem: Can't access frontend (localhost:3000)
-**Similar to backend issue, but for frontend**
-```bash
-# Check frontend status
-./commander status
-
-# Check frontend logs
-./commander logs frontend
-# Look for: "ready - started server on"
-```
-
----
-
-### Problem Category 3: Database Issues
-
-#### Problem: Can't connect to database
-**Symptoms:**
-```
-sqlalchemy.exc.OperationalError: (mysql.connector.errors.DatabaseError) 2003 (HY000): Can't connect to MySQL server
-```
-
-**Diagnosis:**
-```bash
-# Step 1: Check MySQL container
-./commander status
-# Look for: aicmr-mysql "Up"
-
-# Step 2: Check MySQL logs
-./commander logs mysql
-# Look for: "ready for connections" OR "ERROR"
-
-# Step 3: Test MySQL connection
-./commander shell mysql
-# In shell:
-mysql -u aicmr_user -p
-# Enter password from .env
-```
-
-**Common Causes:**
-1. **Wrong credentials**
-   - Check .env DB_USER, DB_PASSWORD
-   - Verify MySQL user exists
-
-2. **Database not ready**
-   - Wait for MySQL to fully start
-   - Check logs for "ready for connections"
-
-3. **Wrong host**
-   - Windows: host.docker.internal
-   - Linux/Mac: mysql (container name)
-   - Check .env DB_HOST
-
-#### Problem: Database migration failed
-**Diagnosis:**
-```bash
-# Check alembic logs
-./commander logs backend | grep -i alembic
-
-# Check current migration state
-./commander shell backend
-# In shell:
-alembic current
-alembic history
-```
-
-**Solutions:**
-1. **Missing migration file**
-   - Create migration: `alembic revision --autogenerate -m "description"`
-   - Apply: `alembic upgrade head`
-
-2. **Migration conflict**
-   - Downgrade: `alembic downgrade -1`
-   - Fix conflict
-   - Upgrade: `alembic upgrade head`
-
-3. **Database out of sync**
-   - Stamp head: `alembic stamp head`
-   - Re-run: `alembic upgrade head`
-
----
-
-### Problem Category 4: Build Issues
-
-#### Problem: Build failed during `./commander rebuild`
-**Symptoms:**
-```
-ERROR [builder] FAILED to build
-```
-
-**Diagnosis:**
-```bash
-# Check build logs
-./commander logs
-
-# Look for specific error in output
-# Usually near "ERROR" keyword
-```
-
-**Common Causes:**
-1. **Syntax error in code**
-   - Check logs for Python/Node syntax error
-   - Fix code
-   - Rebuild: `./commander rebuild`
-
-2. **Missing dependency**
-   - Check requirements.txt or package.json
-   - Add missing dependency
-   - Rebuild
-
-3. **Network timeout**
-   - Check internet connection
-   - Docker can't download packages
-   - Retry rebuild
-
-4. **Out of disk space**
-   - Check: `df -h`
-   - Clean up: `docker system prune -a`
-   - Retry
+1. Port mapping wrong - Should be `"8000:8000"`
+2. Wrong interface - Bind to 0.0.0.0
+3. Firewall blocking - Allow port 8000
 
 ---
 
@@ -714,74 +414,15 @@ docker system prune -a --volumes
 
 # 4. Verify Docker daemon
 docker info
-# If error → Restart Docker Desktop/daemon
 
 # 5. Fresh start
 ./commander up
 
-# 6. If still fails → Check system logs
-# Windows: Event Viewer
-# Linux: journalctl -xe
+# 6. If still fails → Check logs
+./commander logs
 ```
 
-### Emergency 2: Database Corruption
-
-**When:** Database won't start, data corrupted
-
-**Procedure:**
-```bash
-# ⚠️ WARNING: May cause data loss!
-# Only attempt if backup available
-
-# 1. Stop all services
-./commander down
-
-# 2. Access MySQL data directory
-# Windows: \\wsl$\docker-desktop-data\data\aicmr_mysql
-# Linux: /var/lib/docker/volumes/aicmr_mysql/_data
-
-# 3. Backup current data (if possible)
-cp -r /var/lib/docker/volumes/aicmr_mysql/_data /backup/mysql
-
-# 4. Remove corrupted volume
-docker volume rm aicmr_mysql
-
-# 5. Start services (will create fresh DB)
-./commander up
-
-# 6. Run migrations
-./commander shell backend
-alembic upgrade head
-
-# 7. Restore from backup if needed
-# Or recreate data from scratch
-```
-
-### Emergency 3: Disk Space Full
-
-**When:** Can't write logs, containers crash
-
-**Procedure:**
-```bash
-# 1. Check disk space
-df -h
-
-# 2. Clean Docker unused data
-docker system prune -a
-
-# 3. Remove old logs
-# Backend logs
-docker logs aicmr-backend --tail 0 > /dev/null
-# Repeat for other containers
-
-# 4. Remove Docker volumes (unused)
-docker volume prune
-
-# 5. Restart services
-./commander restart
-```
-
-### Emergency 4: Port Conflicts
+### Emergency 2: Port Conflicts
 
 **When:** "port is already allocated"
 
@@ -825,95 +466,23 @@ kill -9 <pid>
 3. **Check before acting**
    - Verify current state
    - Don't restart if already running
-   - Don't start if already started
 
 4. **Monitor execution**
    - Watch output for errors
    - Wait for completion
-   - Don't assume success
-
-5. **Report clearly**
-   - Summarize what happened
-   - Highlight errors if any
-   - Suggest next actions
-
-6. **Ask when unsure**
-   - Better to ask than guess wrong
-   - Clarify ambiguous requests
-   - Confirm destructive actions
 
 #### DON'Ts ❌
 
 1. **Don't use docker compose directly**
    - Always use commander
-   - Commander abstracts complexity
 
 2. **Don't skip diagnostics**
    - Check status before restarting
    - View logs before declaring failure
-   - Diagnose before fixing
 
 3. **Don't make assumptions**
    - Verify container state
    - Check error messages
-   - Don't guess root cause
-
-4. **Don't be destructive**
-   - Ask before deleting data
-   - Confirm before `down`
-   - Warn about consequences
-
-5. **Don't overwhelm user**
-   - Summarize long outputs
-   - Show only relevant logs
-   - One action at a time
-
-### For Developers
-
-#### DO's ✅
-
-1. **Use commander for all operations**
-   - Daily start/stop
-   - Deployments
-   - Debugging
-
-2. **Check health before major changes**
-   - Run `./commander health`
-   - Verify all services OK
-   - Backup before rebuild
-
-3. **Monitor logs regularly**
-   - `./commander logs` during development
-   - Check for warnings (not just errors)
-   - Spot issues early
-
-4. **Clean up periodically**
-   - `docker system prune -a`
-   - Remove old images
-   - Free disk space
-
-5. **Document custom commands**
-   - Add to commander if used often
-   - Share with team
-
-#### DON'Ts ❌
-
-1. **Don't bypass commander**
-   - Use docker compose only if necessary
-   - Commander provides standardization
-
-2. **Don't ignore warnings**
-   - Warnings → Future errors
-   - Fix early
-
-3. **Don't modify running containers**
-   - Stop first, then change
-   - Restart to apply
-
-4. **Don't forget to backup**
-   - Before rebuild
-   - Before migrations
-   - Before major changes
 
 ---
 
@@ -935,31 +504,6 @@ kill -9 <pid>
 - [ ] Frontend accessible at http://localhost:3000
 - [ ] No errors in logs
 
-### Before Making Changes
-
-- [ ] Backup database (if needed)
-- [ ] Commit code changes
-- [ ] Document what will change
-- [ ] Rollback plan ready
-
-### After Making Changes
-
-- [ ] Rebuild successful
-- [ ] All containers healthy
-- [ ] Test critical functionality
-- [ ] Check logs for errors
-- [ ] Monitor for 5 minutes
-
-### Troubleshooting
-
-- [ ] Identify symptoms clearly
-- [ ] Check status first
-- [ ] Run diagnostics
-- [ ] View relevant logs
-- [ ] Document findings
-- [ ] Test proposed fix
-- [ ] Verify resolution
-
 ---
 
 ## 🔗 Quick Reference Card
@@ -977,6 +521,7 @@ Status:
   health      - Quick health check
   status      - Detailed container status
   diagnose    - Full system diagnostics
+  version     - Show CLI version
 
 Logs:
   logs        - View all service logs
@@ -985,7 +530,15 @@ Logs:
 Access:
   shell [svc] - Open shell in service
 
-Services: backend, frontend, mysql, redis, nginx
+Services: backend, frontend, mysql, redis, nginx, phpmyadmin
+
+Container Names (unified across platforms):
+  aicmr-mysql
+  aicmr-backend
+  aicmr-frontend
+  aicmr-redis
+  aicmr-nginx
+  aicmr-phpmyadmin
 
 EXAMPLES:
   ./commander up
@@ -1007,36 +560,18 @@ EMERGENCY:
 
 ---
 
-## 📚 Related Resources
-
-### Internal Skills
-- **backend-api-builder** - Build backend APIs
-- **backend-api-tester** - Test backend APIs
-- **git-commit-push** - Commit changes
-
-### Documentation
-- **scripts/README.md** - Commander full documentation
-- **docker-compose.yml** - Container definitions
-- **CLAUDE.md** - Project overview
-
-### External Resources
-- Docker Documentation: https://docs.docker.com/
-- Docker Compose: https://docs.docker.com/compose/
-- MySQL Reference: https://dev.mysql.com/doc/
-
----
-
 ## 📝 Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0 | 2026-01-21 | Initial version |
-| 2.0 | 2026-01-23 | **OPTIMIZED** - Better structure, advanced scenarios, emergency procedures |
+| 2.0 | 2026-01-23 | Added advanced scenarios, emergency procedures |
+| **3.0** | **2026-01-25** | **Platform-agnostic - single docker-compose.yml, unified container names** |
 
 ---
 
 **Maintained by:** Claude Code AI
-**Last Updated:** 2026-01-23
+**Last Updated:** 2026-01-25
 **Status:** Production Ready ✅
 
 ---

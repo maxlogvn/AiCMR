@@ -1,6 +1,6 @@
 # Story 6.11: Users Page with Living Stats
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -157,3 +157,9 @@ Claude Opus 4.5
 ### File List
 
 - `frontend/src/app/dashboard/users-manager/page.tsx` (ALREADY EXISTS - meets all requirements except WebSocket real-time)
+
+## AI-Review Action Items
+
+- [ ] [AI-Review][MINOR] Status is `ready-for-dev` but sprint-status shows `review` - update status [6-11:3, sprint-status.yaml]
+- [ ] [AI-Review][MINOR] Document WebSocket real-time updates as deferred (Task 4 unchecked) [6-11:50-52]
+

@@ -1,6 +1,6 @@
 # Story 5.2: All Posts Data Table
 
-Status: review
+Status: done
 
 ## Story
 
@@ -76,6 +76,10 @@ so that I can review and moderate content.
   - [x] Add Pagination component
   - [x] Set page size to 20
   - [x] Show total results count
+
+## AI-Review Action Items
+
+- [ ] [AI-Review][MINOR] Fix type assertion at PostsTable.tsx:97 - `return "draft" as StatusBadgePostStatus;` should handle default case properly [PostsTable.tsx:97]
 
 ## Dev Notes
 
