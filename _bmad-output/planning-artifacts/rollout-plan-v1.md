@@ -1,4 +1,4 @@
-# AiCMR Design System - Team Rollout Plan (v1)
+# AiCMR Design System - Team Rollout Plan (v2.0 FINAL)
 
 **Dành cho:** Tech Lead + Frontend Team
 **Thời gian rollout:** 2-3 tuần
@@ -56,9 +56,15 @@
 - ✅ Documentation open (Getting Started guide)
 
 **Materials:**
-- [Getting Started Guide](./getting-started-v1.md)
-- [Common Patterns Guide](./common-patterns-v1.md)
+- [Getting Started Guide v2.0 FINAL](./getting-started-v1.md) ✅ (Updated with Card, Badge, Modal, Toast)
+- [Common Patterns Guide v2.0 FINAL](./common-patterns-v1.md) ✅ (Updated with Modal, Toast patterns)
 - [Design System Principles](./design-system-principles-v1.md)
+
+**New Components in v2.0:**
+- ✅ **Card** - Card component với hover effect (shadow elevation)
+- ✅ **Badge** - Status/label badges với 5 variants (primary, success, warning, error, info)
+- ✅ **Modal** - Dialog component với backdrop + animation (200ms)
+- ✅ **Toast** - Notifications với Sonner integration (success, error, warning)
 
 ---
 
@@ -74,14 +80,20 @@
    - Verify theme toggle works
 
 2. **Explore (1 hour)**
-   - Read Getting Started guide
+   - Read Getting Started guide v2.0
    - Explore template pages (`/dashboard/posts`, `/user/profile`)
    - Explore components (`/components/ui/`)
+   - **NEW v2.0:** Review Card, Badge, Modal, Toast components documentation
+   - **NEW v2.0:** Test component examples from Getting Started guide
 
 3. **Practice (2 hours)**
    - Create test page using LayoutShell
    - Add FormField components
    - Test DataTable component
+   - **NEW v2.0:** Test Card component với hover effect
+   - **NEW v2.0:** Test Badge component (RankBadge, StatusBadge helpers)
+   - **NEW v2.0:** Test Modal component (confirmation dialog)
+   - **NEW v2.0:** Test Toast notifications (success, error, warning)
 
 4. **Questions (30 min)**
    - Ask uncertainties
@@ -436,8 +448,24 @@ Remember:
 
 ---
 
-**Document version:** 1.0
-**Last updated:** 2026-01-26
+## 📚 Version History
+
+**v2.0 (FINAL) - 2026-01-26**
+- ✅ Added Card component documentation and exercises
+- ✅ Added Badge component documentation and exercises
+- ✅ Added Modal component documentation and exercises
+- ✅ Added Toast component documentation and exercises
+- ✅ Updated all documentation links to v2.0 FINAL versions
+- ✅ Added new component examples to practice exercises
+
+**v1.0 - Initial Version**
+- ✅ Initial rollout plan with 3-week timeline
+- ✅ Workshop agenda and preparation checklist
+- ✅ Pilot feature selection criteria
+- ✅ Success metrics definition
+
+---
+
 **Maintained by:** Frontend Tech Lead
 
 ---

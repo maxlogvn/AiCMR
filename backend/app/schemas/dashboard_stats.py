@@ -9,5 +9,6 @@ class DashboardStatsResponse(BaseModel):
     draft_posts: int = Field(default=0, description="Số bài viết nháp")
     archived_posts: int = Field(default=0, description="Số bài viết lưu trữ")
     total_users: int = Field(default=0, description="Tổng số người dùng")
+    active_users: int = Field(default=0, description="Số người dùng hoạt động")
     posts_change_percent: float = Field(default=0.0, description="Tỷ lệ thay đổi bài viết (%)")
     users_change_percent: float = Field(default=0.0, description="Tỷ lệ thay đổi người dùng (%)")

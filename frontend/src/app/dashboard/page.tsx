@@ -11,6 +11,7 @@
 
 import { LayoutDashboard, ArrowRight } from "lucide-react";
 import { PageHeader, StatsCards } from "@/components/dashboard";
+import { UsersWidget } from "@/components/dashboard/UsersWidget";
 import Link from "next/link";
 
 const quickActions = [
@@ -52,6 +53,9 @@ export default function DashboardPage() {
 
       {/* Stats Cards */}
       <StatsCards />
+
+      {/* Users Widget - Admin Only */}
+      <UsersWidget />
 
       {/* Quick Actions Section */}
       <div>

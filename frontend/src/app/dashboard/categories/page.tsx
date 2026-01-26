@@ -12,10 +12,10 @@
 
 import { useState } from "react";
 import { FolderTree, Plus } from "lucide-react";
-import { PageHeader } from "@/components/dashboard";
 import { Button } from "@/components/ui/button";
 import { CategoryTree, CategoryForm } from "@/components/category";
 import type { Category } from "@/types/post";
+import { LayoutShell } from "@/components/ui/layout-shell";
 
 export default function CategoriesPage() {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
@@ -33,8 +33,8 @@ export default function CategoriesPage() {
 
   return (
     <div>
-      {/* Page Header */}
-      <PageHeader
+      {/* Page Header with LayoutShell */}
+      <LayoutShell
         title="Danh mục"
         subtitle="Tổ chức bài viết bằng cây danh mục phân cấp"
         icon={FolderTree}

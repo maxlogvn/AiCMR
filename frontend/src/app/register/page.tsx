@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { AuthCardWrapper, AuthCardWrapperFooter } from "@/components/ui/auth-card";
+import { Input } from "@/components/ui/input-wrapped";
 import { Mail, User, Lock, CheckCircle } from "lucide-react";
 
 export default function RegisterPage() {
@@ -45,125 +46,87 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Đăng ký tài khoản</CardTitle>
-          <CardDescription>Tạo tài khoản mới cho AiCMR</CardDescription>
-        </CardHeader>
+    <AuthCardWrapper
+      title="Đăng ký tài khoản"
+      description="Tạo tài khoản mới cho AiCMR"
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Error Message */}
+        {error && (
+          <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-lg text-sm">
+            {error}
+          </div>
+        )}
 
-        <CardContent>
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            {/* Error Message */}
-            {error && (
-              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg text-sm">
-                {error}
-              </div>
-            )}
+        {/* Success Message */}
+        {success && (
+          <div className="bg-green-500/10 border border-green-500/20 text-green-600 dark:text-green-400 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
+            <CheckCircle className="w-4 h-4" />
+            {success}
+          </div>
+        )}
 
-            {/* Success Message */}
-            {success && (
-              <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
-                <CheckCircle className="w-4 h-4" />
-                {success}
-              </div>
-            )}
+        {/* Email */}
+        <Input
+          label="Email"
+          type="email"
+          name="email"
+          icon={Mail}
+          placeholder="your.email@example.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
 
-            {/* Email */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Email
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                  placeholder="your.email@example.com"
-                />
-              </div>
-            </div>
+        {/* Username */}
+        <Input
+          label="Tên người dùng"
+          type="text"
+          name="username"
+          icon={User}
+          placeholder="username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          required
+        />
 
-            {/* Username */}
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Tên người dùng
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  id="username"
-                  name="username"
-                  type="text"
-                  required
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                  placeholder="username"
-                />
-              </div>
-            </div>
+        {/* Password */}
+        <Input
+          label="Mật khẩu"
+          type="password"
+          name="password"
+          icon={Lock}
+          placeholder="••••••••"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
 
-            {/* Password */}
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Mật khẩu
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                  placeholder="••••••••"
-                />
-              </div>
-            </div>
+        {/* Confirm Password */}
+        <Input
+          label="Xác nhận mật khẩu"
+          type="password"
+          name="confirmPassword"
+          icon={Lock}
+          placeholder="••••••••"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          required
+        />
 
-            {/* Confirm Password */}
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Xác nhận mật khẩu
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  required
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                  placeholder="••••••••"
-                />
-              </div>
-            </div>
+        {/* Submit Button */}
+        <Button type="submit" disabled={isLoading} className="w-full">
+          {isLoading ? "Đang xử lý..." : "Đăng ký"}
+        </Button>
+      </form>
 
-            {/* Submit Button */}
-            <Button type="submit" disabled={isLoading} className="w-full">
-              {isLoading ? "Đang xử lý..." : "Đăng ký"}
-            </Button>
-
-            {/* Login Link */}
-            <div className="text-center text-sm">
-              <span className="text-gray-500 dark:text-gray-400">Đã có tài khoản? </span>
-              <Link href="/login" className="text-primary-600 hover:text-primary-700 font-medium">
-                Đăng nhập ngay
-              </Link>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+      {/* Login Link */}
+      <AuthCardWrapperFooter>
+        Đã có tài khoản?{" "}
+        <Link href="/login" className="text-primary-600 hover:text-primary-700 font-medium">
+          Đăng nhập ngay
+        </Link>
+      </AuthCardWrapperFooter>
+    </AuthCardWrapper>
   );
 }

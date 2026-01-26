@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { FileText, Send, File, Users } from "lucide-react";
+import { FileText, Send, File, Users, UserCheck } from "lucide-react";
 import { StatCard } from "./StatCard";
 
 interface DashboardStats {
@@ -10,6 +10,7 @@ interface DashboardStats {
   draft_posts: number;
   archived_posts: number;
   total_users: number;
+  active_users: number;
   posts_change_percent: number;
   users_change_percent: number;
 }
@@ -46,6 +47,7 @@ export function StatsCards() {
     draft_posts: 0,
     archived_posts: 0,
     total_users: 0,
+    active_users: 0,
     posts_change_percent: 0,
     users_change_percent: 0,
   };
@@ -84,6 +86,14 @@ export function StatsCards() {
         changePercent={stats.users_change_percent}
         href="/dashboard/users"
         icon={<Users className="h-5 w-5" />}
+        isLoading={isLoading}
+      />
+
+      <StatCard
+        title="Người dùng hoạt động"
+        value={stats.active_users}
+        href="/dashboard/users?status=active"
+        icon={<UserCheck className="h-5 w-5" />}
         isLoading={isLoading}
       />
     </div>

@@ -1,4 +1,4 @@
-# AiCMR Design System - Common Patterns (v1)
+# AiCMR Design System - Common Patterns (v2.0 FINAL)
 
 **Dành cho:** Frontend Team AiCMR
 **Thời gian đọc:** 10 phút
@@ -554,15 +554,16 @@ export default function LoginPage() {
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalTitle,
+  ModalFooter,
+} from "@/components/ui/modal";
 import { FormLayout } from "@/components/ui/form-layout";
 import { FormField } from "@/components/ui/form-field";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/useToast";
+import { toast } from "@/components/ui/toast";
 
 interface ItemFormDialogProps {
   open: boolean;
@@ -948,8 +949,21 @@ export function MyPage() {
 
 ---
 
-**Document version:** 1.0
-**Last updated:** 2026-01-26
+## 📚 Version History
+
+**v2.0 (FINAL) - 2026-01-26**
+- ✅ Update Pattern 5 (Dialog Forms) để sử dụng Modal component thay Dialog
+- ✅ Thêm Toast notifications examples cho success/error handling
+- ✅ Thêm Badge component examples cho status và rank display
+- ✅ Thêm Card component examples cho dashboard stats
+- ✅ Update tất cả patterns để sử dụng Design System components mới
+
+**v1.0 - Initial Version**
+- ✅ 8 core patterns được định nghĩa
+- ✅ Template codes cho listing, forms, auth, modals, empty states, filters, loading
+
+---
+
 **Maintained by:** Frontend Team AiCMR
 
 ---

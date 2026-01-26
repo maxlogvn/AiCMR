@@ -188,6 +188,220 @@ import { Button } from '@/components/ui/button';
 
 ---
 
+### Component Cards
+
+**Card** - Card với hover effect (shadow elevation)
+```tsx
+import { Card, CardHeader, CardBody, CardFooter } from '@/components/ui/card';
+
+// Cách dùng:
+<Card>
+  <CardHeader title="Card Title" description="Optional description" />
+  <CardBody>
+    <p>Card content goes here.</p>
+  </CardBody>
+  <CardFooter>
+    <Button>Action</Button>
+  </CardFooter>
+</Card>
+```
+
+**Styling:**
+- Background: `bg-card` (auto adapt dark/light)
+- Border: `border` + `rounded-lg`
+- Shadow: `shadow-sm` → `shadow-md` on hover
+- Animation: `duration-200` (200ms)
+
+---
+
+### Component Badges
+
+**Badge** - Status/label badges với 5 variants
+```tsx
+import { Badge } from '@/components/ui/badge';
+
+// 5 Semantic variants:
+<Badge variant="primary">Admin</Badge>
+<Badge variant="success">Published</Badge>
+<Badge variant="warning">Draft</Badge>
+<Badge variant="error">Archived</Badge>
+<Badge variant="info">Guest</Badge>
+```
+
+**Styling:**
+- Shape: `rounded-full` (pill shape)
+- Font: `text-xs` + `font-semibold`
+- Colors: Solid backgrounds với white text
+- Hover: Darker background color
+
+**Helper: Rank Badge**
+```tsx
+function RankBadge({ rank }: { rank: number }) {
+  const getRankLabel = (rank: number) => {
+    if (rank === 0) return "Guest"
+    if (rank <= 2) return "Member"
+    if (rank <= 4) return "Editor"
+    if (rank === 5) return "Moderator"
+    if (rank === 10) return "Admin"
+    return `Rank ${rank}`
+  }
+
+  const getRankVariant = (rank: number): BadgeVariant => {
+    if (rank === 0) return "info"
+    if (rank <= 2) return "primary"
+    if (rank <= 4) return "success"
+    if (rank === 5) return "warning"
+    if (rank === 10) return "error"
+    return "primary"
+  }
+
+  return (
+    <Badge variant={getRankVariant(rank)}>
+      {getRankLabel(rank)}
+    </Badge>
+  )
+}
+
+// Usage:
+<RankBadge rank={0} />  {/* Guest - blue */}
+<RankBadge rank={5} />  {/* Moderator - yellow */}
+<RankBadge rank={10} /> {/* Admin - red */}
+```
+
+**Helper: Status Badge**
+```tsx
+function StatusBadge({ status }: { status: "draft" | "published" | "archived" }) {
+  const variantMap = {
+    draft: "warning" as const,
+    published: "success" as const,
+    archived: "error" as const,
+  }
+
+  const labelMap = {
+    draft: "Draft",
+    published: "Published",
+    archived: "Archived",
+  }
+
+  return (
+    <Badge variant={variantMap[status]}>
+      {labelMap[status]}
+    </Badge>
+  )
+}
+```
+
+---
+
+### Component Modals
+
+**Modal** - Dialog với backdrop + animation
+```tsx
+import { Modal, ModalContent, ModalHeader, ModalTitle, ModalDescription, ModalFooter } from '@/components/ui/modal';
+import { useState } from 'react';
+
+export default function Example() {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <Modal open={open} onOpenChange={setOpen}>
+      <ModalContent>
+        <ModalHeader>
+          <ModalTitle>Bạn có chắc không?</ModalTitle>
+          <ModalDescription>
+            Hành động này không thể hoàn tác.
+          </ModalDescription>
+        </ModalHeader>
+
+        <ModalFooter>
+          <Button variant="secondary" onClick={() => setOpen(false)}>
+            Hủy
+          </Button>
+          <Button onClick={() => {
+            // Do something
+            setOpen(false)
+          }}>
+            Xác nhận
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
+  )
+}
+```
+
+**Features:**
+- Backdrop: `bg-black/50` với `backdrop-blur-sm`
+- Animation: Zoom in/out + slide + fade (200ms)
+- Close: Backdrop click, Escape key, X button
+- Focus trap: Keyboard navigation works
+- ARIA: Accessible cho screen readers
+
+---
+
+### Component Toasts
+
+**Toast** - Notifications với Sonner
+```tsx
+import { toast, Toaster } from '@/components/ui/toast';
+
+// In app/layout.tsx - Add Toaster:
+<Toaster
+  position="bottom-right"
+  expand={false}
+  richColors
+  closeButton
+/>
+
+// Usage in component:
+function MyComponent() {
+  const handleClick = () => {
+    toast.success('Thao tác thành công!')
+    toast.error('Có lỗi xảy ra!')
+    toast.warning('Vui lòng kiểm tra lại')
+  }
+
+  return <button onClick={handleClick}>Hiển thị Toast</button>
+}
+```
+
+**Features:**
+- 3 variants: `success`, `error`, `warning`
+- Auto-dismiss: 5 giây (default)
+- Click để dismiss
+- Stack nhiều toast
+- Smooth animations
+
+**Toast with Action:**
+```tsx
+toast.success('Người dùng đã được tạo thành công', {
+  action: {
+    label: 'Xem',
+    onClick: () => {
+      // Navigate to user profile
+      router.push(`/users/${userId}`)
+    },
+  },
+})
+```
+
+**Promise Toast:**
+```tsx
+toast.promise(
+  fetch('/api/users', {
+    method: 'POST',
+    body: JSON.stringify({ name: 'John' }),
+  }),
+  {
+    loading: 'Đang tạo người dùng...',
+    success: 'Người dùng đã được tạo thành công!',
+    error: 'Không thể tạo người dùng',
+  }
+)
+```
+
+---
+
 ## 🎨 Colors & Spacing
 
 ### Design Tokens (Colors)
@@ -649,6 +863,10 @@ Context:
 | FormLayout | `@/components/ui/form-layout` | `<FormLayout>...</FormLayout>` |
 | DataTable | `@/components/ui/data-table` | `<DataTable data={...} columns={...} />` |
 | LayoutShell | `@/components/ui/layout-shell` | `<LayoutShell title="Title">...</LayoutShell>` |
+| Card | `@/components/ui/card` | `<Card><CardHeader title="..." /></Card>` |
+| Badge | `@/components/ui/badge` | `<Badge variant="success">Active</Badge>` |
+| Modal | `@/components/ui/modal` | `<Modal open={open}><ModalContent>...</ModalContent></Modal>` |
+| Toast | `@/components/ui/toast` | `toast.success('Success!')` |
 
 ### Common Tailwind Classes
 
@@ -671,9 +889,16 @@ Context:
 
 ---
 
-**Document version:** 1.0
+**Document version:** 2.0 (FINAL)
 **Last updated:** 2026-01-26
 **Maintained by:** Frontend Team AiCMR
+
+**Changes in v2.0:**
+- ✅ Added Card component documentation
+- ✅ Added Badge component documentation (RankBadge, StatusBadge helpers)
+- ✅ Added Modal component documentation
+- ✅ Added Toast component documentation (Sonner integration)
+- ✅ Updated Cheatsheet with new components
 
 ---
 

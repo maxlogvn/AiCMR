@@ -1,21 +1,49 @@
 "use client";
 
+/**
+ * Change Password Page - AiCMR Design System
+ *
+ * Story 4.4: Change Password Page
+ *
+ * Features:
+ * - Form with 3 fields: Current password, New password, Confirm password
+ * - Client-side validation (passwords match, min 8 characters)
+ * - POST /api/v1/users/me/change-password
+ * - Success/error toast notifications
+ * - Redirect to profile after success
+ * - Responsive design
+ *
+ * Design System Components:
+ * - LayoutShell: Page header + back button
+ * - FormLayout + FormField: Form wrapper
+ * - Button: Submit button
+ * - Toast: Success/error notifications
+ */
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Lock, Save, ArrowLeft } from "lucide-react";
-import Link from "next/link";
-import { useToast } from "@/hooks/useToast";
-import api from "@/lib/api";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Lock, ArrowLeft } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { LayoutShell } from "@/components/ui/layout-shell";
+import { FormLayout } from "@/components/ui/form-layout";
+import { FormField } from "@/components/ui/form-field";
 import { Button } from "@/components/ui/button";
-import Breadcrumb from "@/components/layout/Breadcrumb";
+import { toast } from "@/components/ui/toast";
 
+// Validation schema
 const changePasswordSchema = z
   .object({
     old_password: z.string().min(1, "Vui lòng nhập mật khẩu cũ"),
-    new_password: z.string().min(6, "Mật khẩu mới phải có ít nhất 6 ký tự"),
-    confirm_password: z.string().min(6, "Vui lòng xác nhận mật khẩu mới"),
+    new_password: z
+      .string()
+      .min(8, "Mật khẩu mới phải có ít nhất 8 ký tự")
+      .regex(/[A-Z]/, "Mật khẩu phải có ít nhất 1 chữ hoa")
+      .regex(/[a-z]/, "Mật khẩu phải có ít nhất 1 chữ thường")
+      .regex(/[0-9]/, "Mật khẩu phải có ít nhất 1 số"),
+    confirm_password: z.string().min(1, "Vui lòng xác nhận mật khẩu mới"),
   })
   .refine((data) => data.new_password === data.confirm_password, {
     message: "Mật khẩu xác nhận không khớp",
@@ -25,118 +53,111 @@ const changePasswordSchema = z
 type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;
 
 export default function ChangePasswordPage() {
-  const { showSuccess, showError } = useToast();
+  const router = useRouter();
 
+  // Form
   const {
     register,
     handleSubmit,
-    reset,
     formState: { errors, isSubmitting },
   } = useForm<ChangePasswordFormData>({
     resolver: zodResolver(changePasswordSchema),
   });
 
-  const onSubmit = async (data: ChangePasswordFormData) => {
-    try {
-      await api.patch("/users/me/password", {
+  // Mutation
+  const changePasswordMutation = useMutation({
+    mutationFn: async (data: ChangePasswordFormData) => {
+      const api = (await import("@/lib/api")).default;
+      return api.post("/users/me/change-password", {
         old_password: data.old_password,
         new_password: data.new_password,
       });
-      showSuccess("Đổi mật khẩu thành công!");
-      reset();
-    } catch (error: unknown) {
+    },
+    onSuccess: () => {
+      toast.success("Đổi mật khẩu thành công!");
+      setTimeout(() => {
+        router.push("/user/profile");
+      }, 1000);
+    },
+    onError: (error: any) => {
       const err = error as { response?: { data?: { detail?: string } } };
-      showError(err.response?.data?.detail || "Không thể đổi mật khẩu");
-    }
-  };
+      toast.error(err.response?.data?.detail || "Không thể đổi mật khẩu");
+    },
+  });
 
   return (
-    <div className="max-w-2xl mx-auto px-4">
-      <Breadcrumb />
-
-      <Card>
-        <CardHeader>
-          <div className="flex items-center space-x-2">
-            <Lock className="h-5 w-5 text-gray-500 dark:text-gray-400" />
-            <CardTitle>Đổi mật khẩu</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {/* Old Password */}
-            <div>
-              <label htmlFor="old_password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Mật khẩu cũ
-              </label>
-              <input
-                id="old_password"
-                type="password"
-                autoComplete="current-password"
-                {...register("old_password")}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                placeholder="••••••••"
-              />
-              {errors.old_password && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-500">{errors.old_password.message}</p>
-              )}
-            </div>
-
-            {/* New Password */}
-            <div>
-              <label htmlFor="new_password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Mật khẩu mới
-              </label>
-              <input
-                id="new_password"
-                type="password"
-                autoComplete="new-password"
-                {...register("new_password")}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                placeholder="••••••••"
-              />
-              {errors.new_password && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-500">{errors.new_password.message}</p>
-              )}
-            </div>
-
-            {/* Confirm Password */}
-            <div>
-              <label htmlFor="confirm_password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Xác nhận mật khẩu mới
-              </label>
-              <input
-                id="confirm_password"
-                type="password"
-                autoComplete="new-password"
-                {...register("confirm_password")}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-                placeholder="••••••••"
-              />
-              {errors.confirm_password && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-500">{errors.confirm_password.message}</p>
-              )}
-            </div>
-
-            {/* Submit Button */}
-            <div className="pt-2">
-              <Button type="submit" disabled={isSubmitting} className="w-full">
-                <Save className="h-4 w-4 mr-2" />
-                {isSubmitting ? "Đang xử lý..." : "Lưu thay đổi"}
-              </Button>
-            </div>
-          </form>
-
-          {/* Back Link */}
-          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <Link href="/user/profile">
-              <Button variant="outline" className="w-full">
+    <LayoutShell
+      title="Đổi mật khẩu"
+      subtitle="Cập nhật mật khẩu để bảo vệ tài khoản"
+      icon={Lock}
+      backUrl="/user/profile"
+    >
+      <form onSubmit={handleSubmit((data) => changePasswordMutation.mutate(data))}>
+        <FormLayout
+          actions={
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => router.back()}
+              >
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Quay lại hồ sơ
+                Hủy
               </Button>
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+              <Button type="submit" disabled={changePasswordMutation.isPending}>
+                {changePasswordMutation.isPending ? "Đang xử lý..." : "Đổi mật khẩu"}
+              </Button>
+            </div>
+          }
+        >
+          {/* Old Password */}
+          <FormField
+            label="Mật khẩu cũ"
+            name="old_password"
+            type="password"
+            placeholder="••••••••••"
+            error={errors.old_password?.message}
+            required
+            {...register("old_password")}
+            autoComplete="current-password"
+          />
+
+          {/* New Password */}
+          <FormField
+            label="Mật khẩu mới"
+            name="new_password"
+            type="password"
+            placeholder="••••••••••"
+            error={errors.new_password?.message}
+            required
+            {...register("new_password")}
+            autoComplete="new-password"
+          />
+
+          {/* Confirm Password */}
+          <FormField
+            label="Xác nhận mật khẩu mới"
+            name="confirm_password"
+            type="password"
+            placeholder="••••••••••"
+            error={errors.confirm_password?.message}
+            required
+            {...register("confirm_password")}
+            autoComplete="new-password"
+          />
+        </FormLayout>
+      </form>
+
+      {/* Password Requirements */}
+      <div className="mt-4 p-4 bg-muted/50 rounded-lg border border-border">
+        <p className="text-sm font-medium mb-2">Yêu cầu mật khẩu:</p>
+        <ul className="text-sm text-muted-foreground space-y-1">
+          <li>• Ít nhất 8 ký tự</li>
+          <li>• Ít nhất 1 chữ hoa (A-Z)</li>
+          <li>• Ít nhất 1 chữ thường (a-z)</li>
+          <li>• Ít nhất 1 số (0-9)</li>
+        </ul>
+      </div>
+    </LayoutShell>
   );
 }

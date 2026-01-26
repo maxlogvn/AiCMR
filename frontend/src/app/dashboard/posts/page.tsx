@@ -37,12 +37,12 @@ import { useUser } from "@/hooks/useUser";
 import { useToast } from "@/hooks/useToast";
 import { useDebounce } from "@/hooks/useDebounce";
 import {
-  PageHeader,
   StatsCard,
   EmptyState,
   StatsCardSkeleton,
   PostsCardGrid,
 } from "@/components/dashboard";
+import { LayoutShell } from "@/components/ui/layout-shell";
 import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { PostsTable, type SortField, type SortOrder } from "@/components/dashboard/PostsTable";
@@ -310,8 +310,8 @@ export default function DashboardPostsPage() {
 
   return (
     <div className="relative pb-20">
-      {/* Page Header */}
-      <PageHeader
+      {/* Page Header with LayoutShell */}
+      <LayoutShell
         title="Quản lý bài đăng"
         subtitle="Quản lý tất cả bài viết trong hệ thống"
         icon={FileText}

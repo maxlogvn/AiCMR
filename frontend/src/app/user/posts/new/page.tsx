@@ -17,10 +17,14 @@ import { useToast } from '@/hooks/useToast';
 import Breadcrumb from '@/components/layout/Breadcrumb';
 import QuickNavigation from '@/components/layout/QuickNavigation';
 import { useUser } from '@/hooks/useUser';
+import { LayoutShell } from '@/components/ui/layout-shell';
+import { FormLayout } from '@/components/ui/form-layout';
+import { FormField } from '@/components/ui/form-field';
+import { toast } from '@/components/ui/toast';
 
 export default function CreatePostPage() {
   const router = useRouter();
-  const toast = useToast();
+  const { showSuccess, showError } = useToast();
   const { user } = useUser();
 
   const [formData, setFormData] = useState<CreatePostRequest>({
@@ -67,9 +71,9 @@ export default function CreatePostPage() {
       const response = await uploadsApi.uploadFile(file, undefined, false);
       setThumbnailPreview(getFileUrl(response.data.id));
       setFormData({ ...formData, thumbnail_image_id: response.data.id });
-      toast.showSuccess('Thumbnail uploaded successfully');
+      toast.success('Upload thumbnail thành công');
     } catch (error) {
-      toast.showError('Failed to upload thumbnail');
+      toast.error('Không thể upload thumbnail');
     } finally {
       setIsUploading(false);
     }
@@ -111,10 +115,10 @@ export default function CreatePostPage() {
         tags: selectedTags,
         publish_now: publish,
       });
-      toast.showSuccess(publish ? 'Post published successfully' : 'Post saved as draft');
+      toast.success(publish ? 'Xuất bản bài viết thành công' : 'Lưu bản nháp thành công');
       router.push('/user/posts');
     } catch (error) {
-      toast.showError(publish ? 'Failed to publish post' : 'Failed to save post');
+      toast.error(publish ? 'Không thể xuất bản bài viết' : 'Không thể lưu bản nháp');
     }
   };
 
@@ -149,23 +153,12 @@ export default function CreatePostPage() {
   ];
 
   return (
-    <div className="container mx-auto max-w-5xl px-4 sm:px-6 py-8">
-      <Breadcrumb />
-
-      {/* Quick Navigation */}
-      <QuickNavigation links={quickLinks} title="Thao Tác Nhanh" />
-
-      {/* Header */}
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <Button variant="ghost" onClick={handleBack} className="mb-2">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Quay lại
-          </Button>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-            Tạo Bài Đăng Mới
-          </h1>
-        </div>
+    <LayoutShell
+      title="Tạo Bài Đăng Mới"
+      subtitle="Đăng bài viết mới cho blog của bạn"
+      icon={FileText}
+      backUrl="/user/posts"
+      actions={
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setPreview(!preview)}>
             <Eye className="w-4 h-4 mr-2" />
@@ -187,7 +180,8 @@ export default function CreatePostPage() {
             Xuất Bản
           </Button>
         </div>
-      </div>
+      }
+    >
 
        {preview ? (
          /* Preview Mode */

@@ -12,10 +12,10 @@
 
 import { useState } from "react";
 import { Tag as TagIcon, Plus, Hash } from "lucide-react";
-import { PageHeader } from "@/components/dashboard";
 import { Button } from "@/components/ui/button";
 import { TagList, TagForm, MergeDialog } from "@/components/tag";
 import type { Tag } from "@/types/post";
+import { LayoutShell } from "@/components/ui/layout-shell";
 
 export default function TagsPage() {
   const [selectedTag, setSelectedTag] = useState<Tag | null>(null);
@@ -34,8 +34,8 @@ export default function TagsPage() {
 
   return (
     <div>
-      {/* Page Header */}
-      <PageHeader
+      {/* Page Header with LayoutShell */}
+      <LayoutShell
         title="Tags"
         subtitle="Quản lý tags để người dùng dễ dàng tìm kiếm nội dung"
         icon={TagIcon}

@@ -99,6 +99,12 @@ async def get_dashboard_stats(
     result = await db.execute(select(func.count()).select_from(User))
     total_users = result.scalar() or 0
 
+    # Get active users
+    result = await db.execute(
+        select(func.count()).select_from(User).where(User.is_active == True)
+    )
+    active_users = result.scalar() or 0
+
     # Calculate trends - compare with last 30 days
     thirty_days_ago = datetime.utcnow() - timedelta(days=30)
 
@@ -155,6 +161,7 @@ async def get_dashboard_stats(
         draft_posts=draft_posts,
         archived_posts=archived_posts,
         total_users=total_users,
+        active_users=active_users,
         posts_change_percent=posts_change_percent,
         users_change_percent=users_change_percent,
     )
