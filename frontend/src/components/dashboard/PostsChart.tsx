@@ -10,7 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardBody } from "@/components/ui/card";
 
 interface PostsChartData {
   date: string;
@@ -38,12 +38,10 @@ export function PostsChart({ data, isLoading = false }: PostsChartProps) {
   if (isLoading) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>Bài viết theo thời gian</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardHeader title="Bài viết theo thời gian" />
+        <CardBody>
           <div className="h-64 bg-muted/50 rounded animate-pulse" />
-        </CardContent>
+        </CardBody>
       </Card>
     );
   }
@@ -51,24 +49,20 @@ export function PostsChart({ data, isLoading = false }: PostsChartProps) {
   if (data.length === 0) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>Bài viết theo thời gian</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardHeader title="Bài viết theo thời gian" />
+        <CardBody>
           <div className="h-64 flex items-center justify-center text-muted-foreground">
             Không có dữ liệu
           </div>
-        </CardContent>
+        </CardBody>
       </Card>
     );
   }
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Bài viết theo thời gian</CardTitle>
-      </CardHeader>
-      <CardContent>
+      <CardHeader title="Bài viết theo thời gian" />
+      <CardBody>
         <ResponsiveContainer width="100%" height={280}>
           <LineChart
             data={chartData}
@@ -103,7 +97,7 @@ export function PostsChart({ data, isLoading = false }: PostsChartProps) {
             />
           </LineChart>
         </ResponsiveContainer>
-      </CardContent>
+      </CardBody>
     </Card>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { Avatar } from "@/components/ui/avatar";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardBody } from "@/components/ui/card";
 import Link from "next/link";
 
 interface AuthorData {
@@ -21,10 +21,8 @@ export function TopAuthors({ data, isLoading = false }: TopAuthorsProps) {
   if (isLoading) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>Tác giả tiêu biểu</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardHeader title="Tác giả tiêu biểu" />
+        <CardBody>
           <div className="space-y-3">
             {[1, 2, 3, 4, 5].map((i) => (
               <div key={i} className="flex items-center gap-3">
@@ -36,7 +34,7 @@ export function TopAuthors({ data, isLoading = false }: TopAuthorsProps) {
               </div>
             ))}
           </div>
-        </CardContent>
+        </CardBody>
       </Card>
     );
   }
@@ -44,24 +42,20 @@ export function TopAuthors({ data, isLoading = false }: TopAuthorsProps) {
   if (data.length === 0) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>Tác giả tiêu biểu</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardHeader title="Tác giả tiêu biểu" />
+        <CardBody>
           <div className="h-32 flex items-center justify-center text-muted-foreground">
             Không có dữ liệu
           </div>
-        </CardContent>
+        </CardBody>
       </Card>
     );
   }
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Tác giả tiêu biểu</CardTitle>
-      </CardHeader>
-      <CardContent>
+      <CardHeader title="Tác giả tiêu biểu" />
+      <CardBody>
         <div className="space-y-3">
           {data.map((author, index) => {
             const displayName = author.full_name || author.username;
@@ -116,7 +110,7 @@ export function TopAuthors({ data, isLoading = false }: TopAuthorsProps) {
             );
           })}
         </div>
-      </CardContent>
+      </CardBody>
     </Card>
   );
 }

@@ -8,7 +8,7 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardBody } from "@/components/ui/card";
 
 interface StatusData {
   status: string;
@@ -44,12 +44,10 @@ export function StatusBreakdown({ data, isLoading = false }: StatusBreakdownProp
   if (isLoading) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>Bài viết theo trạng thái</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardHeader title="Bài viết theo trạng thái" />
+        <CardBody>
           <div className="h-64 bg-muted/50 rounded animate-pulse" />
-        </CardContent>
+        </CardBody>
       </Card>
     );
   }
@@ -57,24 +55,20 @@ export function StatusBreakdown({ data, isLoading = false }: StatusBreakdownProp
   if (data.length === 0 || total === 0) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>Bài viết theo trạng thái</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardHeader title="Bài viết theo trạng thái" />
+        <CardBody>
           <div className="h-64 flex items-center justify-center text-muted-foreground">
             Không có dữ liệu
           </div>
-        </CardContent>
+        </CardBody>
       </Card>
     );
   }
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Bài viết theo trạng thái</CardTitle>
-      </CardHeader>
-      <CardContent>
+      <CardHeader title="Bài viết theo trạng thái" />
+      <CardBody>
         <ResponsiveContainer width="100%" height={280}>
           <PieChart>
             <Pie
@@ -127,7 +121,7 @@ export function StatusBreakdown({ data, isLoading = false }: StatusBreakdownProp
             </div>
           ))}
         </div>
-      </CardContent>
+      </CardBody>
     </Card>
   );
 }

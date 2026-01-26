@@ -1,7 +1,6 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
 import ClientProvider from "@/components/providers/QueryProvider";
-import { ToastProvider } from "@/hooks/useToast";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import InstallGuard from "@/components/auth/InstallGuard";
@@ -74,10 +73,8 @@ export default function RootLayout({
           <InstallGuard>
             <ThemeProvider>
               <ClientProvider>
-                <ToastProvider>
-                  {children}
-                  <Toaster position="top-right" richColors closeButton />
-                </ToastProvider>
+                {children}
+                <Toaster position="top-right" richColors closeButton />
               </ClientProvider>
             </ThemeProvider>
           </InstallGuard>

@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardBody } from "@/components/ui/card";
 
 interface CategoryData {
   id: number;
@@ -24,10 +24,8 @@ export function TopCategories({ data, isLoading = false }: TopCategoriesProps) {
   if (isLoading) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>Danh mục nổi bật</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardHeader title="Danh mục nổi bật" />
+        <CardBody>
           <div className="space-y-3">
             {[1, 2, 3, 4, 5].map((i) => (
               <div key={i} className="flex items-center gap-3">
@@ -39,7 +37,7 @@ export function TopCategories({ data, isLoading = false }: TopCategoriesProps) {
               </div>
             ))}
           </div>
-        </CardContent>
+        </CardBody>
       </Card>
     );
   }
@@ -47,24 +45,20 @@ export function TopCategories({ data, isLoading = false }: TopCategoriesProps) {
   if (data.length === 0) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>Danh mục nổi bật</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardHeader title="Danh mục nổi bật" />
+        <CardBody>
           <div className="h-32 flex items-center justify-center text-muted-foreground">
             Không có dữ liệu
           </div>
-        </CardContent>
+        </CardBody>
       </Card>
     );
   }
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Danh mục nổi bật</CardTitle>
-      </CardHeader>
-      <CardContent>
+      <CardHeader title="Danh mục nổi bật" />
+      <CardBody>
         <div className="space-y-3">
           {data.map((category, index) => {
             const percentage = (category.count / maxCount) * 100;
@@ -113,7 +107,7 @@ export function TopCategories({ data, isLoading = false }: TopCategoriesProps) {
             );
           })}
         </div>
-      </CardContent>
+      </CardBody>
     </Card>
   );
 }
